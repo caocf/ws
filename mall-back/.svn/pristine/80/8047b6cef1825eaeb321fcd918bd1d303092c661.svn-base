@@ -1,0 +1,740 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.PathUtil;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.websys.dao.SysFileDao;
+import com.cplatform.mall.back.websys.dao.SysFileImgDao;
+import com.cplatform.mall.back.websys.dao.SysFileImgThumbDao;
+import com.cplatform.mall.back.websys.entity.SysFile;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.mall.back.websys.entity.SysFileImgThumb;
+import com.cplatform.util2.FileTools;
+import com.cplatform.util2.TimeStamp;
+import com.cplatform.util2.image.ImageUtils;
+import com.cplatform.util2.image.ImageUtils.FitType;
+import com.cplatform.util2.image.ImageUtils.ImageFormat;
+
+/**
+ * Title. 文件存储service<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-29 下午6:57:46
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: BaiJie
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class BsFileService {
+
+	private final Logger logger = Logger.getLogger(BsFileService.class.getName());
+	
+	public static final String LOTTERY_ACTIVE_CONF_KEY = "lottery_active_config";
+
+	/** 商户移动签约签署协议附件 **/
+	public static final String BS_STORE_TREATY_KEY = "STORE_TREATY";
+
+	/** 渠道商移动签约签署协议附件 **/
+	public static final String BS_CHANNEL_TREATY_KEY = "STORE_TREATY";
+
+	/** 商品相册图片 **/
+	public static final String BS_ITEM_PIC_KEY = "ITEM_PIC";
+
+	/** 商品封面图片 唯一 **/
+	public static final String BS_ITEM_COVER_PIC_KEY = "ITEM_COVER_PIC";
+
+	/** 属性相关图片 **/
+	public static final String BS_PROPERTY_PIC_KEY = "PROPERY_PIC";
+
+	/** 品牌图片 **/
+	public static final String MODULE_BRAND_IMG_KEY = "BRAND_IMG";
+
+	public static final String MODULE_TASK_BATCH = "task_file";
+
+	public static final String MODULE_TASK_BATCH_BLACK = "black_file";
+
+	public static final String MODULE_TASK_BATCH_WHITE = "white_file";
+
+	/** 模块管理 */
+	public static final String MODULE_TEMPLATE = "TEMPATE_MODULE";
+
+	/** 频道图片 */
+	public static final String MODULE_CHANNEL_PIC = "MODULE_CHANNEL_PIC";
+
+	/** 频道推荐图片 */
+	public static final String MODULE_CHANNEL_CMD_PIC = "MODULE_CHANNEL_CMD_PIC";
+
+	/** 广告图片存储 */
+	public static final String MODULE_AD = "AD_IMG";
+
+	/** 商品协议存储 **/
+	public static final String MODULE_SETTLE = "SETTLE_FILE";
+	
+	/** 二维码 **/
+	public static final String GIFT_CARD_QRCODE_KEY = "GIFT_CARD_QRCODE";
+	
+	/** 二维码 尺寸*/
+	public static final int GIFT_CARD_QRCODE_SIZE = 210;
+	
+	/** 礼品卡需求 **/
+	public static final String GIFT_REQUIRED_KEY = "GIFT_REQUIRED";
+	
+	/** 公告图**/
+	public static final String ADVISE_PIC_KEY = "ADVISE_PIC";
+	
+	/** 拉伸公告图**/
+	public static final String ADVISE_EXTEND_PIC_KEY = "ADVISE_EXTEND_PIC";
+	
+	
+	
+	
+
+	@Autowired
+	SysFileDao fileDao;
+
+	@Autowired
+	SysFileImgDao fileImgDao;
+
+	@Autowired
+	SysFileImgThumbDao sysFileImgThumbDao;
+
+	@Autowired
+	AppConfig appConfig;
+
+	@Autowired
+	PathUtil pathUtil;
+
+	/** 业务key 对应的缩略图尺寸，顺序从大到小 */
+	private static Map<String, String[]> bsKeySizeMap = new HashMap<String, String[]>();
+
+	static {
+		bsKeySizeMap.put(BS_ITEM_COVER_PIC_KEY, new String[] { "320x320", "240x240", "160x160", "100x100", "50x50" });
+		bsKeySizeMap.put(BS_ITEM_PIC_KEY, new String[] { "320x320", "240x240", "160x160", "100x100", "50x50" });
+	}
+
+	/**
+	 * 普通模块的操作，会保存传入的流，返回存储的路径对象
+	 * 
+	 * @param is
+	 * @param module
+	 * @param ext
+	 * @param id
+	 * @return
+	 */
+	public PathInfo dealModuleFile(InputStream is, String module, String ext) {
+		PathInfo pathinfo = pathUtil.getPathInfo(module, ext);
+		writeFile(is, pathinfo.getRealPath());
+		return pathinfo;
+	}
+
+	/**
+	 * 模块上传文件处理
+	 * 
+	 * @param uploadfile
+	 * @param module
+	 * @return
+	 * @throws Exception
+	 */
+	public PathInfo dealModuleFile(MultipartFile uploadfile, String module, Long... id) throws Exception {
+		if (uploadfile != null && !uploadfile.isEmpty()) {
+			String ext = FileTools.getExtFilename(uploadfile.getOriginalFilename());
+			if (MODULE_TEMPLATE.equals(module)) {
+				ext = uploadfile.getOriginalFilename();
+			}
+			PathInfo pathinfo = pathUtil.getPathInfo(module, ext, id);
+			FileTools.write(uploadfile.getBytes(), pathinfo.getRealPath());
+			return pathinfo;
+		} else {
+			PathInfo pathinfo = pathUtil.getPathInfo(module, "txt", id);
+			return pathinfo;
+		}
+	}
+	public PathInfo dealMultipartFile(MultipartFile uploadfile, String module, Long id)throws Exception{
+		String  ext = FileTools.getExtFilename(uploadfile.getOriginalFilename());
+		PathInfo pathinfo = pathUtil.getPathById(module,id,ext);
+		String realPath = pathinfo.getRealPath();
+		saveBsImgFile(realPath, pathinfo.getRealWebPath(""), module, id);
+		writeFile(uploadfile.getInputStream(), realPath);
+		return pathinfo;
+	}
+
+	
+	public PathInfo LotteryActive(MultipartFile uploadfile, String module, Long... id) throws Exception {
+		if (uploadfile != null && !uploadfile.isEmpty()) {
+			String ext = FileTools.getExtFilename(uploadfile.getOriginalFilename());
+			if (LOTTERY_ACTIVE_CONF_KEY.equals(module)) {
+				ext = uploadfile.getOriginalFilename();
+			}
+			PathInfo pathinfo = pathUtil.getPathInfo(module, ext, id);
+			FileTools.write(uploadfile.getBytes(), pathinfo.getRealPath());
+			return pathinfo;
+		} else {
+			PathInfo pathinfo = pathUtil.getPathInfo(module, "txt", id);
+			return pathinfo;
+		}
+	}
+	
+	/**
+	 * 保存文件
+	 * 
+	 * @param absPath
+	 *            绝对路径
+	 * @param webPath
+	 *            web路径
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @return
+	 */
+	@Transactional
+	public SysFile saveBsFile(String absPath, String webPath, String key, Long id)throws Exception {
+		String ext = FileTools.getExtFilename(absPath);
+
+		SysFile sf = new SysFile();// 存原始文件
+		sf.setFileAbsPath(absPath);
+		sf.setFileType(ext);
+		sf.setFileWebPath(webPath);
+		sf.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		sf.setCreateUser(SessionUser.getSessionUser().getId());// 当前登录用户登录编号
+		sf.setBsId(id);
+		sf.setBsKey(key);
+		fileDao.save(sf);
+		// 存储关联表
+		// SysFileLink sfl = new SysFileLink(key, id, sf.getId(),
+		// getTablename(key));
+		// fileLinkDao.save(sfl);
+
+		return sf;
+	}
+
+	@Transactional
+	public void deleteBsFile(String bsKey, Long id) {
+
+		List<SysFile> files = fileDao.findByBsKeyAndBsId(bsKey, id);
+		if (files != null && !files.isEmpty()) {
+			for (SysFile fileLink : files) {
+				// TODO:删除实际的文件
+				String filepath = fileLink.getFileAbsPath();
+				rmFile(filepath);
+				fileDao.delete(fileLink);
+			}
+		}
+	}
+
+	/**
+	 * 删除 原始。 同时要删除相关关联对象
+	 * 
+	 * @param fileid
+	 *            原始文件id
+	 * @return
+	 */
+	public void deleteBsFile(Long fileid) {
+		SysFile file = fileDao.findOne(fileid);
+		// SysFileLink fileLink = fileDao.findOneByFileId(fileid);
+		String filepath = file.getFileAbsPath();
+		rmFile(filepath);
+		fileDao.delete(file);
+	}
+
+	/**
+	 * 删除 原始。 同时要删除相关关联对象
+	 * 
+	 * @param fileid
+	 *            原始文件id
+	 * @return
+	 */
+	public void deleteBsFileImg(Long fileid) {
+		SysFileImg file = fileImgDao.findOne(fileid);
+		// SysFileImgLink fileImgLink =
+		// sysFileImgLinkDao.findOneByFileId(fileid);
+		String pre = pathUtil.getKeyPrefix(file.getBsKey());
+		String fileImgpath = pre + file.getFileWebPath();
+		rmFile(fileImgpath);
+		deleteThumbFile(file.getId(), pre);
+		fileImgDao.delete(file);
+	}
+
+	public List<SysFile> getSysFileList(String key, Long bsId) {
+		return fileDao.findByBsKeyAndBsId(key, bsId);
+	}
+
+	/**
+	 * 根据业务key，及业务id获得图片列表
+	 * 
+	 * @param key
+	 *            业务key
+	 * @param bsId
+	 *            业务id
+	 * @return
+	 */
+	public List<SysFileImg> getSysFileImgList(String key, Long bsId) {
+		return fileImgDao.findByBsKeyAndBsId(key, bsId);
+	}
+
+	/**
+	 * 删除业务文件
+	 * 
+	 * @param bsKey
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 */
+	public void deleteBsFileImg(String bsKey, Long bsId) {
+		List<SysFileImg> files = fileImgDao.findByBsKeyAndBsId(bsKey, bsId);
+		String pre = pathUtil.getKeyPrefix(bsKey);
+		if (files != null && !files.isEmpty()) {
+
+			for (SysFileImg fileLink : files) {
+				deleteThumbFile(fileLink.getId(), pre);
+				// TODO:删除实际的文件
+				fileImgDao.delete(fileLink);
+				String filepath = fileLink.getFileAbsPath();
+				rmFile(filepath);
+			}
+		}
+	}
+
+	/**
+	 * 删除缩略图
+	 * 
+	 * @param fileId
+	 *            文件id
+	 * @param pre
+	 *            前缀
+	 */
+	private void deleteThumbFile(Long fileId, String pre) {
+		// 删除对应的缩略图对象
+		List<SysFileImgThumb> thumbList = sysFileImgThumbDao.findByFileId(fileId);
+		// 删除缩略图文件
+		if (thumbList != null) {
+			for (SysFileImgThumb sft : thumbList) {
+				String filepath = pre + sft.getImgWebPath();
+				rmFile(filepath);
+				sysFileImgThumbDao.delete(sft);
+			}
+		}
+	}
+
+	/**
+	 * 保存图片文件
+	 * 
+	 * @param absPath
+	 *            图片真实路径
+	 * @param webPath
+	 *            网络路径
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @return
+	 */
+	@Transactional
+	public SysFileImg saveBsImgFile(String absPath, String webPath, String key, Long id) {
+		String ext = FileTools.getExtFilename(absPath);
+
+		SysFileImg sf = new SysFileImg();// 存原始文件
+		sf.setFileAbsPath(webPath);
+		sf.setFileType(ext);
+		sf.setFileWebPath(webPath);
+		sf.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		sf.setCreateUser(SessionUser.getSessionUser().getId());// 当前登录用户登录编号
+		sf.setFileName(getFilename(absPath));
+		sf.setBsKey(key);
+		sf.setBsId(id);
+		sf.setTableName(getTablename(key));
+
+		fileImgDao.save(sf);
+		// 存储关联表
+		// SysFileImgLink sfl = new SysFileImgLink(key, id, sf.getId(),
+		// getTablename(key));
+		// sysFileImgLinkDao.save(sfl);
+
+		return sf;
+	}
+
+	/**
+	 * 上传图片处理
+	 * 
+	 * @param is
+	 *            图片流
+	 * @param ext
+	 *            扩展名
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @param sizes
+	 *            缩略图，可以传入多个，形式为 150*150 。。。
+	 * @return
+	 */
+	@Transactional
+	public SysFileImg dealBsImgFile(InputStream is, String ext, String key, Long id, String... sizes) {
+		// 处理文件存储
+		return dealBsImgFile(is, ext, key, id, false, sizes);
+	}
+
+	/**
+	 * 处理上传的文件
+	 * 
+	 * @param is
+	 *            文件流
+	 * @param ext
+	 *            扩展名
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @param isone
+	 *            是否唯一
+	 * @param sizes
+	 *            生成的缩略图规则
+	 * @return
+	 */
+	public SysFileImg dealBsImgFile(InputStream is, String ext, String key, Long id, boolean isone, String... sizes) {
+		// 处理文件存储
+		PathInfo pathInfo = pathUtil.getPathById(key, id, ext);
+		String realPath = pathInfo.getRealPath();
+
+		if (writeFile(is, realPath)) {// 写入原始文件成功，写入到数据库
+			if (isone) {// 删除先关图片
+				deleteBsFileImg(key, id);
+			}
+			SysFileImg sfi = saveBsImgFile(realPath, pathInfo.getRealWebPath(""), key, id);
+			if (sizes == null || sizes.length == 0) {
+				sizes = bsKeySizeMap.get(key);
+			}
+			// 根据不同的size生成不同的缩略图
+			if (sizes != null && sizes.length > 0) {
+				for (int i = 0; i < sizes.length; i++) {
+					saveThumb(sfi, sizes[i], (i + 1));// 上传的原图地址为N0,该出从1开始累计
+				}
+			}
+			return sfi;
+		}
+
+		return null;
+	}
+
+	/**
+	 * 上传文件处理
+	 * 
+	 * @param dealFile
+	 *            上传文件
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @return
+	 */
+	@Transactional
+	public SysFile dealBsFile(File dealFile, String key, Long id) throws Exception{
+		if (dealFile == null) {
+			return null;
+		}
+		String ext = FileTools.getExtFilename(dealFile);
+		try {
+			return dealBsFile(new FileInputStream(dealFile), ext, key, id);
+		}
+		catch (FileNotFoundException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * 上传文件处理
+	 * 
+	 * @param is
+	 *            流
+	 * @param ext
+	 *            文件扩展名
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @return
+	 */
+	@Transactional
+	public SysFile dealBsFile(InputStream is, String ext, String key, Long id) throws Exception {
+		if (is == null) {
+			return null;
+		}
+		// 处理文件存储
+		return dealBsFile(is, ext, key, id, false);
+	}
+
+	@Transactional
+	/**
+	 * 上传文件
+	 * @param is 文件流
+	 * @param ext 扩展名
+	 * @param key 业务key
+	 * @param id 业务id
+	 * @param isOne 只能存在一个文件
+	 * @return
+	 */
+	public SysFile dealBsFile(InputStream is, String ext, String key, Long id, boolean isOne) throws Exception{
+		if (is == null) {
+			return null;
+		}
+		// 处理文件存储
+		PathInfo pathInfo = pathUtil.getPathById(key, id, ext);
+
+		if (writeFile(is, pathInfo.getRealPath())) {// 写入文件成功，写入到数据库
+			if (isOne) {// 如果要求唯一，删除原有的文件
+				deleteBsFile(key, id);
+			}
+
+			return this.saveBsFile(pathInfo.getRealPath(), pathInfo.getRealWebPath(""), key, id);
+		}
+		return null;
+	}
+	
+	
+	
+	/**
+	 * 上传商户合同
+	 * @param is 文件流
+	 * @param ext 扩展名
+	 * @param key 业务key
+	 * @param id 业务id
+	 * @param isOne 只能存在一个文件
+	 * @return
+	 */
+	public SysFile dealBusiContractFile(InputStream is, String ext, String key, Long id, boolean isOne) throws Exception {
+		if (is == null) {
+			return null;
+		}
+		// 处理文件存储
+		PathInfo pathInfo = pathUtil.getBusiContractPathById(key, id, ext);
+
+		if (writeFile(is, pathInfo.getRealPath())) {// 写入文件成功，写入到数据库
+			if (isOne) {// 如果要求唯一，删除原有的文件
+				deleteBsFile(key, id);
+			}
+
+			return this.saveBsFile(pathInfo.getRealPath(), pathInfo.getRealWebPath(""), key, id);
+		}
+		return null;
+	}
+
+	/**
+	 * 下载文件
+	 * 
+	 * @param request
+	 * @param response
+	 * @param filePath
+	 *            文件路径
+	 * @param realName
+	 *            要保存的文件名
+	 * @throws Exception
+	 */
+	public void download(HttpServletRequest request, HttpServletResponse response, String filePath, String realName) throws Exception {
+		response.setContentType("text/html;charset=UTF-8");
+		request.setCharacterEncoding("UTF-8");
+		BufferedInputStream bis = null;
+		BufferedOutputStream bos = null;
+		long fileLength = new File(filePath).length();
+
+		response.setHeader("Content-disposition", "attachment; filename=" + new String(realName.getBytes("utf-8"), "ISO8859-1"));
+		response.setHeader("Content-Length", String.valueOf(fileLength));
+
+		try {
+			bis = new BufferedInputStream(new FileInputStream(filePath));
+			bos = new BufferedOutputStream(response.getOutputStream());
+			byte[] buff = new byte[2048];
+			int bytesRead;
+			while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+				bos.write(buff, 0, bytesRead);
+			}
+		}
+		catch (Exception e) {
+			logger.error("下载文件出错", e);
+		}
+		finally {
+			bis.close();
+			bos.close();
+		}
+	}
+
+	/**
+	 * 生成保存缩略图
+	 * 
+	 * @param sfImg
+	 *            原始文件对象
+	 * @param imgSize
+	 *            缩略大小
+	 * @return
+	 */
+	private boolean saveThumb(SysFileImg sfImg, String imgSize, int index) {
+		String[] size = imgSize.split("x");
+		int width = Integer.parseInt(size[0]);
+		int height = Integer.parseInt(size[1]);
+		String prefix = pathUtil.getKeyPrefix(sfImg.getBsKey());
+		String absPath = prefix + sfImg.getFileWebPath();
+		String destFile = new File(prefix + sfImg.getFileWebPath()).getParentFile().getParent() + "/N" + index + "/" + sfImg.getFileName();
+		// String destFile = new
+		// File(sfImg.getFileAbsPath()).getParentFile().getParent() + "/N" +
+		// index + "/" + sfImg.getFileName();
+		String webFile = sfImg.getFileWebPath().replace(sfImg.getFileName(), "").replace("/N0/", "/N" + index + "/") + sfImg.getFileName();
+
+		String ext = FileTools.getExtFilename(destFile);
+
+		try {
+			FileTools.makeParentDir(destFile);
+			BufferedImage bi = ImageUtils.openImage(absPath);
+			BufferedImage newImage = ImageUtils.resize(bi, width, height, FitType.KEEP_ASPECT_RATIO_AND_KEEP_FULL_IMGAGE);
+			if ("gif".equals(ext.toLowerCase())) {
+				ImageUtils.saveImage(newImage, ImageFormat.GIF, new File(destFile));
+			} else if ("png".equals(ext.toLowerCase())) {
+				ImageUtils.saveImage(newImage, ImageFormat.PNG, new File(destFile));
+			} else if ("bmp".equals(ext.toLowerCase())) {
+				ImageUtils.saveImage(newImage, ImageFormat.BMP, new File(destFile));
+			} else {
+				ImageUtils.saveImage(newImage, ImageFormat.JPEG, new File(destFile));
+			}
+			bi = null;
+
+			SysFileImgThumb sft = new SysFileImgThumb(sfImg.getId(), imgSize, TimeStamp.getTime(14), webFile, webFile);
+			sysFileImgThumbDao.save(sft);
+			return true;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	/**
+	 * 写二进制文件流
+	 * 
+	 * @param is
+	 * @param destFile
+	 *            目标文件
+	 * @return
+	 */
+	private boolean writeFile(InputStream is, String destFile) {
+		FileOutputStream fos = null;
+		try {
+			FileTools.makeParentDir(destFile);// 创建父目录
+			fos = new FileOutputStream(destFile);
+			byte[] b = new byte[1024];
+			int len = 0;
+			while ((len = is.read(b)) > 0) {
+				fos.write(b, 0, len);
+			}
+			return true;
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (is != null) {
+				try {
+
+					is.close();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (fos != null) {
+				try {
+					fos.close();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * 删除文件
+	 * 
+	 * @param pathname
+	 *            文件真实路径
+	 * @return
+	 */
+	private boolean rmFile(String pathname) {
+		File file = new File(pathname);
+		if (file.exists() && file.isFile()) {
+			logger.info("删除文件：" + pathname);
+			return file.delete();
+		}
+		logger.info("文件不存在或者是文件夹：" + pathname);
+		return false;
+	}
+
+	/**
+	 * 根据业务key，获得业务表明
+	 * 
+	 * @param key
+	 *            业务key
+	 * @return
+	 */
+	private String getTablename(String key) {
+		if (BS_STORE_TREATY_KEY.equals(key) || BS_CHANNEL_TREATY_KEY.equals(key)) {
+			return "t_store";
+		}
+		if (BS_ITEM_PIC_KEY.equals(key) || BS_ITEM_COVER_PIC_KEY.equals(key)) {
+			return "t_item_org";
+		}
+		if (BS_PROPERTY_PIC_KEY.equals(key)) {
+			return "t_item_property";
+		}
+		if (GIFT_CARD_QRCODE_KEY.equals(key)) {
+			return "T_GIFT_REQUIRED_ITEM";
+		}
+		if (GIFT_REQUIRED_KEY.equals(key)) {
+			return "T_GIFT_REQUIRED";
+		}
+		if (ADVISE_PIC_KEY.equals(key)) {
+			return "T_SYS_ANNOUNCEMENT";
+		}
+		if (ADVISE_EXTEND_PIC_KEY.equals(key)) {
+			return "T_SYS_ANNOUNCEMENT";
+		}
+		return "";
+	}
+
+	/**
+	 * 获得文件名称
+	 * 
+	 * @param filepath
+	 * @return
+	 */
+	private String getFilename(String filepath) {
+		return filepath.substring(filepath.lastIndexOf("/") + 1);
+	}
+
+}

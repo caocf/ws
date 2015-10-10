@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_umc_msg

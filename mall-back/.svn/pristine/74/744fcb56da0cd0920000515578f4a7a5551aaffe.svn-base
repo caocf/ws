@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"
+       >
+    <!-- 所有过滤器的配置项 -->
+    <description>DelegatingFilterProxy</description>
+
+    <bean name="encodingFilter" class="org.springframework.web.filter.CharacterEncodingFilter"
+            p:encoding="UTF-8" p:forceEncoding="true" />
+
+    <!-- 单点登出功能，必须放在所有项目前 -->
+    <bean name="singleSignOutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter" />
+
+    <!-- 验证本地是否sso登录，否则跳转并进行验证 -->
+    <bean name="authenticationFilter" class="com.cplatform.cas.client.ExcludeableAuthenticationFilter"
+          p:casServerLoginUrl="${sso.server}/login"
+          p:renew="false"
+          p:gateway="false"
+          p:service="${sso.client}">
+        <property name="ignorePaths"> <!-- 附加的忽略验证地址，一般为静态及不需权限的功能，使用ANT PATH方式 -->
+            <list>
+                <value>/static/**</value>
+                <value>/logout</value>
+                <value>/</value>
+                <value>/if_item/**</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 接受服务器ticket票据验证的过滤器。实现真正的登录 -->
+    <bean name="ticketValidationFilter" class="org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter"
+          p:redirectAfterValidation="true"
+          p:service="${sso.client}">
+
+        <property name="ticketValidator">
+            <bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator" p:encoding="utf-8">
+                <constructor-arg index="0" value="${sso.ticket.server}" />
+            </bean>
+        </property>
+    </bean>
+
+    <!-- wrap成 CasHttpServletRequestWrapper -->
+    <bean name="httpServletRequestWrapperFilter" class="org.jasig.cas.client.util.HttpServletRequestWrapperFilter"/>
+
+    <!-- AssertionHolder的实现 -->
+    <bean name="assertionThreadLocalFilter" class="org.jasig.cas.client.util.AssertionThreadLocalFilter"/>
+
+    <!-- jpa 视图lazy load问题解决 -->
+    <bean name="openEntityManagerInViewFilter" class="org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter" />
+
+</beans>

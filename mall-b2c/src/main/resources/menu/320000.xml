@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<body>
+	<menu menuId="10040" name="我的账户" sort="40">
+		<cmenu menuId="1004005" href="myBalance.chtml" name="我的余额" sort="5" parentId="10040" />
+		<cmenu menuId="1004060" href="lotteryInfo.chtml" name="我的抽奖" sort="60" parentId="10040" /> 
+		<cmenu menuId="1004070" href="addresses.chtml" name="我的等级" sort="70" parentId="10040" />
+		<cmenu menuId="1004080" type="union" href="16,http://i.12580life.com/userCenter/userCenter/myAccount/zpAwardList.jsp?account_target=8" name="参与的活动" sort="80" parentId="10040" />
+		<cmenu menuId="1004090" href="gCheapDeposit.chtml" name="竞拍保证金" sort="90" parentId="10040" />
+	</menu>
+	<menu menuId="10050" name="社区中心" sort="50">
+		<cmenu menuId="1005030" type="union" href="12,http://i.12580life.com/userCenter/userCenter/myShop/myShopList.jsp?common_target=14" name="我的榜单" sort="30" parentId="10050" />
+	</menu>
+</body>
+

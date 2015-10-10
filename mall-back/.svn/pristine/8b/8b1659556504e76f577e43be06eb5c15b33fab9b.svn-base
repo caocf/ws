@@ -1,0 +1,627 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+<head>
+<ht:head />
+<script type="text/javascript">
+	$().ready(function() {
+
+		$("#audit_btn1").click(function() {
+			var id = '${sale.id }';
+			window.location.href="${ctx}/item/item/auditing/"+id;
+			
+		});
+		$(".item_view").click(function() {
+			var id = $(this).attr("id");
+			window.location = 'view/' +id;
+
+		});
+		
+		$("#audit_btn2").click(function() {
+			var id = '${sale.id }';
+			window.location.href="${ctx}/item/item/twoAuditing/"+id;
+			
+		});
+		
+
+	});
+</script>
+
+
+</head>
+<body>
+	<br />
+
+	<div id="content">
+		<!-- forms -->
+		<div class="box">
+			<!-- box / title -->
+			<div class="title">
+				<h5>商品信息查看</h5>
+			</div>
+			<!-- end box / title -->
+			<div class="form">
+				<div class="fields">
+<h3>1.基本信息</h3>	
+					<div class="field">
+						<div class="label">
+							<label for="shopId">所属商户：</label>
+						</div>
+						<div class="input">${store.name }&nbsp;</div>
+					</div>
+					
+					
+				
+					
+
+					<div class="field" id="typeIdDiv">
+						<div class="label">
+							<label for="typeId">商品分类：</label>
+						</div>
+						<div class="input">${sale.typeName }&nbsp;</div>
+					</div>
+
+					<div class="field">
+						<div class="label label-radio">
+							<label for="itemMode">商品类型：</label>
+						</div>
+						<div class="input">${sale.itemModeName }&nbsp;</div>
+					</div>
+
+				
+						<div class="field">
+							<div class="label">
+								<label for="postArea" >是否营销商品:</label>
+							</div>
+							<div class="input">${iseckillMap[sale.iseckill]}&nbsp;
+							</div>
+						</div>
+						
+						<c:if test="${sale.iseckill eq 1 }">
+							<div class="field">
+							<div class="label">
+								<label for="" >秒杀价:</label>
+							</div>
+							<div class="input">${sale.iseckillPrice}&nbsp;
+							</div>
+						</div>
+						</c:if>
+					<div class="field">
+						<div class="label">
+							<label for="cashIdgoods">支付方式：</label>
+						</div>
+						<c:if test="${itemSalePayment.payType == 0}" var="fg">
+							<div class="input">单一支付：</div>
+						</c:if>
+						<c:if test="${!fg}">
+							<div class="input">组合支付：</div>
+						</c:if>
+						<c:if test="${sale.cashIdgoods eq 1}">
+							<div class="input">${cashIdgoodsMap[sale.cashIdgoods]}&nbsp;</div>
+						</c:if>
+						<c:if test="${sale.coinIdgoods eq 1}">
+							<div class="input">${coinIdgoodsMap[sale.coinIdgoods]}&nbsp;</div>
+						</c:if>
+						<c:if test="${sale.scoreIdgoods eq 1}">
+							<div class="input">${scoreIdgoodsMap[sale.scoreIdgoods]}&nbsp;</div>
+						</c:if>
+					</div>
+					<div class="field">
+						<div class="label">
+							<label for="name">是否使用话费支付：</label>
+						</div>
+						<div class="input">
+							<c:if test="${itemSalePayment.billPay eq 1}" var="fg">是</c:if>
+							<c:if test="${!fg}">否</c:if>
+						</div>
+					</div>
+				
+					<div class="field">
+						<div class="label">
+							<label for="name">商品名称：</label>
+						</div>
+						<div class="input">
+							<!-- small medium large -->
+							${sale.name}&nbsp;
+						</div>
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="shortName">商品简称：</label>
+						</div>
+						<div class="input">
+							<!-- small medium large -->
+							${sale.shortName }&nbsp;
+						</div>
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="brand">品牌：</label>
+						</div>
+						<div class="input">
+							<!-- small medium large -->
+							${sale.brand }&nbsp;
+						</div>
+					</div>
+
+
+
+
+					<div class="field">
+						<div class="label label-textarea">
+							<label for="tag">标签（用";"隔开）：</label>
+						</div>
+						<div class="input">${sale.tag }&nbsp;</div>
+
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="marketContent">营销语：</label>
+						</div>
+						<div class="input">${sale.marketContent }&nbsp;</div>
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="warmPrompt">温馨提示：</label>
+						</div>
+						<div class="input">${sale.warmPrompt }&nbsp;</div>
+					</div>
+					<div class="field">
+						<div class="label label-textarea">
+							<label for="remark">商品介绍：</label>
+						</div>
+					
+						<div class="input">${sale.remark }&nbsp;</div>
+						
+					</div>
+				</div>
+			</div>
+
+
+
+
+
+			<div class="form">
+				<div class="fields">
+
+
+<div class="field"  id="sizeDivId" >
+        	  <div class="label label-textarea">
+                        <label >商品规格:</label>
+                    </div>
+        	  <div class="inputs" id="parameterId">
+					<c:forEach items="${typeItemParamList}" var="item"
+						varStatus="index">
+
+						<c:if test="${item.paramType==1}">
+							<div class="field">
+								<div class="label">
+									<label for="name"> ${item.paramKey}：&nbsp;</label>
+								</div>
+
+								<div class="radios">
+									<div class="radio">
+										<c:forEach items="${item.paramValueList}" var="str"
+											varStatus="index1">
+
+											<c:if test="${item.userParamValue==str}">${str}</c:if>
+
+										</c:forEach>
+									</div>
+								</div>
+							</div>
+						</c:if>
+
+						<c:if test="${item.paramType==2}">
+							<div class="field">
+								<div class="label">
+									<label for="name"> ${item.paramKey}：&nbsp;</label>
+								</div>
+
+								<div class="checkboxes">
+									<div class="checkboxe">
+										<c:forEach items="${item.paramValueList}" var="str"
+											varStatus="index1">
+
+											<c:if test="${fn:contains(item.userParamValue,str)}"> ${str } ,&nbsp;</c:if>
+
+										</c:forEach>
+									</div>
+								</div>
+							</div>
+						</c:if>
+
+						<c:if test="${item.paramType==3}">
+							<div class="field">
+								<div class="label">
+									<label for="name"> ${item.paramKey}：&nbsp;</label>
+								</div>
+
+								<div class="input">${item.userParamValue}&nbsp;</div>
+							</div>
+						</c:if>
+
+					</c:forEach>
+					<div class="field">
+						<div class="label">
+							<label for="name">自定义参数</label>
+						</div>
+						<div class="input">
+							<div class="dl" id="divAddpara">
+								<c:forEach items="${paralist }" var="item">
+									<div class='dl'>
+										<br /> <span style="float:left">参数名称：${item.paramKey }</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+										<span style="float:left">参数值:${item.paramValue } </span>
+									</div>
+
+								</c:forEach>
+							</div>
+						</div>
+					</div>
+					</div>
+					
+<!-- 
+					<div class="field">
+						<div class="label">
+							<label for="name">商品属性</label>
+						</div>
+						<div class="input">
+							<c:forEach items="${itemProperty}" var="itemP" varStatus="index">
+								<div class="dl" id="fath">
+									<div class="dt class="req">${itemP.propertyName}：</div>
+									<div class="dd">
+										${itemP.content}
+										<div>
+											<c:if test="${! empty itemP.imgPath}">
+												<ht:image id="${itemP.itemId}" type="property" webpath="${itemP.imgPath}"/>
+											</c:if>
+										</div>
+									</div>
+
+								</div>
+							</c:forEach>
+						</div>
+					</div>
+ -->
+
+
+
+				</div>
+			</div>
+
+			<div class="form">
+				<div class="fields">
+<h3>2.销售信息</h3>	
+					
+
+					<!-- 需要发码此div显示begin -->
+					<div id="selSendCode"
+						<c:if test="${sale.itemMode eq 0 }">style="display: none;"</c:if>>
+						
+						<div class="field">
+						<div class="label label-radio">
+							<label>发码方式:</label>
+						</div>
+						<div class="radios">
+							<div class="radio">
+								<c:if test="${sale.sendCodeMode eq 0 }">不发码</c:if>
+								<c:if test="${sale.sendCodeMode eq 1 }">按照订单发码</c:if>
+								<c:if test="${sale.sendCodeMode eq 2 }">按照商品个数发码</c:if>
+							</div>
+						</div>
+					</div>
+					
+						<div class="field">
+							<div class="label label-radio">
+								<label>发码类型设置:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<c:if test="${sale.verifyCodeType eq 1 }">一维码</c:if>
+									<c:if test="${sale.verifyCodeType eq 2 }">二维码</c:if>
+								</div>
+							</div>
+						</div>
+						
+						<div class="field">
+							<div class="label label-radio">
+								<label>发码方设置:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<c:if test="${sale.sendCodeChannel eq 0 }">平台自己</c:if>
+									<c:if test="${sale.sendCodeChannel eq 1 }">方正码平台</c:if>
+									<c:if test="${sale.sendCodeChannel eq 2 }">第三方应用</c:if>
+								</div>
+							</div>
+						</div>
+						<!-- 选择第三方应用此div显示begin -->
+						<div class="field" id="sendCodeSrcId"
+							<c:if test="${sale.sendCodeChannel ne 2 }">style="display: none;"</c:if>>
+							<div class="label">
+								<label for="select">选择制码渠道:</label>
+							</div>
+							<div class="select">
+								<c:if test="${sale.sendCodeSrc eq 10 }">85度C</c:if>
+								<c:if test="${sale.sendCodeSrc eq 11 }">鲜芋仙 </c:if>
+							</div>
+						</div>
+						<!-- 选择第三方应用此div显示 end-->
+						<div class="field">
+							<div class="label">
+								<label for="verifyStartTime" <c:if test="${ empty sale.verifyDay }"> class="req" </c:if> >验证开始时间:</label>
+							</div>
+							<div class="input">
+								<ct:time source="${sale.verifyStartTime}" />&nbsp;
+							</div>
+						</div>
+						<div class="field">
+							<div class="label">
+								<label for="verifyStopTime" <c:if test="${ empty sale.verifyDay }"> class="req" </c:if> >验证结束时间:</label>
+							</div>
+							<div class="input">
+								<ct:time source="${sale.verifyStopTime}" />&nbsp;
+							</div>
+						</div>
+						<div class="field">
+							<div class="label">
+								<label for="verifyDay" <c:if test="${ empty sale.verifyStopTime }"> class="req" </c:if> >验证天数:</label>
+							</div>
+							<div class="input">${sale.verifyDay}&nbsp;</div>
+						</div>
+						<div class="field">
+							<div class="label">
+								<label for="verifyShopName"  class="req"  >验证门店:</label>
+							</div>
+							<div class="input">${sale.verifyShopName}&nbsp;</div>
+						</div>
+
+					</div>
+					<!-- 需要发码此div显示end -->
+
+					<!-- 不需要发码此div显示 begin -->
+					<div id="selLogistics"
+						<c:if test="${sale.itemMode eq 1}">style="display: none;"</c:if>>
+
+						<!-- 不发码显示是否需要物流 -->
+						<div class="field">
+							<div class="label label-radio">
+								<label>是否需要物流:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<c:if test="${sale.postFlag eq 0}"> 不需要物流配送</c:if>
+									<c:if test="${sale.postFlag eq 1}"> 需要物流配送 </c:if>
+								</div>
+							</div>
+						</div>
+
+						<!-- 需要物流配送此div显示 begin-->
+						<div id="isPost"
+							<c:if test="${sale.postFlag eq 0}">style="display: none;"</c:if>>
+<!-- 							<div class="field"> -->
+<!-- 								<div class="label"> -->
+<!-- 									<label for="postArea" class="req">配送区域选择:</label> -->
+<!-- 								</div> -->
+<!-- 								<div class="input">${sale.postArea}&nbsp;</div> -->
+<!-- 							</div> -->
+							<div class="field">
+								<div class="label">
+									<label for="logisticsFee" class="req">物流运费:</label>
+								</div>
+								<div class="input">
+									<c:if test="${sale.logisticsFee eq 0}">包邮</c:if>
+									<c:if test="${sale.logisticsFee != 0}">${sale.logisticsFee}</c:if>
+									<c:if test="${sale.logisticsFeeType==0 }">&nbsp;&nbsp;&nbsp;√不累计</c:if>
+									<c:if test="${sale.logisticsFeeType==1 }">&nbsp;&nbsp;&nbsp;√累计</c:if>
+								</div>
+
+							</div>
+
+
+						</div>
+						<!-- 需要物流配送此div显示 end -->
+					</div>
+					<!-- 不需要发码此div显示  end-->
+
+
+
+					<div class="field">
+						<div class="label">
+							<label for="saleStartTime" class="req">销售开始时间:</label>
+						</div>
+						<div class="input">
+							<ct:time source="${sale.saleStartTime}" />&nbsp;
+						</div>
+					</div>
+					<div class="field">
+						<div class="label">
+							<label for="saleStopTime" class="req">销售结束时间:</label>
+						</div>
+						<div class="input">
+							<ct:time source="${sale.saleStopTime}" />&nbsp;
+						</div>
+					</div>
+
+
+
+					<div class="field">
+						<div class="label">
+							<label for="saleAreaName" class="req">显示区域:</label>
+						</div>
+						<div class="input">${sale.saleAreaName}&nbsp;</div>
+					</div>
+
+
+
+
+					<div class="field"
+					<c:if test="${sale.itemMode eq 0}">style="display: none;"</c:if>>
+						<div class="label">
+							<label for="saleShopName">销售门店:</label>
+						</div>
+						<div class="input">${sale.saleShopName}&nbsp;</div>
+					</div>
+
+
+					<div class="field">
+						<div class="label label-checkbox">
+							<label>购买用户限制:</label>
+						</div>
+						<div class="checkboxes">
+							<div class="checkbox">
+								<c:if test="${fn:contains(sale.buyLimit,'0')}">会员级别限制</c:if>
+								&nbsp;&nbsp;&nbsp;
+								<c:if test="${fn:contains(sale.buyLimit,'1')}">购买用户地市限制</c:if>
+								&nbsp;&nbsp;&nbsp;
+								<c:if test="${fn:contains(sale.buyLimit,'2')}">单个用户购买数量</c:if>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="field" id="userLimit">
+						<div class="label label-checkbox">
+							<label>会员级别限制:</label>
+						</div>
+						<div class="checkboxes">
+							<div class="checkbox">
+							<c:forEach items="${pricetypeList }" var="item">
+								<c:if test="${fn:contains(sale.userLimitCode,item.priceTypeCode)}"> ${item.priceType } </c:if>
+							</c:forEach>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="field" id="areaLimit"
+						<c:if test="${!fn:contains(sale.buyLimit,'1')}"> style="display: none;" </c:if>>
+						<div class="label">
+							<label for="areaLimitName" class="req">购买用户地市限制:</label>
+						</div>
+						<div class="input">${sale.areaLimitName}&nbsp;</div>
+					</div>
+
+					<div class="field" id="numLimit"
+						<c:if test="${!fn:contains(sale.buyLimit,'2')}"> </c:if>>
+						<div class="label">
+							<label for="userPerBuyNum" class="req">单个用户购买数量:</label>
+						</div>
+						<div class="input">${sale.userPerBuyNum }&nbsp;</div>
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="stockNum" class="req">商品库存:</label>
+						</div>
+						<div class="input">
+							<c:choose>
+								<c:when test="${storeNum eq initStoreNum}">不限</c:when>
+								<c:otherwise>${sale.stockNum}</c:otherwise>
+							</c:choose>&nbsp;
+						</div>
+					</div>
+					<div class="field">
+						<div class="label">
+							<label for="marketPrice" class="req">市场价:</label>
+						</div>
+						<div class="input">${sale.marketPrice} &nbsp;</div>
+					</div>
+
+					<div class="field">
+						<div class="label">
+							<label for="marketPrice" class="req">商城价:</label>
+						</div>
+						<div class="input">${sale.shopPrice} &nbsp;</div>
+					</div>
+					<div class="field">
+						<div class="label">
+							<label for="settlePrice" class="req">结算价:</label>
+						</div>
+						<div class="input">${sale.settlePrice} &nbsp;</div>
+					</div>
+					<div class="field" <c:if test="${empty priceList}">style="display:none"</c:if>>
+						<div class="label">
+							<label for="payPrice" class="req">支付价格配置:</label>
+						</div>
+						<div class="input" id="priceId" >
+							<table border="0" style="width:100px"  id="TbData" name="TbData" cellpadding="0" cellspacing="0">
+								<c:forEach items="${priceList}" var="item">
+									<tr>
+										<td nowrap="nowrap" width="80">
+										    <c:choose>
+											   <c:when test="${empty  item.priceType }">
+										         ${map[item.priceTypeCode] }:
+										       </c:when>
+												<c:otherwise>
+												          ${item.priceType }价:
+											    </c:otherwise>
+										    </c:choose>
+										</td>
+										<td nowrap="nowrap" width="80">${item.price }元</td>
+									</tr>
+								</c:forEach>
+
+							</table>
+							&nbsp;
+						</div>
+					</div>
+
+					<div class="field">
+						<div class="label label-radio">
+							<label>选择费率:</label>
+						</div>
+
+						<div class="select">
+							<c:forEach items="${feeList }" var="item">
+								<c:if test="${item.id==sale.feeType }">${item.name }</c:if>
+							</c:forEach>&nbsp;
+						</div>
+					</div>
+					<c:if test="${!empty auditStepList}">
+					 <div class="field">
+							<div class="label">
+								<label for="remarkL" >审核意见:</label>
+							</div>
+							<div class="input">
+								<c:forEach items="${auditStepList}" var="item">
+			                         <label >${item.remarkL}</label></br>
+                       			</c:forEach>
+							</div>
+					</div>
+                	</c:if>
+                 <div class="field">
+							<div class="label">
+								<label for=statusName >审核状态:</label>
+							</div>
+							<div class="input">
+								${sale.statusName }&nbsp;
+							</div>
+				</div>
+				
+				
+			
+				
+				
+				
+				
+							
+					
+				
+					<div class="buttons">
+						
+						<input type="button" class="common_btn" onclick="history.back();" value="返回" />
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- end forms -->
+	</div>
+</body>
+</html>

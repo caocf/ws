@@ -1,0 +1,63 @@
+package com.cplatform.mall.back.comment.web;
+
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.comment.entity.ShopComment;
+import com.cplatform.mall.back.comment.service.ShopCommentService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * 门店审核管理类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-4 上午11:01:54
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping("/comment/shop")
+public class ShopCommentController {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private ShopCommentService shopCommentService;
+
+	@RequestMapping(value = "list")
+	public String findList(@ModelAttribute("shopComment") ShopComment shopComment,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+
+		shopComment.setShopClass(1L);
+		Page<ShopComment> pageData = shopCommentService.findShopComment(shopComment, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		return "/comment/shop-comment-list";
+
+	}
+
+	@RequestMapping(value = "audit")
+	@ResponseBody
+	public Object audit(@RequestParam(value = "id") Long id, @RequestParam(value = "status") Long status, Model model) {
+		ShopComment shopComment = this.shopCommentService.findShopCommentById(id);
+		shopComment.setStatus(status);
+		this.shopCommentService.addOrUpdateShopComment(shopComment);
+		return JsonRespWrapper.success("操作成功", "/comment/shop/list");
+
+	}
+}

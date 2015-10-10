@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="/css/base.css" rel="stylesheet" type="text/css" />
+<link href="/css/layout.css" rel="stylesheet" type="text/css" />
+<link href="/css/product.css" rel="stylesheet" type="text/css" />
+<link href="/css/sidebar.css" rel="stylesheet" type="text/css" />
+<link href="/css/pro.css" rel="stylesheet" type="text/css" />
+
+
+<script>
+ var itemId = '200072';
+ var itemName ='\u7535\u6C34\'\u58F6';
+ var webRoot = '/';
+ var storeId = '123';
+</script>
+<script type="text/javascript" src="/js/jquery.min.js"></script>
+<script type="text/javascript" src="/js/jquery.jqzoom.js"></script>
+<link rel="stylesheet" type="text/css" href="/css/zoom.css" />
+<script type="text/javascript" src="/js/jquery.cookie.js"></script>
+<script type="text/javascript" src="/js/product.js"></script>
+<script type="text/javascript" src="/js/global.js"></script>
+<script type="text/javascript" src="/js/ad.js"></script>
+
+<title>电水'壶--移动商城</title>
+</head>
+<body id="product">
+<script type="text/javascript" src="/js/head.js"></script>
+<div class="wrapper mauto" >
+<div class="alert_windows">
+	<a href="javascript:void(0);" onclick="$('.alert_windows').hide();" class="close"></a>
+	<div class="content">
+    	<p id="favoritetips">收藏成功！</p>
+        <a class="btn" onclick="$('.alert_windows').hide();">确定</a> 
+    </div>
+</div>
+<div class="breadcrumb"></div>
+<div id="product_container" class="w bt10">
+	<div id="product_img">
+        <div clstag="shangpin|keycount|product|spec-n1" class="jqzoom" id="spec-n1"> <img width="320" height="320" jqimg="//img/item/1234N0/001.jpg" alt="电水'壶" src="//img/item/1234N1/001.jpg" data-img="1"/> </div>
+        <div clstag="shangpin|keycount|product|spec-n5" id="spec-list"> <a id="spec-forward" class="spec-control disabled" href="javascript:void(0);"></a> <a id="spec-backward" class="spec-control disabled" href="javascript:;"></a>
+            <div class="spec-items" style="position: absolute; height: 54px; overflow: hidden;">
+                <ul class="lh" style="position: absolute; left: 0px; top: 0px; width: 280px;">
+				<li><img src="//img/item/1234N5/001.jpg" alt="电水'壶" class="img-hover" data-img="1"></li>
+				<li><img src="//img/item/1234N5/002.jpg" alt="电水'壶" class="" data-img="1"></li>
+				<li><img src="//img/item/1234N5/003.jpg" alt="电水'壶" class="" data-img="1"></li>
+				<li><img src="//img/item/1234N5/004.jpg" alt="电水'壶" class="" data-img="1"></li>
+				<li><img src="//img/item/1234N5/005.jpg" alt="电水'壶" class="" data-img="1"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="product_info">
+        <div id="name">
+            <h1>电水'壶</h1>
+            <strong id="marketContent"></strong> </div>
+        <ul id="summary">
+            <li id="summary-market">
+                <div class="dt">商品编号：</div>
+                <div class="dd"><span>200072</span></div>
+            </li>
+            <div id="memPrice"></div>
+        	<li style="display list-item;">
+                <div class="dt">物流运费：</div>
+                <div class="dd" id="feeNum"></div>
+            </li>        
+            <li id="summary-grade">
+                <div class="dt">支付方式：</div>
+                <div class="dd">
+                    <p class="pay_mth"><span>商城币</span><span>支付宝</span> <span>农行网银</span> <span>手机支付</span><a href='http://mall.12580life.com:8080/ExPlatWeb/' target='_blank'>积分/M值兑换</a> </p>
+                </div>
+            </li>
+            <li class="hide" id="summary-tips">
+                <div class="dt">温馨提示：</div>
+                <div class="dd red">本商品支持现金和商城币同时支付,其中商城币仅限苏州市移动手机用户。 </div>
+            </li>
+            <li class="hide" id="summary-gifts">
+                <div class="dt">购买数量：</div>
+                <div class="dd">
+                    <div class="wrap-input"> <a onclick="downNum()" href="javascript:void(0);" class="btn-reduce">减少数量</a> <a onclick="upNum()" href="javascript:;" class="btn-add">增加数量</a>
+                        <input onkeyup="value=value.replace(/[^\d]/g,&#39;&#39;)" onbeforepaste="clipboardData.setData(&#39;text&#39;,clipboardData.getData(&#39;text&#39;).replace(/[^\d]/g,&#39;&#39;))" onblur="numcheck()" value="1" id="buy-num" class="text"/>
+                        
+                    </div><span class="count" id="stocknum"></span>
+                    <div id="kucunTips"></div>
+                </div>
+            </li>
+            <li id="choose-btns">
+              </li>
+            <span class="clr"></span>
+        </ul>
+        <span class="clr"></span> </div>
+    <div id="product_main" class="fr  w750">
+    	<div id="rr"></div>
+        <div class="product_detail">
+            <div class="product_tab" id="tab_detail">
+                <div class="product_tab_nav" id="product_menu">
+                    <ul class="tab">
+                        <li class="curr"><a href="#info1">商品介绍</a></li>
+                        <li class=""><a href="#info2">规格参数</a></li>
+                        <li class=""><a href="#info4" onclick="getPurchaseRecords(1);">成交记录</a></li>
+                        <li class="" id="comment"><a href="#info5" onclick="getItemComments(1)">用户评价</a></li>
+                        <li class=""><a href="#info6" onclick="getConsults(1)">用户咨询</a></li>
+                    </ul>
+                </div>
+                <div class="product_tab_wrap">
+                    <div class="product_tab_cont" style="display:block;" id="info1">
+					<div class='i_new_infoCont' id='imgShow' style='display: block;'><p><img border='0' src='http://183.213.31.6/userfiles/product/img/20130430/editor/1367315626635.jpg'></p><p><img border='0' src='http://183.213.31.6/userfiles/product/img/20130430/editor/1367315636939.jpg'></p><p><img border='0' src='http://183.213.31.6/userfiles/product/img/20130430/editor/1367315649877.jpg'></p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p></div>
+				    </div>
+                    <div class="product_tab_cont" id="info2">
+                    	<table width="100%">
+                    		<tbody>
+					    		<tr>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">商品品牌：</span></td>
+					    	<td width="296">诺基亚</td>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">商品型号：</span></td>
+					    	<td width="296">--</td>
+					    			</tr>
+					    		<tr>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">外观：</span></td>
+					    	<td width="296">直板</td>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">外观1：</span></td>
+					    	<td width="296">直板</td>
+					    			</tr>
+					    		<tr>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">外观2：</span></td>
+					    	<td width="296">直板</td>
+					    	<td width="120" align="center"><span style="color:#AAAAAA;">商品型号1：</span></td>
+					    	<td width="296">--</td>
+					  
+					    	</tr>
+					    
+					    
+					    	</tbody>
+					    </table>
+                    </div>
+                    <div class="product_tab_cont" id="info4"> </div>
+                    <div class="product_tab_cont" id="info5"> </div>
+                        <div class="product_tab_cont" id="info6">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="sidebar" class="w240 fl">
+        <div id="sidebar_shop" class="mb10">
+            <div class="related-title">
+                <h3>我的小店</h3>
+            </div>
+            <div class="related-content">
+                <a href="http://mall.12580life.com/store/web/index.jsp?storeId=szlz"><img src="/img/dp.jpg" /></a>
+            </div>
+        </div>
+        <div id="sidebar_history" class="mb10">
+            <div class="related-title">
+                <h3>浏览过的历史记录</h3>
+            </div>
+            <div class="related-content">
+                <ul class="" id="related_his">
+                </ul>                       
+            </div>
+        </div>
+        <div id="pro">
+          
+        </div>
+    </div>
+    <span class="clr"></span>
+    </div>
+	<div id="alert" style="display: none;">
+		<div class="alert_wrapper">
+       	   <div class="alert_title"><span onclick="$('#alert').hide()"></span>商品已添加到购物车</div>
+           <div class="alert_conter">
+           	    <!--<p class="alert_p1">购物车共<i id="productCountsAndTotoalIdx">1</i>种商品 <span id="saler">合计:<em>￥340.00</em></span></p>-->
+                <div class="alert_btn clearfix">
+                <a href="/cart/show.chtml" id="product_btn_cart" target="_blank"></a>
+                 <a onclick="$('#alert').hide();" href="javascript:void(0);"></a>
+                 </div>
+           </div>
+    	</div>
+	</div>
+	
+	<div id="alert_mobile" style="display: none;" >
+			<div class="alert_wrapper">
+              	   <div class="alert_title">
+              	   <span onclick="$('#alert_mobile').hide()"></span>
+              	   	手机验证：请添加江苏移动手机号</div>
+                  <div class="alert_conter">
+                  	    <p class="alert_p1">手机号码：
+                  	    	<input type="text" class="text" id="bind_mobile" maxlength="11"  
+                  	    		onkeyup="this.value=this.value.replace(/\D/g,'')" 
+                  	    		onafterpaste="this.value=this.value.replace(/\D/g,'')" />
+                  	    </p>
+                       <p class="alert_p1">验证码：
+                         <input type="text" class="text" id="bind_code" maxlength="6" 
+                         		onkeyup="this.value=this.value.replace(/\D/g,'')" 
+                  	    		onafterpaste="this.value=this.value.replace(/\D/g,'')" /> 
+                       	 <input id="bind_mobile_btn" class="btn" type="button" value="发送验证码" 
+                       	 		onclick="sendBindSmsCode();" />
+                       </p>
+                       <div class="alert_btn clearfix">
+                       		<input type="button" id="product_btn_sumbit" onclick="verifyBindCode();" />
+                       </div>
+                  </div>
+    		</div>
+	</div>
+	
+</div>
+<script type="text/javascript" src="/js/foot.js"></script>
+<script>
+var src = "<script type='text/javascript' src='/ad/getAd.chtml?code=global&disfunction=displayAd240X320Pro&appendElement=pro&position=item&region_code="+getAreaCode()+"'><\/script>";
+document.write(src);
+
+</script>
+
+
+</body>
+</html>

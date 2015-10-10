@@ -1,0 +1,290 @@
+package com.cplatform.mall.back.smsact.web;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.smsact.entity.SmsActOnline;
+import com.cplatform.mall.back.smsact.entity.SmsActRouter;
+import com.cplatform.mall.back.smsact.service.SecondaryDevelopmentService;
+import com.cplatform.mall.back.sys.entity.SysSpcode;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * 二次开发短信业务配置管理控制器. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:59:26
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/smsact/seconddevelop")
+public class SmsActOnlineController {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private SecondaryDevelopmentService secondaryDevelopmentService;
+
+	/**
+	 * 二次开发短信业务配置查询
+	 * @param online    查询条件
+	 * @param page    当前页
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/online_query")
+	public String list(SmsActOnline online, 
+					   @RequestParam(value = "page", required = false, defaultValue = "1") int page, 
+					   Model model) throws SQLException {
+		Page<SmsActOnline> onlinePage = secondaryDevelopmentService.findSmsActOnline(online, page);
+		model.addAttribute("onlinePage", onlinePage);
+		model.addAttribute("statusMap", SmsActOnline.getStatusMap());
+		return "smsact/secondarydevelopment/online_list";
+	}
+
+	/**
+	 * 跳转配置短信业务
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/online_add", method = RequestMethod.GET)
+	public String add(Model model) {
+		SmsActOnline online = new SmsActOnline();
+		model.addAttribute("method", "add");
+		model.addAttribute("online", online);
+		return "smsact/secondarydevelopment/online_add";
+	}
+	/**
+	 * 配置短信业务
+	 * @param online    短信业务实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/online_add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPost(@ModelAttribute("online") SmsActOnline online, 
+							 HttpServletRequest request, 
+							 BindingResult result) {
+		online.setStartTime(online.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		online.setEndTime(online.getEndTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		online.setStatus(SmsActOnline.STATUS_0);
+		try {
+			// 执行业务逻辑
+			secondaryDevelopmentService.saveOnline(online);
+
+			// 提示并跳转
+			return JsonRespWrapper.success("配置成功", "/smsact/seconddevelop/online_query");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 跳转短信业务编辑
+	 * @param id    待编辑短信业务ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/online_edit", method = RequestMethod.GET)
+	public String edit(@RequestParam(required = false) Long id, Model model) {
+		SmsActOnline online = secondaryDevelopmentService.findOneOnline(id);
+		model.addAttribute("method", "edit");
+		model.addAttribute("online", online);
+		List<SysSpcode> sysSpcodeList = secondaryDevelopmentService.findByValid();
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		List<SmsActRouter> routerList = secondaryDevelopmentService.findRouterByOnline(id);
+		model.addAttribute("routerList", routerList);
+		model.addAttribute("payTypeMap", SmsActRouter.getPayTypeMap());
+		return "smsact/secondarydevelopment/online_add";
+	}
+
+	/**
+	 * 短信业务编辑
+	 * @param sysPos    短信业务实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/online_edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePost(@ModelAttribute("online") SmsActOnline online, 
+							 HttpServletRequest request, 
+							 BindingResult result) {
+		online.setStartTime(online.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		online.setEndTime(online.getEndTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		online.setStatus(SmsActOnline.STATUS_0);
+		try {
+			// 执行业务逻辑
+			secondaryDevelopmentService.saveOnline(online);
+
+			// 提示并跳转
+			return JsonRespWrapper.success("修改成功", "/smsact/seconddevelop/online_query");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 查看短信业务
+	 * @param id    短信业务ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/online_view")
+	public String view(@RequestParam(required = false) Long id, Model model) {
+		SmsActOnline online = secondaryDevelopmentService.findOneOnline(id);
+		model.addAttribute("online", online);
+		List<SmsActRouter> routerList = secondaryDevelopmentService.findRouterByOnline(id);
+		model.addAttribute("routerList", routerList);
+		return "smsact/secondarydevelopment/online_view";
+	}
+	
+	/**
+	 * 操作
+	 * @param id    短信业务ID
+	 * @param status    目标状态
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/operate/{status}/{id}/{whereAbout}")
+	@ResponseBody
+	public Object operate(@PathVariable Long id, 
+						@PathVariable Long status,
+						@PathVariable String whereAbout,
+						Model model) {
+//		String url = null;
+//		if("view".equals(whereAbout)){
+//			url = "/smsact/seconddevelop/online_view?id=" + id;
+//		}else {
+//			url = "/smsact/seconddevelop/online_query";
+//		}
+		try {
+			SmsActOnline online = secondaryDevelopmentService.findOneOnline(id);
+			if (1 == status) {//审核
+				online.setStatus(SmsActOnline.STATUS_1);
+				online = secondaryDevelopmentService.saveOnline(online);
+				logUtils.logAudit("短信业务审核成功", "ACT_ID:" + online.getActId().toString() + ",状态 STATUS：" + online.getStatusName());	
+				return JsonRespWrapper.successReload("审核成功");
+			} else if (2 == status) {//发布
+				//查看是否添加指令，没有则返回提示添加
+				List<SmsActRouter> routerList = secondaryDevelopmentService.findRouterByOnline(id);
+				if (routerList.size() < 1) {
+					return JsonRespWrapper.successAlert("发布失败，请设置指令！");
+				}
+				online.setStatus(SmsActOnline.STATUS_2);
+				online = secondaryDevelopmentService.saveOnline(online);
+				logUtils.logAudit("短信业务发布成功", "ACT_ID:" + online.getActId().toString() + ",状态 STATUS：" + online.getStatusName());	
+				return JsonRespWrapper.successReload("发布成功");
+			} else if (3 == status) {//暂停
+				online.setStatus(SmsActOnline.STATUS_3);
+				online = secondaryDevelopmentService.saveOnline(online);
+				logUtils.logAudit("短信业务暂停成功", "ACT_ID:" + online.getActId().toString() + ",状态 STATUS：" + online.getStatusName());	
+				return JsonRespWrapper.successReload("暂停成功");
+			} else if (0 == status) {//恢复
+				online.setStatus(SmsActOnline.STATUS_0);
+				online = secondaryDevelopmentService.saveOnline(online);
+				logUtils.logAudit("短信业务恢复成功", "ACT_ID:" + online.getActId().toString() + ",状态 STATUS：" + online.getStatusName());	
+				return JsonRespWrapper.successReload("恢复成功");
+			} else if (4 == status) {//下线
+				online.setStatus(SmsActOnline.STATUS_4);
+				online = secondaryDevelopmentService.saveOnline(online);
+				logUtils.logAudit("短信业务下线成功", "ACT_ID:" + online.getActId().toString() + ",状态 STATUS：" + online.getStatusName());	
+				return JsonRespWrapper.successReload("下线成功");
+			} else {
+				return null;
+			}
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 增加短信业务指令
+	 * @param router    短信业务指令实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/addRouter")
+	@ResponseBody
+	public Object addRouter(@ModelAttribute("router") SmsActRouter router, 
+							 HttpServletRequest request, 
+							 BindingResult result) {
+		
+		if(!router.getrSpCode().isEmpty() && !router.getcSpCode().isEmpty()){
+			router.setSpCode(router.getrSpCode() + router.getcSpCode());		
+		}
+		router.setCmdOptType(1L);
+		router.setIsSession(0L);
+		//校验指令唯一
+		List<SmsActRouter> routerList = secondaryDevelopmentService.findByCommandAndSpCode(router.getCommand(), router.getSpCode());
+		if(routerList.size() > 0){
+			JSONObject json = new JSONObject();
+			json.put("msg", "指令已存在，请重新设定!");
+			return json;
+		}
+		try {
+			// 执行业务逻辑
+			SmsActRouter smsActRouter = secondaryDevelopmentService.saveRouter(router);
+
+			return smsActRouter;
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 删除指令
+	 * @param id
+	 * @param actId
+	 * @return
+	 */
+	@RequestMapping(value = "router_delete/{id}")
+	@ResponseBody
+	public Object deleteRouter(@PathVariable Long id) {
+		SmsActRouter router = secondaryDevelopmentService.findOneRouter(id);
+		SmsActOnline online = secondaryDevelopmentService.findOneOnline(router.getActId());
+		if("2".equals(online.getStatus())) {
+			return JsonRespWrapper.successAlert("该指令所属业务已经商用，不能被删除！");
+		}
+		secondaryDevelopmentService.deleteRouter(id);
+		return true;
+	}
+}

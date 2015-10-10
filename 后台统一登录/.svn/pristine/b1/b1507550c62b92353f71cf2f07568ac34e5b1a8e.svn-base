@@ -1,0 +1,10 @@
+# \u7701\u8BA4\u8BC1\u90E8\u5206\u914D\u7F6E
+#
+# \u7528\u6237\u4FE1\u606F\u83B7\u53D6\u63A5\u53E3
+jssso.valid.url = http://www.js.10086.cn/jssso/valid
+
+# channel \u5E10\u53F7
+jssso.channel.code = 00600
+jssso.channel.pwd = sm7777@#$
+
+memcached.servers = 127.0.0.1:11211

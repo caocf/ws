@@ -1,0 +1,14 @@
+.ts460{filter:alpha(opacity=40); -moz-opacity:0.4; text-align:left;}
+.ts3{height:25px; background:#fff url(../../images/grgl_4.jpg) bottom repeat-x; border-bottom:1px solid #565656; font-weight:bold;}
+.ts31{float:left; font-size:13px; color:#fff; padding:3px 8px;font-family:'lucida grande',tahoma,helvetica,arial,'bitstream vera sans',sans-serif;}
+.ts32{float:right; padding:2px 3px;}
+
+.ts4{padding:10px 15px;}
+.ts45{border-top:1px solid #D8DFEA; border-bottom:1px solid #D8DFEA; padding:10px 0 5px 0; margin:10px 0;}
+
+
+.c{clear:both;}
+
+#dialogClose a{color:##666666;font-size:12px;text-decoration:none;}
+#dialogClose a:hover{color:##666666;font-size:12px;text-decoration:none;}
+#dialogClose a:link{color:##666666;font-size:12px;text-decoration:none;}

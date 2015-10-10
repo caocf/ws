@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_verify_cplatform_code ON "LIFE".t_verify_cplatform_code(order_id);

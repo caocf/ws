@@ -1,0 +1,130 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+<head>
+<ht:head />
+<script type="text/javascript">
+	$().ready(function() {
+
+		$("#radio").click(function() {
+			$("#cellphoneNumber").val("${terminalId}");
+		});
+
+	});
+</script>
+</head>
+<body>
+
+	<div id="content">
+		<!-- forms -->
+		<div class="box">
+			<!-- box / title -->
+			<div class="title">
+				<h5>
+					<c:if test="${empty info.address}"> 添加短信购地址</c:if>
+					<c:if test="${!empty info.address}"> 修改短信购地址</c:if>
+				</h5>
+			</div>
+
+			<div class="form">
+				<div class="fields">
+					<div class="field">
+						<div class="label">
+							<label for="shopId">手机号码：</label>
+						</div>
+						<div class="input">${terminalId}&nbsp;</div>
+					</div>
+					<div class="field" id="itemIdsDiv">
+						<div class="label">
+							<label for="itemIds">下单时间:</label>
+						</div>
+						<div class="input">
+							<ct:time source="${createTime}" />
+							&nbsp;
+						</div>
+					</div>
+					<div class="field" id="itemIdsDiv">
+						<div class="label">
+							<label for="itemIds">短信内容共:</label>
+						</div>
+						<div class="input">${totalCount}条</div>
+					</div>
+
+					<c:forEach items="${addresses}" var="item" varStatus="status">
+
+						<div class="field" id="itemIdsDiv">
+							<div class="label">
+								<label for="itemIds">短信显示内容${status.index+1}:</label>
+							</div>
+							<div class="input">
+								${item.address}
+<%-- 								&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${item.terminalId}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;上传时间 --%>
+<%-- 								<ct:time source="${item.updateTime}" /> --%>
+							</div>
+						</div>
+					</c:forEach>
+					<br />
+					<br /> <span style="color: red;">温馨提示：请根据用户发送的短信内容，进行内容提取，并添加到以下列表</span>
+					<br />
+					<br />
+					<form:form action="${ctx}/order/smsbuy/add?orderId=${ orderId}&terminalId=${terminalId}"
+						method="post" id="fm" commandName="express" htmlEscape="true"
+						acceptCharset="utf-8" cssClass="required-validate">
+						<input type="hidden" name="groupFlag" value="1" />
+						<div class="form">
+							<div class="fields">
+								<div class="field">
+									<div class="label">
+										<label for="address" class="req">收货地址:</label>
+									</div>
+									<div class="input">
+										<input name="address" class=" required " maxlength="125"
+											style="width: 500px" value="${info.address }" /> <span
+											class="error" id="advice-required-address"
+											style="display: none"></span>
+									</div>
+								</div>
+								<div class="field">
+									<div class="label">
+										<label for="receiverName" class="req">收货人:</label>
+									</div>
+									<div class="input">
+										<input name="receiverName" class="  required " maxlength="125"
+											value="${info.receiverName}" /> <span class="error"
+											id="advice-required-receiverName" style="display: none"></span>
+									</div>
+								</div>
+								<div class="field">
+									<div class="label">
+										<label for="cellphoneNumber" class="req">手机号码:</label>
+									</div>
+									<div class="input">
+										<input id="cellphoneNumber" name="cellphoneNumber"
+											class=" required validate-mobile-phone"
+											value="${info.cellphoneNumber}" />&nbsp; <input type="radio"
+											id="radio" /> <label>本人</label> <span class="error"
+											id="advice-required-cellphoneNumber" style="display: none"></span>
+									</div>
+								</div>
+								<div class="buttons">
+								<input type="hidden" name="status" value="${info.status }">
+									<div class="highlight">
+										<input type="submit" name="submit.highlight" value="提交" />
+									</div>
+									<input type="reset" name="reset" value="重置" /> <input
+										type="button" class="common_btn" onclick="history.back();"
+										value="返回" />
+								</div>
+							</div>
+						</div>
+
+					</form:form>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</body>
+</html>

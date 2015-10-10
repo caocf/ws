@@ -1,0 +1,264 @@
+package com.cplatform.mall.back.websys.entity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.codehaus.jackson.annotate.JsonProperty;
+
+@Entity
+@Table(name = "T_CHANNEL_CATALOG_RCMD_CONF")
+public class ChannelCatalogRcmdConfig {
+
+	private Long id;
+
+	private Integer groupId;
+
+	private Integer orderIndex;
+
+	private Integer channel;
+
+	private String groupName;
+
+	private String channelName;
+
+	private String displayName;
+
+	private String linkUrl;
+
+	private Integer type;
+
+	private String imagePath;
+
+	private String regionCode;
+
+	private String regionName;
+
+	public static Map<Integer, String> groupMap = null;
+	static {
+		groupMap = new HashMap<Integer, String>();
+		groupMap.put(0, "顶楼");
+		groupMap.put(1, "1楼");
+		groupMap.put(2, "2楼");
+		groupMap.put(3, "3楼");
+		groupMap.put(4, "4楼");
+		groupMap.put(5, "5楼");
+	}
+
+	public static Map<Integer, String> channelMap = null;
+	static {
+		channelMap = new HashMap<Integer, String>();
+		channelMap.put(1, "商城");
+	}
+
+	public static Map<Integer, String> typeMap = null;
+	static {
+		typeMap = new HashMap<Integer, String>();
+		typeMap.put(1, "文本");
+		typeMap.put(2, "图片");
+	}
+
+	@Transient
+	public String getTypeName() {
+		return typeMap.get(this.getType());
+	}
+
+	/**
+	 * 获取 channelName
+	 * 
+	 * @return channelName
+	 */
+	@Transient
+	public String getChannelName() {
+		return channelMap.get(channel);
+	}
+
+	/**
+	 * 设置 channelName
+	 * 
+	 * @param channelName
+	 */
+	public void setChannelName(String channelName) {
+		this.channelName = channelName;
+	}
+
+	/**
+	 * 获取 groupName
+	 * 
+	 * @return groupName
+	 */
+	@Transient
+	public String getGroupName() {
+		return groupMap.get(groupId);
+	}
+
+	/**
+	 * 设置 groupName
+	 * 
+	 * @param groupName
+	 */
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
+
+	/**
+	 * 获取 id
+	 * 
+	 * @return id
+	 */
+	@SequenceGenerator(name = "seq_channelCatalogRcmd", sequenceName = "SEQ_CHANNEL_CATALOG_RCMD_CONF")
+	@Id
+	@GeneratedValue(generator = "seq_channelCatalogRcmd")
+	@JsonProperty
+	public Long getId() {
+		return id;
+	}
+
+	/**
+	 * 设置 id
+	 * 
+	 * @param id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	/**
+	 * 获取 groupId
+	 * 
+	 * @return groupId
+	 */
+	@Column(name = "group_id")
+	public Integer getGroupId() {
+		return groupId;
+	}
+
+	/**
+	 * 设置 groupId
+	 * 
+	 * @param groupId
+	 */
+	public void setGroupId(Integer groupId) {
+		this.groupId = groupId;
+	}
+
+	/**
+	 * 获取 orderIndex
+	 * 
+	 * @return orderIndex
+	 */
+	@Column(name = "order_index")
+	public Integer getOrderIndex() {
+		return orderIndex;
+	}
+
+	/**
+	 * 设置 orderIndex
+	 * 
+	 * @param orderIndex
+	 */
+	public void setOrderIndex(Integer orderIndex) {
+		this.orderIndex = orderIndex;
+	}
+
+	/**
+	 * 获取 channel
+	 * 
+	 * @return channel
+	 */
+	@Column(name = "channel")
+	public Integer getChannel() {
+		return channel;
+	}
+
+	/**
+	 * 设置 channel
+	 * 
+	 * @param channel
+	 */
+	public void setChannel(Integer channel) {
+		this.channel = channel;
+	}
+
+	/**
+	 * 获取 displayName
+	 * 
+	 * @return displayName
+	 */
+	@Column(name = "display_name")
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	/**
+	 * 设置 displayName
+	 * 
+	 * @param displayName
+	 */
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	/**
+	 * 获取 linkUrl
+	 * 
+	 * @return linkUrl
+	 */
+	@Column(name = "link_url")
+	public String getLinkUrl() {
+		return linkUrl;
+	}
+
+	/**
+	 * 设置 linkUrl
+	 * 
+	 * @param linkUrl
+	 */
+	public void setLinkUrl(String linkUrl) {
+		this.linkUrl = linkUrl;
+	}
+
+	@Column(name = "type")
+	public Integer getType() {
+		return type;
+	}
+
+	public void setType(Integer type) {
+		this.type = type;
+	}
+
+	@Column(name = "image_path")
+	public String getImagePath() {
+		return imagePath;
+	}
+
+	public void setImagePath(String imagePath) {
+		this.imagePath = imagePath;
+	}
+
+	@Column(name = "region_code")
+	public String getRegionCode() {
+		return regionCode;
+	}
+
+	public void setRegionCode(String regionCode) {
+		this.regionCode = regionCode;
+	}
+
+	@Transient
+	public String getRegionName() {
+		return regionName;
+	}
+
+	public void setRegionName(String regionName) {
+		this.regionName = regionName;
+	}
+
+}

@@ -1,0 +1,123 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.mall.back.websys.dao.FloorCatalogRcmdDao;
+import com.cplatform.mall.back.websys.entity.ChannelCatalogRcmdConfig;
+import com.cplatform.mall.back.websys.entity.ChannelFloor;
+
+@Service
+public class FloorCatalogRcmdService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private FloorCatalogRcmdDao floorCatalogRcmdDao;
+
+	@Autowired
+	SysRegionService regionService;
+	
+	@Autowired
+	ChannelFloorService channelfloorService;
+
+	/**
+	 * 频道分类列表
+	 * 
+	 * @param channelCatalog
+	 * @param page
+	 * @param defaultPagesize
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ChannelCatalogRcmdConfig> list(ChannelCatalogRcmdConfig channelCatalog, int page, int pagesize) throws SQLException {
+
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT cc.*, r.region_name FROM T_CHANNEL_CATALOG_RCMD_CONF cc left join t_sys_region r on  cc.region_code = r.region_code where 1=1  ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (channelCatalog != null) {
+			if (channelCatalog.getChannel() != null) {
+				sql.append(" AND cc.CHANNEL=?");
+				paramsList.add(channelCatalog.getChannel());
+			}
+			if (channelCatalog.getGroupId() != null) {
+				sql.append(" AND cc.GROUP_ID=?");
+				paramsList.add(channelCatalog.getGroupId());
+			}
+
+			if (StringUtils.isNotEmpty(channelCatalog.getDisplayName())) {
+				sql.append(" AND DISPLAY_NAME LIKE ?");
+				paramsList.add("%" + channelCatalog.getDisplayName() + "%");
+			}
+			
+			if (StringUtils.isNotEmpty(channelCatalog.getRegionName())) {
+				sql.append(" AND r.region_name like ? ");
+				paramsList.add("%" + channelCatalog.getRegionName() + "%");
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_CHANNELCATALOGCONFIG));
+		sql.append(" ORDER BY cc.channel asc, cc.GROUP_ID asc, cc.ORDER_INDEX asc");
+		return dbHelper.getPage(sql.toString(), ChannelCatalogRcmdConfig.class, page, pagesize, paramsList.toArray());
+	}
+
+	/**
+	 * 保存
+	 * 
+	 * @param channelCatalog
+	 */
+	public void save(ChannelCatalogRcmdConfig channelCatalog) {
+		floorCatalogRcmdDao.save(channelCatalog);
+	}
+
+	/**
+	 * 修改预处理
+	 * 
+	 * @param id
+	 * @param model
+	 * @throws SQLException 
+	 */
+	public void preEdit(Long id, Model model) throws SQLException {
+		ChannelCatalogRcmdConfig channelCatalogRcmd = floorCatalogRcmdDao.findOne(id);
+
+		SysRegion region = regionService.findByRegionCode(channelCatalogRcmd.getRegionCode());
+		if (region != null) {
+			channelCatalogRcmd.setRegionName(region.getRegionName());
+		}
+		 Map<Integer, String> groupMap = new HashMap<Integer, String>();
+		  ChannelFloor channelfloor = new ChannelFloor();
+		  List<ChannelFloor> listChannelFloor = channelfloorService.findChannelFloorByrf(channelfloor, channelCatalogRcmd.getChannel(), channelCatalogRcmd.getRegionCode());
+		  for(int i=0;i<listChannelFloor.size();i++){
+			  groupMap.put(listChannelFloor.get(i).getFloorId(), ChannelCatalogRcmdConfig.groupMap.get(listChannelFloor.get(i).getFloorId()));
+		  }
+		model.addAttribute("groupMap", groupMap);
+		model.addAttribute("channelMap", ChannelCatalogRcmdConfig.channelMap);
+		model.addAttribute("channelCatalogRcmd", channelCatalogRcmd);
+		model.addAttribute("method", "edit");
+
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param id
+	 */
+	public void delete(Long id) {
+		floorCatalogRcmdDao.delete(id);
+	}
+
+}

@@ -1,0 +1,179 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.dao.SysTypeDao;
+import com.cplatform.mall.back.sys.entity.SysType;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * 分类相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午03:35:19
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class SysTypeService {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	SysTypeDao typeDao;
+
+	/**
+	 * 商户分类查询
+	 * 
+	 * @param sysType
+	 *            分类实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysType> findSysTypeStore(SysType sysType, String name, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from t_sys_type where 1=1 ");
+		List params = new ArrayList();
+		if (null != sysType) {
+			if (sysType.getId() != null) {
+				sql.append(" and p_id = ? ");
+				params.add(sysType.getId());
+			}
+		}
+		sql.append(" and type = 1 ");
+		if (StringUtils.isNotEmpty(name)) {
+			sql.append(" and name like ? ");
+			params.add("%" + name + "%");
+		}
+		sql.append(" order by id asc ");
+		return dbHelper.getPage(sql.toString(), SysType.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 商品分类查询
+	 * 
+	 * @param sysType
+	 *            分类实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysType> findSysTypeGoods(SysType sysType, String name, Long isValid, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from t_sys_type where 1=1 ");
+		List params = new ArrayList();
+		if (null != sysType) {
+			if (sysType.getId() != null) {
+				sql.append(" and p_id = ? ");
+				params.add(sysType.getId());
+			}
+		}
+		sql.append(" and type = 2 ");
+		if (StringUtils.isNotEmpty(name)) {
+			sql.append(" and name like ? ");
+			params.add("%" + name + "%");
+		}
+		if (null != isValid) {
+			sql.append(" and is_valid = ? ");
+			params.add(isValid);
+		}
+		sql.append(" order by id asc ");
+		return dbHelper.getPage(sql.toString(), SysType.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param type
+	 *            类型实体映射
+	 * @return
+	 */
+	@Transactional
+	public SysType add(SysType type) {
+		SysType t = typeDao.save(type);
+		updateChildType(type);
+
+		return t;
+	}
+
+	public List<SysType> getTreeType(Long type, Long pid) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,  decode(connect_by_isleaf,'1','0','0','1') parent ");
+		sql.append("  from t_sys_type t ");
+		sql.append(" where type = ? ");
+		sql.append(" and  IS_VALID = 1 ");
+		sql.append(" start with p_id = ? ");
+		sql.append("connect by p_id = prior id");
+		sql.append("  order by t.id asc");
+		return dbHelper.getBeanList(sql.toString(), SysType.class, new Object[] { type, pid });
+	}
+
+	/**
+	 * 查询指定类别
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public SysType findOne(Long id) {
+		SysType sysType = typeDao.findOne(id);
+		return sysType;
+	}
+
+	// 修改子分类
+
+	private void updateChildType(SysType sysType) {
+		List<SysType> typeList = getChildType(sysType.getType(), sysType.getId());
+		if (null != typeList) {
+			for (SysType t : typeList) {
+				t.setIsValid(sysType.getIsValid());
+				typeDao.save(t);
+			}
+		}
+
+	}
+
+	/**
+	 * 根据分类id查询该分类下的所有子分类
+	 * 
+	 * @param type
+	 * @param pid
+	 * @return
+	 * @throws SQLException
+	 */
+	private List<SysType> getChildType(Long type, Long pid) {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.* ");
+		sql.append("  from t_sys_type t ");
+		sql.append(" where type = ? ");
+		sql.append(" start with p_id = ? ");
+		sql.append("connect by p_id = prior id");
+		sql.append("  order by t.id asc");
+		try {
+			return dbHelper.getBeanList(sql.toString(), SysType.class, new Object[] { type, pid });
+		}
+		catch (SQLException e) {
+			return null;
+		}
+	}
+
+}

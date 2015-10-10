@@ -1,0 +1,156 @@
+package com.cplatform.mall.back.utils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+
+/**
+ * 读取excel add by chensl
+ */
+public class ReadExcel {
+
+	private static final Logger log = Logger.getLogger(ReadExcel.class);
+
+	/**
+	 * 去掉字符串右边的空格
+	 * 
+	 * @param str
+	 *            要处理的字符串
+	 * @return 处理后的字符串
+	 */
+	public static String rightTrim(String str) {
+		if (str == null) {
+			return "";
+		}
+		int length = str.length();
+		for (int i = length - 1; i >= 0; i--) {
+			if (str.charAt(i) != 0x20) {
+				break;
+			}
+			length--;
+		}
+		return str.substring(0, length);
+	}
+
+	/**
+	 * 读取excel 参数说明 （in 所要读取的文件流 ignoreRows 从excel的第几行开始读取 filePath 上传文件的路径）
+	 */
+	public static List<String[]> getData2(InputStream in, int ignoreRows, String filePath) {
+		List<String[]> result = new ArrayList<String[]>();
+		int rowSize = 0;
+		Workbook wb = null;
+		try {
+			wb = WorkbookFactory.create(in);
+			Cell cell = null;
+			// 获取sheet1表格
+			Sheet st = wb.getSheetAt(0);
+			// 第一行、最后一行为标题、说明，不读取
+			for (int rowIndex = ignoreRows; rowIndex <= st.getLastRowNum() - 1; rowIndex++) {
+				Row row = st.getRow(rowIndex);
+				if (row == null) {
+					continue;
+				}
+				int tempRowSize = row.getLastCellNum() + 1;
+				if (tempRowSize > rowSize) {
+					rowSize = tempRowSize;
+				}
+				String[] values = new String[rowSize];
+				Arrays.fill(values, "");
+				// 读取每一列的值
+				for (short columnIndex = 0; columnIndex <= row.getLastCellNum(); columnIndex++) {
+					String value = "";
+					cell = row.getCell(columnIndex);
+					if (cell != null) {
+						switch (cell.getCellType()) {
+							case Cell.CELL_TYPE_STRING:
+								value = cell.getStringCellValue();
+								break;
+							case Cell.CELL_TYPE_NUMERIC:
+								value = new DecimalFormat("0").format(cell.getNumericCellValue());
+								break;
+							default:
+								value = "";
+						}
+					}
+					values[columnIndex] = rightTrim(value);
+				}
+				result.add(values);
+			}
+		}
+		catch (Exception ex) {
+			log.error("读取excel" + ex.getMessage());
+		}
+		finally {
+			try {
+				in.close();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 读取excel 参数说明 （in 所要读取的文件流 ignoreRows 从excel的第几行开始读取 filePath 上传文件的路径）
+	 */
+	public static String[] getCardData(InputStream in, int ignoreRows, String filePath) {
+		String[] result = null;
+		Workbook wb = null;
+		try {
+			wb = WorkbookFactory.create(in);
+			Cell cell = null;
+			// 获取sheet1表格
+			Sheet st = wb.getSheetAt(0);
+			result = new String[st.getLastRowNum()];
+			Arrays.fill(result, "");
+			// 第一行为标题，不读取
+			for (int rowIndex = ignoreRows; rowIndex <= st.getLastRowNum(); rowIndex++) {
+				Row row = st.getRow(rowIndex);
+				if (row == null) {
+					continue;
+				}
+				// 读取每一列的值
+				for (short columnIndex = 0; columnIndex < 1; columnIndex++) {
+					String value = "";
+					cell = row.getCell(columnIndex);
+					if (cell != null) {
+						switch (cell.getCellType()) {
+							case Cell.CELL_TYPE_STRING:
+								value = cell.getStringCellValue();
+								break;
+							case Cell.CELL_TYPE_NUMERIC:
+								value = new DecimalFormat("0").format(cell.getNumericCellValue());
+								break;
+							default:
+								value = "";
+						}
+					}
+					result[rowIndex - 1] = rightTrim(value);
+				}
+			}
+		}
+		catch (Exception ex) {
+			log.error("读取excel" + ex.getMessage());
+		}
+		finally {
+			try {
+				in.close();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+}

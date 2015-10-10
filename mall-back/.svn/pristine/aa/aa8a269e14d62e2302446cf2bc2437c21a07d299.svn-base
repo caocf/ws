@@ -1,0 +1,208 @@
+package com.cplatform.mall.back.giftcard.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.giftcard.dao.GiftCardDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardStorageDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardStorageExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardTaskDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardTaskExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftRequiredDao;
+import com.cplatform.mall.back.giftcard.entity.GiftCard;
+import com.cplatform.mall.back.giftcard.entity.GiftCardTask;
+import com.cplatform.mall.back.giftcard.entity.GiftCardTaskExt;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+/**
+ * 
+ * @author mudeng
+ * 礼品卡库存管理Service
+ *
+ */
+@Service
+public class GiftTaskService {
+
+	@Autowired
+	DbHelper dbHelper;
+
+	
+	@Autowired
+	GiftRequiredDao giftRequiredDao;
+	
+	@Autowired
+	GiftCardStorageDao giftCardStorageDao;
+	
+	@Autowired
+	GiftCardStorageExtDao giftCardStorageExtDao;
+	
+	@Autowired
+	GiftCardDao giftCardDao;
+	
+	@Autowired
+	GiftCardTaskDao gGiftCardTaskDao;
+	
+	@Autowired
+	GiftCardTaskExtDao gGiftCardTaskExtDao;
+	
+	public Page<GiftCardTask> findGiftTask(GiftCardTask giftCardTask, int pageNo, int pageSize) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from T_GIFT_CARD_TASK t left join t_gift_required giftRequired on t.batch_no = giftRequired.batch_no ");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftCardTask != null) {
+			if (giftCardTask.getResources() != null) {
+				sql.append(" and t.resources  = ? ");
+				paramsList.add(giftCardTask.getResources());
+			}
+			if (giftCardTask.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftCardTask.getStatus());
+			}
+
+		}
+
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));
+		return dbHelper.getPage(sql.toString(), GiftCardTask.class, pageNo, pageSize, paramsList.toArray());
+	}
+	
+	public List<GiftCardTask> findGiftTaskList(GiftCardTask giftCardTask) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from T_GIFT_CARD_TASK t");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftCardTask != null) {
+			if (giftCardTask.getResources() != null) {
+				sql.append(" and t.resources  = ? ");
+				paramsList.add(giftCardTask.getResources());
+			}
+			if (giftCardTask.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftCardTask.getStatus());
+			}
+
+		}
+
+		return dbHelper.getBeanList(sql.toString(), GiftCardTask.class,paramsList.toArray());
+	}
+	
+	public Page<GiftCardTaskExt> findGiftTaskExt(GiftCardTaskExt giftCardTaskExt, int pageNo, int pageSize) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from T_GIFT_CARD_TASK_EXT t");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftCardTaskExt != null) {
+			if (giftCardTaskExt.getTaskId() != null) {
+				sql.append(" and t.TASK_ID  = ? ");
+				paramsList.add(giftCardTaskExt.getTaskId());
+			}
+			if (giftCardTaskExt.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftCardTaskExt.getStatus());
+			}
+			
+			if (StringUtils.isNotEmpty(giftCardTaskExt.getSerialNo())) {
+				sql.append(" and t.serial_no  = ? ");
+				paramsList.add(giftCardTaskExt.getSerialNo().trim());
+			}
+
+		}
+
+		return dbHelper.getPage(sql.toString(), GiftCardTaskExt.class, pageNo, pageSize, paramsList.toArray());
+	}
+	@Transactional
+	public void addTaskBybatchNo(Long batchNo,GiftCardTask giftCardTask) throws Exception{
+		gGiftCardTaskDao.save(giftCardTask);
+		List<GiftCard> listGiftCard = findGiftCardList(batchNo,"","");
+		for(GiftCard giftCard:listGiftCard){
+			if(giftCard.getStatus() == 0L){
+				GiftCardTaskExt giftCardTaskExt = setGiftCardTaskExt(giftCard,giftCardTask.getId());
+				gGiftCardTaskExtDao.save(giftCardTaskExt);
+			}
+		}
+	}
+	@Transactional
+	public void addTaskByFile(String[] serialNos,String filepath,GiftCardTask giftCardTask) throws Exception{
+		gGiftCardTaskDao.save(giftCardTask);
+		for(String serialNo:serialNos){
+			GiftCard giftCard = findGiftCard(serialNo);
+			if(giftCard!=null){
+				if(giftCard.getStatus()==0L){
+					GiftCardTaskExt giftCardTaskExt = setGiftCardTaskExt(giftCard,giftCardTask.getId());
+					gGiftCardTaskExtDao.save(giftCardTaskExt);
+				}
+			}
+		}
+	}
+	@Transactional
+	public void addTaskByserialNo(String serialStartNo , String serialEndNo,GiftCardTask giftCardTask) throws Exception{
+		gGiftCardTaskDao.save(giftCardTask);
+		List<GiftCard> listGiftCard = findGiftCardList(null,serialStartNo,serialEndNo);
+		for(GiftCard giftCard:listGiftCard){
+			if(giftCard.getStatus()==0L){
+				GiftCardTaskExt giftCardTaskExt = setGiftCardTaskExt(giftCard,giftCardTask.getId());
+				gGiftCardTaskExtDao.save(giftCardTaskExt);
+			}
+		}
+	}
+	public GiftCardTaskExt setGiftCardTaskExt(GiftCard giftCard,Long taskId){
+		GiftCardTaskExt giftCardTaskExt = new GiftCardTaskExt();
+		giftCardTaskExt.setTaskId(taskId);
+		giftCardTaskExt.setSerialNo(giftCard.getSerialNo());
+		giftCardTaskExt.setCreateTime(TimeUtil.now());
+		giftCardTaskExt.setStatus(0L);
+		return giftCardTaskExt;
+	}
+	
+	
+	
+	public List<GiftCard> findGiftCardList(Long batchNo, String serialStartNo,String serialEndtNo) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append(" select * from t_gift_card c ");
+		sql.append("  where 1=1  ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if(batchNo!=null){
+			sql.append(" and batch_no = ? ");
+			paramsList.add(batchNo);
+		}
+		if (StringUtils.isNotEmpty(serialStartNo)&&StringUtils.isNotEmpty(serialEndtNo)) {
+				sql.append(" and c.serial_no between ? and ? ");
+				paramsList.add(serialStartNo);
+				paramsList.add(serialEndtNo);
+		}
+
+		return dbHelper.getBeanList(sql.toString(), GiftCard.class, paramsList.toArray());
+	}
+	public GiftCard findGiftCard(String serialNo) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append(" select * from t_gift_card c ");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (serialNo != null && serialNo!="") {
+				sql.append(" and c.SERIAL_NO  = ? ");
+				paramsList.add(serialNo.trim());
+		}
+		
+		return dbHelper.getBean(sql.toString(), GiftCard.class, paramsList.toArray());
+	}
+	
+	public String actCard() throws Exception{
+		String msg = "激活完成";
+		GiftCardTask giftCardTask = new GiftCardTask();
+		giftCardTask.setStatus(0L);
+		 List<GiftCardTask> giftTaskList  = findGiftTaskList(giftCardTask);
+		 for(GiftCardTask giftTask:giftTaskList){
+			 
+		 }
+		return msg;
+	}
+	
+
+}

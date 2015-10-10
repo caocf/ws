@@ -1,0 +1,112 @@
+#quan #quan_menu{ border:1px #ddd solid; margin-top:10px;}
+	#quan #quan_menu{}
+		#quan_menu_search_res{ color:#666; line-height:36px; min-height:36px; height:auto !important; padding:5px 15px; font-size:14px; background:#f7f1e1; border-bottom:1px #ddd solid;}
+		#quan #quan_menu_search_res a{ color:#E95098; padding:0 5px;}
+			#quan_menu_search_res .red{ color:#c00;}
+		#quan #quan_menu dl{ position:relative; line-height:40px; position:relative; }
+			#quan #quan_menu dt{ top:0;left:0; width:60px; text-align:center; line-height:24px; position:absolute; padding:8px 0; }
+				#quan #quan_menu dd{ line-height:24px; position:relative; padding :8px  60px 8px 60px;  }
+					#quan #quan_menu dd a.quan_menu_more{ position:absolute;top:8px; right:0; line-height:24px;  }
+					#quan #quan_menu dd a{ padding:0px 5px; color:#0071a3; display:inline-block; margin-right:5px; }
+					#quan #quan_menu dd a:hover{color:#e95098; }
+					#quan #quan_menu dd strong{ width:5px; display:inline-block; height:37px; background:url(../img/line.jpg) no-repeat center center; line-height:37px; padding:0;}
+						#quan #quan_menu dd a span{padding:0 2px 0 5px; color:#999;display:inline-block;}
+					#quan #quan_menu dd a.hot{ color:#e95098;}
+					#quan #quan_menu dd a.hover{ background:url(../img/bg_quan.png) 0 -40px no-repeat; padding:0 0 0 10px; color:#FFF;}
+						#quan #quan_menu dd a.hover span,#quan #quan_menu dd #quan_menu_nav a.hover span{ color:#FFF; background:url(../img/bg_quan.png) 100% -70px no-repeat;  line-height:24px; height:24px;  min-width:6px; width:auto !important; width:auto;  }
+				#quan #quan_menu .quan_menu_area{ display:none; }
+			#quan #quan_menu #quan_menu_hot{ height:37px; line-height:37px; background:url(../img/bg_quan.png) 0 0 repeat-x; border-bottom:1px solid #ddd;}
+			
+				#quan #quan_menu #quan_menu_hot dd a{float:left; }
+					#quan #quan_menu #quan_menu_hot dd strong{ float:left;}
+				#quan #quan_menu #quan_menu_hot dt{ padding:0;line-height:37px; height:37px;}
+				#quan #quan_menu #quan_menu_hot dd{ padding:0 0 0 60px; line-height:37px; height:37px;}
+					
+				#quan #quan_menu .quan_menu_tab_content,#quan #quan_menu .quan_menu_area{ background:#f5f5f5; margin:5px 0; padding:8px;}
+				
+	#quan #quan_menu div#quan_menu_area,#quan #quan_menu div#quan_menu_class,#quan #quan_menu div#quan_menu_price{ border-bottom:1px solid #dddddd; height:auto; _height:40px; min-height:40px;}
+		#quan #quan_menu #quan_menu_array dd{  padding:0 0 0 60px;line-height:40px; height:40px; }
+			#quan #quan_menu #quan_menu_array .quan_menu_content{ float:left; }	
+				#quan #quan_menu #quan_menu_array .quan_menu_content span{ border-right:1px #ddd solid; display:block;  padding-right:10px ;margin-right:10px; float:left;height:40px; line-height:40px;}
+				#quan #quan_menu #quan_menu_array .quan_menu_content span label{ line-height:40px; display:inline-block;}
+					#quan #quan_menu #quan_menu_array .quan_menu_content input.checkbox{ margin:0 3px 0 7px;}
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class a { border:1px solid #ddd; display:block; line-height:24px; float:left; margin:7px 0 0 0; color:#666; padding-right:20px; position:relative;}
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class a:hover{ color:#0071a3; }
+					#quan #quan_menu #quan_menu_array dd #quan_menu_array_class a i{ display:block; height:16px; width:16px; position:absolute; top:5px; right:5px; }
+					#quan #quan_menu #quan_menu_array dd #quan_menu_array_class a i.up{ background:url(../img/bg_quan.png) 2px -99px no-repeat;}
+					#quan #quan_menu #quan_menu_array dd #quan_menu_array_class a i.down{ background:url(../img/bg_quan.png) -18px -99px no-repeat;}
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_left{ border:1px #ddd solid; }
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_left.active{border:1px #0071a3 solid; }
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_middle{border:1px #ddd solid;   }
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_middle.active{border:1px #0071a3 solid;}
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_right{border:1px #ddd solid;  }
+				#quan #quan_menu #quan_menu_array dd #quan_menu_array_class #quan_menu_btn_right.active{border:1px #0071a3 solid;}
+		#quan #quan_menu #quan_menu_array .quan_menu_page_nav{ float:right; width:120px;padding-right:10px; position:relative; line-height:40px; height:40px;}
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav label,#quan #quan_menu #quan_menu_array .quan_menu_page_nav a{ line-height:40px; display:inline-block;}	
+		#quan #quan_menu #quan_menu_array .quan_menu_page_nav a{ width:27px; height:21px; position:relative;top:5px; display:inline-block; padding:0;margin:0;  }
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_prev{   background:url(../img/bg_quan.png) -124px -98px no-repeat; }
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_prev:hover{ background:url(../img/bg_quan.png) -124px -119px no-repeat;}
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_next{ background:url(../img/bg_quan.png) -151px -98px no-repeat; }
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_next:hover{ background:url(../img/bg_quan.png) -151px -119px no-repeat;}	
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_prev#un{background:url(../img/bg_quan.png) -124px -140px no-repeat;}
+			#quan #quan_menu #quan_menu_array .quan_menu_page_nav .quan_menu_btn_next#un{background:url(../img/bg_quan.png) -151px -140px no-repeat;}	
+	#quan #quan_main{ margin-top:20px;}	
+	#quan #quan_main h1{ padding:0 10px; line-height:36px; height:36px; font-size:14px; border:1px solid #ddd; margin-bottom:10px; }	
+			#quan #quan_main ul li{ width:286px; padding:15px 15px 5px; float:left; border:1px #ddd solid; height:300px;  position:relative; z-index:1;margin:0 22px 15px 0;-webkit-box-shadow:2px 2px #f0f0f0; -moz-box-shadow:2px 2px #f0f0f0;box-shadow:2px 2px #f0f0f0;
+			  }
+			#quan #quan_main ul li.nth-child-3n { margin:0 0 20px 0; }	
+			#quan #quan_main ul li:nth-child(3n+0){ margin:0 0 20px 0; }	
+			#quan #quan_main ul li ul.other_price{ display:none; float:none; position:absolute; top:30px;  width:140px; background:#fff;border:1px #ddd solid; z-index:100;  }
+				#quan #quan_main ul li .quan_main_btn{ cursor:pointer;}
+				#quan #quan_main ul li ul.other_price li{ height:36px; line-height:36px; margin:0; border:0; width:120px; background:#fff; padding:0 10px; font-size:12px;  }
+					#quan #quan_main ul li .quan_main_btn ul.other_price li i strong span{ font-size:18px;}
+			
+				#quan #quan_main ul li .quan_main_title{ line-height:2em; height:32px; font-size:16px; overflow:hidden; color:#000; display:block; font-weight:700; padding-top:3px; }
+				#quan #quan_main ul li .quan_main_des{ line-height:18px; font-size:12px; height:36px; display:block; overflow:hidden; color:#666;  }
+				#quan #quan_main ul li .quan_main_btn{ position:relative; margin:5px 0; height:32px; line-height:32px;}
+					#quan #quan_main ul li .quan_main_btn i { color:#999; font-style:normal; }
+						#quan #quan_main ul li .quan_main_btn i .oldprice{ text-decoration:line-through; padding:0 10px;}
+						#quan #quan_main ul li .quan_main_btn i .vipprice{ color:#E95098;}
+						#quan #quan_main ul li .quan_main_btn i strong{ color:#E95098; }
+							#quan #quan_main ul li .quan_main_btn i strong span{ font-size:24px;}
+						#quan #quan_main ul li .quan_main_btn a{ position:absolute;right:0;top:0; font-size:14px; text-align:center; line-height:32px;height:32px;  background:url(../img/bg_quan.png) 0 -164px no-repeat; color:#FFF; width:86px; }
+						#quan #quan_main ul li .quan_main_btn a:hover{ color:#FCC;}
+				#quan #quan_main ul li .quan_main_info{ position:relative; margin:5px 0; height:32px; line-height:32px; color:#999; z-index:9999;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count strong{ color:#e95098;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i{background:url(../img/bg_quan.png) -88px -118px no-repeat; display:inline-block; width:12px; height:12px; margin-left:20px; cursor:pointer; }
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i.icon-1{background:url(../img/bg_quan.png) -92px -175px no-repeat; display:inline-block; width:12px; height:12px; margin-left:2px; position:relative;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i.icon-2{background:url(../img/bg_quan.png) -107px -175px no-repeat; display:inline-block; width:12px; height:12px; margin-left:2px; position:relative;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i.icon-3{background:url(../img/bg_quan.png) -122px -175px no-repeat; display:inline-block; width:12px; height:12px; margin-left:2px; position:relative;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i.icon-4{background:url(../img/bg_quan.png) -137px -175px no-repeat; display:inline-block; width:12px; height:12px; margin-left:2px; position:relative;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_tip{ border:10px; left:3px; position:absolute; z-index:1000; font-size:12px; color:#999; line-height:12px;}
+					#quan #quan_main ul li .quan_main_info .quan_main_info_count i em{ display:none;}
+					#quan .quan_main_info_address_content{ display:inline; position:absolute; border:1px #ddd solid; border-top:none; z-index:100000000; right:-10px;top:30px; background:#fff; line-height:18px; padding:5px 10px; display:none; }
+					
+					#quan #quan_main ul li .quan_main_info .quan_main_info_address{ top:0;right:0; position:absolute; cursor:pointer; z-index:1000000; background:#fff;}
+				#quan #quan_main ul li .quan_main_ico{ position:absolute; z-index:10; height:30px; left:15; top:15px;}
+					#quan #quan_main ul li .quan_main_ico i{ float:left;width:43px; display:block;height:30px; }
+					#quan #quan_main ul li .quan_main_ico i.tehui{ background:url(../img/bg_quan.png) -43px -120px no-repeat;}
+					#quan #quan_main ul li .quan_main_ico i.xindan{ background:url(../img/bg_quan.png) 0 -120px no-repeat;}
+					
+				
+	#quan  #pagenav {
+    	margin: 10px 0;
+   		text-align: center;
+		line-height:36px;
+	}
+		#quan #pagenav a {
+			background: none repeat scroll 0 0 #bbb;
+    		color: #FFFFFF;
+   			display:inline;
+    		font-size: 16px;
+    		font-weight: normal;
+   			height: 30px;
+    		line-height: 30px;
+   		 	margin: 2px;
+			padding:5px 10px;
+    		text-align: center;
+    		min-width: 30px;
+		}
+			#quan #pagenav a.hover, #quan #pagenav a:hover {
+   				background: 0 0 #E95098;
+			}

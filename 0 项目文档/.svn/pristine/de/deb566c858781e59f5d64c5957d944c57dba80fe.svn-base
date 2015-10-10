@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_t_cont_mms_01 ON "LIFE".t_cont_mms(content_src,status,start_time,end_time);

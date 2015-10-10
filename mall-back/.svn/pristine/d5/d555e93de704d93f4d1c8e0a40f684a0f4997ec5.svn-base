@@ -1,0 +1,306 @@
+package com.cplatform.mall.back.smsbuy.web;
+
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.smsbuy.entity.SmsBuyActOnline;
+import com.cplatform.mall.back.smsbuy.entity.SmsbuyItemRouter;
+import com.cplatform.mall.back.smsbuy.service.SmsBuyActOnlineService;
+import com.cplatform.mall.back.smsbuy.web.validator.SmsbuyRouterValidator;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+
+/**
+ * 短信购活动配置控制器. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-15 下午5:21:29
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: wuyn@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "/smsbuy/act")
+public class SmsBuyActOnlineController {
+
+	@Autowired
+	private SmsBuyActOnlineService smsBuyActOnlineService;
+
+	@Autowired
+	private SmsbuyRouterValidator smsbuyRouterValidator;
+
+	/**
+	 * 活动配置列表
+	 * 
+	 * @param smsBuyActOnline
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "list")
+	public String list(SmsBuyActOnline smsBuyActOnline, @RequestParam(value = "page", defaultValue = "1") Integer page, Model model)
+	        throws SQLException {
+		Page<SmsBuyActOnline> pageList = smsBuyActOnlineService.listSmsBuyAct(smsBuyActOnline, page, Page.DEFAULT_PAGESIZE);
+
+		model.addAttribute("pageData", pageList);
+		model.addAttribute("statusMap", SmsBuyActOnline.statusMap);
+		return "/smsbuy/act/act-list";
+	}
+
+	/**
+	 * 活动配置列表
+	 * 
+	 * @param smsBuyActOnline
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "auditList")
+	public String auditList(SmsBuyActOnline smsBuyActOnline, @RequestParam(value = "page", defaultValue = "1") Integer page, Model model)
+	        throws SQLException {
+		Page<SmsBuyActOnline> pageList = smsBuyActOnlineService.listSmsBuyAct(smsBuyActOnline, page, Page.DEFAULT_PAGESIZE);
+
+		model.addAttribute("pageData", pageList);
+		model.addAttribute("statusMap", SmsBuyActOnline.statusMap);
+		return "/smsbuy/act/act-audit-list";
+	}
+
+	/**
+	 * 商品指令列表
+	 * 
+	 * @param smsbuyItemRouter
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "routerList")
+	public String routerList(SmsbuyItemRouter smsbuyItemRouter, @RequestParam(value = "page", defaultValue = "1") Integer page, Model model)
+	        throws SQLException {
+
+		Page<SmsbuyItemRouter> pageList = smsBuyActOnlineService.routerList(smsbuyItemRouter, page, Page.DEFAULT_PAGESIZE);
+
+		model.addAttribute("pageData", pageList);
+
+		return "/smsbuy/router/router-list";
+	}
+
+	/**
+	 * 短信购活动添加预处理
+	 * 
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "preAdd")
+	public String preAdd(@RequestParam(value = "actId", required = false) Long actId, Model model) {
+
+		return smsBuyActOnlineService.preAdd(actId, model);
+	}
+
+	/**
+	 * 短信购活动添加预处理
+	 * 
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "addAct")
+	@ResponseBody
+	public Object addAct(SmsBuyActOnline smsBuyActOnline, Model model) {
+
+		String msg = "添加成功,请继续完善活动配置！";
+		String url = "";
+		
+		if (smsBuyActOnline.getActId() != null) {
+			msg = "修改成功";
+			url = "/smsbuy/act/list";
+			smsBuyActOnlineService.addAct(smsBuyActOnline);
+		} else {
+			smsBuyActOnlineService.addAct(smsBuyActOnline);
+			url = "/smsbuy/act/preAddItemRouter.do?actId=" + smsBuyActOnline.getActId();
+		}
+
+		return JsonRespWrapper.success(msg, url);
+	}
+
+	/**
+	 * @param actId
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "preAddItemRouter")
+	public String preAddItemRouter(@RequestParam(value = "page", defaultValue = "1") Integer page, @RequestParam(value = "actId") Long actId,
+	        @RequestParam(value = "id", required = false) Long id, Model model) throws SQLException {
+		smsBuyActOnlineService.preAddItemRouter(actId, id, page, model);
+		return "/smsbuy/act/act-add2";
+	}
+
+	/**
+	 * @param actId
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "addItemRouter")
+	@ResponseBody
+	public Object addItemRouter(@RequestParam(value = "actId") Long actId, SmsbuyItemRouter smsbuyItemRouter, BindingResult result) {
+		smsbuyItemRouter.setActId(actId);
+		smsbuyRouterValidator.validate(smsbuyItemRouter, result);
+
+		String msg = "添加成功！";
+		if (smsbuyItemRouter.getId() != null) {
+			msg = "修改成功！";
+		}
+		if (result.hasErrors()) {
+			return JsonRespWrapper.error(result.getFieldErrors());
+		}
+		smsbuyItemRouter.setItemPrice(smsbuyItemRouter.getItemPrice()*100);
+		smsBuyActOnlineService.addItemRouter(smsbuyItemRouter);
+		
+		/* 根据活动ID显示该活动下所有的商品指令 @modify_by macl@c-platform.com @date 2013-7-13 start...*/
+		//return JsonRespWrapper.success(msg, "/smsbuy/act/preAddItemRouter?actId=" + actId/* + "&id=" + smsbuyItemRouter.getId()*/);
+		return JsonRespWrapper.success(msg, "/smsbuy/act/preAddItemRouter?actId=" + actId);
+		/* ... end*/
+		
+	}
+
+	/**
+	 * 编辑活动信息
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "preEditAct")
+	public String preEditAct(@RequestParam(value = "actId", required = true) Long actId, Model model) {
+		smsBuyActOnlineService.preEditAct(actId, model);
+		model.addAttribute("actId", actId);
+		return "/smsbuy/act/act-add1";
+	}
+
+	/**
+	 * 编辑活动信息
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "preEditRouter")
+	public String preEditRouter(@RequestParam(value = "id", required = true) Long id, Model model) {
+		smsBuyActOnlineService.preEditRouter(id, model);
+		return "/smsbuy/router/router-add";
+	}
+
+	/**
+	 * 删除活动
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "deleteAct")
+	@ResponseBody
+	public Object deleteAct(@RequestParam(value = "actId") Long actId, Model model) {
+		String msg = smsBuyActOnlineService.deleteAct(actId);
+
+		return JsonRespWrapper.success(msg, "/smsbuy/act/list");
+	}
+
+	/**
+	 * 删除商品指令
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "deleteRouter")
+	@ResponseBody
+	public Object deleteRouter(@RequestParam(value = "id") Long id, Model model) {
+
+		String url = smsBuyActOnlineService.deleteRouter(id);
+
+		return JsonRespWrapper.success("删除成功！", url);
+	}
+
+	/**
+	 * 查看
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "viewAct")
+	public String viewAct(@RequestParam(value = "actId") Long actId,
+	        @RequestParam(value = "page", defaultValue = "1", required = false) Integer page, Model model) throws SQLException {
+		smsBuyActOnlineService.viewAct(page, actId, model);
+
+		return "/smsbuy/act/act-view";
+	}
+
+	/**
+	 * 查看
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "viewRouter")
+	public String viewRouter(@RequestParam(value = "id") Long id, Model model) {
+		smsBuyActOnlineService.viewRouter(id, model);
+
+		return "/smsbuy/router/router-view";
+
+	}
+
+	@RequestMapping(value = "auditAct")
+	@ResponseBody
+	public Object auditAct(@RequestParam(value = "actId") Long actId, Model model) {
+		smsBuyActOnlineService.updateStatus(actId, "release");
+		return JsonRespWrapper.success("审核通过！", "/smsbuy/act/auditList");
+	}
+
+	@RequestMapping(value = "releaseAct")
+	@ResponseBody
+	public Object releaseAct(@RequestParam(value = "actId") Long actId, Model model) {
+
+		String msg = smsBuyActOnlineService.updateStatus(actId, "online");
+		return JsonRespWrapper.success(msg, "/smsbuy/act/auditList");
+	}
+
+	@RequestMapping(value = "pauseAct")
+	@ResponseBody
+	public Object pauseAct(@RequestParam(value = "actId") Long actId, Model model) {
+		smsBuyActOnlineService.updateStatus(actId, "pause");
+		return JsonRespWrapper.success("暂停成功！", "/smsbuy/act/auditList");
+	}
+
+	@RequestMapping(value = "offlineAct")
+	@ResponseBody
+	public Object offlineAct(@RequestParam(value = "actId") Long actId, Model model) {
+		smsBuyActOnlineService.updateStatus(actId, "offline");
+		return JsonRespWrapper.success("下线成功！", "/smsbuy/act/auditList");
+	}
+
+	@RequestMapping(value = "startAct")
+	@ResponseBody
+	public Object startAct(@RequestParam(value = "actId") Long actId, Model model) {
+		smsBuyActOnlineService.updateStatus(actId, "release");
+		return JsonRespWrapper.success("开始成功！", "/smsbuy/act/auditList");
+	}
+
+}

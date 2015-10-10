@@ -1,0 +1,5 @@
+.alert_div{ position:absolute; bottom:20px; left:420px; width:555px; height:335px; overflow:hidden; background:#e5e5e5; border:1px #fff solid; padding:5px; }
+.agreement_box{ border:1px #bbbbbb solid; height:333px; overflow:hidden; background:#fff;}
+.agreement_tle{ height:30px; line-height:30px; font-size:16px; font-weight:bold; color:#2d2d2d; background:#eaf2fa; text-align:center; border-bottom:1px #d9e5f2 solid; position:relative;}
+.agreement_tle a{ position:absolute; right:10px; top:10px;}
+.agreement_cnt{ width:505px; height:220px; overflow:scroll; overflow-x:hidden; border:1px #b4b4b4 solid; margin:0 auto; margin-top:10px; color:#666; padding:5px 10px; line-height:20px;}

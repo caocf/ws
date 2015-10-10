@@ -1,0 +1,6 @@
+news#105#新闻#t_c_news_dc_site#{"id":"rid","name":"newstitle","field":[{"nid":"newssite","sname":"新闻采集站点"},{"nid":"newstitle","sname":"新闻标题"},{"nid":"newskeywords","sname":"新闻关键词"},{"nid":"newscontent","sname":"新闻内容"}]}
+book#101#阅读#t_c_book_dc_site#{"id":"contid","name":"bookname","field":[{"nid":"bookname","sname":"图书名称"},{"nid":"bookauthor","sname":"图书作者"},{"nid":"bookkeywords","sname":"图书关键词"},{"nid":"booksite","sname":"图书采集站点"}]}
+app#107212#软件|应用#t_c_soft_dc_site#{"id":"rid","name":"softname","field":[{"nid":"softsite","sname":"软件采集站点"},{"nid":"softname","sname":"站点软件名称"},{"nid":"softos","sname":"操作系统"},{"nid":"softfilesize","sname":"软件大小"},{"nid":"softprice","sname":"软件价格"}]}
+game#107213#软件|游戏#t_c_soft_dc_site#{"id":"rid","name":"softname","field":[{"nid":"softsite","sname":"软件采集站点"},{"nid":"softname","sname":"站点软件名称"},{"nid":"softos","sname":"操作系统"},{"nid":"softfilesize","sname":"软件大小"},{"nid":"softprice","sname":"软件价格"}]}
+business#601#自有业务#t_c_self_dc#{"id":"rid","name":"busname","field":[{"nid":"busname","sname":"业务名称"},{"nid":"bustype","sname":"业务分类"},{"nid":"busprovince","sname":"业务归属省"},{"nid":"buscode","sname":"业务码"}]}
+prod#701#流量套餐#t_c_pack_dc#{"id":"rid","name":"packname","field":[{"nid":"packname","sname":"套餐名称"},{"nid":"packcode","sname":"套餐编码"},{"nid":"brand","sname":"品牌"},{"nid":"cost","sname":"资费信息"},{"nid":"netype","sname":"网络制式"}]}

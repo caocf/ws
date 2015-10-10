@@ -1,0 +1,212 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../includes/importer.jsp"%>
+<!doctype html>
+<html>
+	<head>
+	    <ht:head/>
+	    <script type="text/javascript">
+	    //选择退款商品
+// 	    function chooseRefundGoods(obj, count, maxCash, maxCoin){
+// 	    	if($(obj).attr("checked")){
+// 	    		var actOrderGoodsId = $(obj).attr("value");
+// 	    		$("#backNumber_" + actOrderGoodsId).val(count);
+// 	    		//$("#backNumber_" + actOrderGoodsId).attr("readonly",false);
+// 	    		$("#cash_" + actOrderGoodsId).val(maxCash);
+// 	    		$("#cash_" + actOrderGoodsId).attr("readonly",false);
+// 	    		$("#coin_" + actOrderGoodsId).val(maxCoin);
+// 	    		$("#coin_" + actOrderGoodsId).attr("readonly",false);
+// 	    	}else{
+// 	    		var actOrderGoodsId = $(obj).attr("value");
+// 	    		$("#backNumber_" + actOrderGoodsId).val("");
+// 	    		$("#backNumber_" + actOrderGoodsId).attr("readonly",true);
+// 	    		$("#cash_" + actOrderGoodsId).val("");
+// 	    		$("#cash_" + actOrderGoodsId).attr("readonly",true);
+// 	    		$("#coin_" + actOrderGoodsId).val("");
+// 	    		$("#coin_" + actOrderGoodsId).attr("readonly",true);
+// 	    	}
+// 		    getThisRefundAmount($(obj).attr("value"), maxCash, maxCoin);
+// 	    }
+	    
+	    //校验商品退款数量
+	    function getThisRefundBackNumber(goodsId, backNumberLimit){
+	    	$("#backNumber_" + goodsId + "_advice").css("color","#A9A9A9");	    		 
+	    	if(parseFloat(backNumberLimit) < parseFloat($("#backNumber_" + goodsId).val())){
+	    		alert("已超过最多可退数量，请重新输入！");
+	    		$("#backNumber_" + goodsId + "_advice").css("color","red");
+	    		$("#backNumber_" + goodsId).focus();
+	    		return null;
+	    	}
+	    }
+	    //校验退款金额及商城币
+	    function getThisRefundAmount(goodsId, cashLimit, coinLimit){
+	    	$("#cash_" + goodsId + "_advice").css("color","#A9A9A9");
+	    	$("#coin_" + goodsId + "_advice").css("color","#A9A9A9");
+	    	var cashs = $("input[name='cash']");
+	    	var coins = $("input[name='coin']");
+		    var sum = 0;
+		    var cashSum = 0;
+		    var coinSum = 0;
+		    if(parseFloat(cashLimit) < parseFloat($("#cash_" + goodsId).val())){
+	    		alert("已超过最高退款金额，请重新输入！");
+	    		$("#cash_" + goodsId + "_advice").css("color","red");
+	    		$("#cash_" + goodsId).focus();
+	    		$("#cash_" + goodsId).val(parseFloat(cashLimit));
+	    		return null;
+		    }	
+		    if(parseFloat(coinLimit) < parseFloat($("#coin_" + goodsId).val())){
+	    		alert("已超过最高退款商城币，请重新输入！");
+	    		$("#coin_" + goodsId + "_advice").css("color","red");
+	    		$("#coin_" + goodsId).focus();
+	    		$("#coin_" + goodsId).val(parseFloat(coinLimit));
+	    		return null;
+		    }
+	    	for(var i = 0; i < cashs.length; i++){
+		    	var cash = cashs[i].value;
+		    	if("" == cash){
+		    		cash = 0;
+		    	}
+	    		cashSum += parseFloat(cash);
+	    	}
+	    	for(var i = 0; i < coins.length; i++){
+		    	var coin = coins[i].value;
+		    	if("" == coin){
+		    		coin = 0;
+		    	} 	
+	    		coinSum += parseFloat(coin);
+	    	}
+	    	sum = cashSum + coinSum;
+	    	$("#refundFee").val(sum);	
+	    	$("#thisRefundAmount").text("现金：" + cashSum + "元;商城币：" + coinSum + "元");
+// 	    	if(0 != cashSum || 0 != coinSum){
+// 	    		$("#thisRefundAmount").text("现金：" + cashSum + "元;商城币：" + coinSum + "元");
+// 	    		$("#refundReason").removeClass("req").addClass("req");
+// 	    		$("#reason").removeClass("required").addClass("required");    		
+// 	    	}else{
+// 	    		$("#thisRefundAmount").text("现金：" + cashSum + "元;商城币：" + coinSum + "元");
+// 	    		$("#refundReason").removeClass("req");
+// 	    		$("#reason").removeClass("required");
+// 	    	}
+	    }
+	    </script>
+	</head>
+	<body>
+		<div id="content">
+			<div class="box">
+			    <div class="title">
+			        <h5>退款单</h5>
+			    </div>
+			    <form:form method="post" id="fm"  commandName="orderRefund" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate">
+			        <div class="form">
+			            <form:hidden path="orderId"/>
+			            <form:hidden path="storeId"/>
+			            <div class="fields">
+			                <div class="field">
+			                    <div class="label noinput">订单编号：</div>
+			                    <div class="input">${orderRefund.orderId}</div>
+			                </div>
+			                <div class="field">
+			                    <div class="label noinput">退款单号：</div>
+			                    <div class="input">自动生成</div>
+			                </div>
+			                <div class="field">
+			                    <div class="label">
+			                    	<label style="color: red;">可退款商品：</label>			                    
+			                    </div>
+								<div class="select">
+									<c:choose>
+									<c:when test="${not empty actOrderGoodsList}">
+									<table class="datalist fixwidth">
+										<tr>
+<!-- 											<th nowrap="nowrap" width="30">选择</th> -->
+											<th nowrap="nowrap" style="border-right: hidden;" width="200"></th>
+							                <th nowrap="nowrap" style="border-right: hidden;border-left: hidden;" width="100">商品</th>
+							                <th nowrap="nowrap" style="border-left: hidden;" width="100"></th>
+							                <th nowrap="nowrap" style="border-right: hidden;" width="100">现金</th>
+							                <th nowrap="nowrap" style="border-left: hidden;" width="100">商城币</th>
+							            </tr>
+										<c:forEach items="${actOrderGoodsList}" var="goods">
+							            <tr>
+<!-- 							            	<td nowrap="nowrap"> -->
+<%-- 							                	<input type="checkbox" name="actOrderGoodsCheck" value="${goods.id}" onclick="chooseRefundGoods(this, '${goods.count}','${goods.maxCash}','${goods.maxCoin}')" /> --%>
+<!-- 							                </td> -->
+							                <td nowrap="nowrap" class="ellipsis" style="border-right: hidden;">
+							                	${goods.goodsName}
+							                </td>
+							                <td nowrap="nowrap" style="border-right: hidden;border-left: hidden;">
+							                	数量：${goods.count}
+							                </td>
+							                <td nowrap="nowrap" style="border-left: hidden;">
+							                	退
+							                	<input type="text" id="backNumber_${goods.id}" name="backNumber" value="${goods.count}" readonly onblur="getThisRefundBackNumber('${goods.id}', '${goods.count}')" style="width:60px;height:20px;" maxlength="9" />
+							                	个&nbsp;&nbsp;&nbsp;&nbsp;<font id="backNumber_${goods.id}_advice" style="font-style: italic;color: #A9A9A9;"><br />最多可退${goods.count}个</font>
+											</td>
+							                <td nowrap="nowrap" style="border-right: hidden;">
+							                	<input type="text" id="cash_${goods.id}" name="cash" value="${goods.maxCash}" onblur="getThisRefundAmount('${goods.id}', '${goods.maxCash}', '')" style="width:60px;height:20px;" maxlength="9" />
+							                	<font id="cash_${goods.id}_advice" style="font-style: italic;color: #A9A9A9;"><br />最多可退${goods.maxCash}元</font>
+							                	<input type="hidden" name="actOrderGoodsId" value="${goods.id}"/>
+							                	<input type="hidden" name="goodsId" value="${goods.goods_id}"/>
+							                </td>
+							                <td nowrap="nowrap" style="border-left: hidden;">
+							                	<input type="text" id="coin_${goods.id}" name="coin" value="${goods.maxCoin}" onblur="getThisRefundAmount('${goods.id}', '', '${goods.maxCoin}')" style="width:60px;height:20px;" maxlength="9" />
+							                	<font id="coin_${goods.id}_advice" style="font-style: italic;color: #A9A9A9;"><br />最多可退${goods.maxCoin}元</font>
+											</td>
+							            </tr>
+							            </c:forEach>
+									</table>
+									</c:when>
+									<c:otherwise>
+									无订单商品
+									</c:otherwise>
+									</c:choose>
+								</div>
+			                </div>
+			                <div class="field">
+			                    <div class="label noinput">订单价格：</div>
+			                    <div class="input">
+			                    <c:choose>
+				                    <c:when test="${not empty orderSum}">
+				                    ${orderSum}元&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(包含物流费：<c:choose><c:when test="${not empty expressCost}">${expressCost}</c:when><c:otherwise>0</c:otherwise></c:choose>元)
+				                    </c:when>
+				                    <c:otherwise>0元</c:otherwise>
+			                    </c:choose>
+								</div>
+			                </div>
+			                <div class="field">
+			                    <div class="label noinput">已退金额：</div>
+			                    <div class="input">
+			                    <c:choose>
+				                    <c:when test="${not empty oldRefundAmount}">${oldRefundAmount}</c:when>
+				                    <c:otherwise>0</c:otherwise>
+			                    </c:choose>元			                    	
+			                    </div>
+			                </div>
+			                <div class="field">
+			                    <div class="label noinput">本次退款金额：</div>
+			                    <div id="thisRefundAmount" class="input" style="color: red;">现金：${totalCash }元;商城币：${totalCoin }元</div>
+			                    <input type="hidden" id="refundFee" name="refundFee" value="${totalCash+totalCoin}"/>
+			                </div>
+			                <div class="field">
+			                    <div class="label label-textarea">
+			                        <label id="refundReason" class="req" for="reason">退款理由：</label>
+			                    </div>
+			                    <div class="input">
+			                        <textarea id="reason" class="required" name="reason" cols="50" rows="8" placeholder="输入退款理由..." class="max-length-150">${sysProperty.content}</textarea>
+			                        <span class="error" id="advice-required-reason" style="display:none"></span>
+			                        <span class="error" id="advice-max-length-reason" style="display:none"></span>
+			                        <span class="error" id="advice-server-reason" style="display:none"></span>
+			                    </div>
+			                </div>
+			                <div class="buttons">
+			                    <div class="highlight">
+			                        <input type="submit" name="submit.highlight" value="提交" />
+			                    </div>
+			                    <input type="reset" name="reset" value="重置" />
+			                    <a href="javascript:history.go(-1)" class="btnAnchor">返回</a>
+			                </div>
+			            </div>
+			        </div>
+			    </form:form>
+			</div>
+		</div>
+	</body>
+</html>

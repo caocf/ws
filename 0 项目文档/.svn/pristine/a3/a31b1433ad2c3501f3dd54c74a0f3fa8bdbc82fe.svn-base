@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_verify_consume_notify ON "LIFE".t_verify_consume_notify(order_id);

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "LIFE".uni_item_lashou_teamid ON "LIFE".t_item_lashou(item_id);

@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_page_static_info

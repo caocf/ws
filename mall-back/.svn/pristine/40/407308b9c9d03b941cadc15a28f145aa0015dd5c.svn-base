@@ -1,0 +1,119 @@
+package com.cplatform.mall.back.item.service;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.dao.BrandDao;
+import com.cplatform.mall.back.item.entity.Brand;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+@Service
+public class BrandService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private BrandDao brandDao;
+
+	@Autowired
+	private BsFileService bsFileService;
+
+	/**
+	 * 品牌列表
+	 * 
+	 * @param name
+	 *            品牌名称
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<Brand> listBrand(String name) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT *  FROM T_BRAND WHERE IS_VALID=1 ");
+		List params = new ArrayList();
+		if (StringUtils.isNotEmpty(name)) {
+			sql.append(" and NAME like ?");
+			params.add("%" + name + "%");
+		}
+		return dbHelper.getBeanList(sql.toString(), Brand.class, params.toArray());
+	}
+
+	public Page<Brand> listBrand(Brand brand, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT *  FROM T_BRAND WHERE 1=1 ");
+		List params = new ArrayList();
+		if (StringUtils.isNotEmpty(brand.getName())) {
+			sql.append(" and NAME like ?");
+			params.add("%" + brand.getName() + "%");
+		}
+		if (StringUtils.isNotEmpty(brand.getQueryStartTime())) {
+			sql.append(" and CREATE_TIME >= ? ");
+			params.add(brand.getQueryStartTime() + "000000");
+		}
+		if (StringUtils.isNotEmpty(brand.getQueryEndTime())) {
+			sql.append(" and CREATE_TIME <= ? ");
+			params.add(brand.getQueryEndTime() + "235959");
+		}
+		sql.append("order by id desc");
+		return dbHelper.getPage(sql.toString(), Brand.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 保存品牌
+	 * 
+	 * @param store
+	 *            商户实体类
+	 * @param is
+	 *            文件流
+	 * @param list
+	 *            选择的渠道商列表
+	 * @param opType
+	 *            操作类型 true 修改 false 增加
+	 * @throws Exception
+	 */
+
+	@Transactional
+	public void saveUpdateBrand(Brand brand, MultipartFile uploadfile) throws Exception {
+		if (null == brand.getIsreUpload() || "1".equals(brand.getIsreUpload())) {
+			if (uploadfile != null && !uploadfile.isEmpty()) {
+				PathInfo pathinfo = bsFileService.dealModuleFile(uploadfile, BsFileService.MODULE_BRAND_IMG_KEY);
+				// 保存文件表
+				brand.setBrandImg(pathinfo.getRealWebPath(""));
+			}
+		}
+
+		brand.setCreateTime(TimeStamp.getTime(14));
+		brand.setIsValid("1");
+
+		Brand restore = brandDao.save(brand);
+
+	}
+
+	/**
+	 * 删除品牌
+	 * 
+	 * @param id
+	 *            品牌id
+	 * @throws IOException
+	 */
+
+	@Transactional
+	public void deleteBrand(Long id) throws IOException {
+		// Brand brand = brandDao.findOne(id);
+		// brand.setIsValid("0");
+		// brandDao.save(brand);
+		brandDao.delete(id);
+	}
+}

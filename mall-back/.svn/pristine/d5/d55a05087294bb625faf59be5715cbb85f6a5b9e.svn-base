@@ -1,0 +1,177 @@
+package com.cplatform.mall.back.store.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.store.dao.ShopUserDao;
+import com.cplatform.mall.back.store.entity.ShopUser;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 渠道商、结算商户、业务门店账号 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-1 下午2:54:49
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: baibo@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service("shopUserService")
+public class ShopUserService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	/**
+	 * logger
+	 */
+	protected static final Log logger = LogFactory
+			.getLog(ShopUserService.class);
+
+	@Autowired
+	private ShopUserDao shopUserDao;
+
+	@Autowired
+	private AppConfig config;
+
+	/**
+	 * 账号查询
+	 * 
+	 * @param user
+	 * @param pageNo
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ShopUser> findShopUser(ShopUser user, int pageNo)
+			throws SQLException {
+
+		StringBuilder sql = new StringBuilder();
+		sql.append("  select *                                    ");
+		sql.append("    from ((select su.*, s.name ,s.area_code   ");
+		sql.append("             from t_shop_user su, t_shop s    ");
+		sql.append("            where su.shop_class = 1           ");
+		sql.append("              and su.shop_id = s.id) union all");
+		sql.append("          (select su.*, s.name ,s.area_code   ");
+		sql.append("             from t_shop_user su, t_store s   ");
+		sql.append("            where su.shop_class in (2,3)      ");
+		sql.append("              and su.shop_id = s.id))         ");
+		sql.append("   where 1=1                                  ");
+		List params = new ArrayList();
+		if (null != user) {
+			if (StringUtils.isNotEmpty(user.getCode())) {
+				sql.append(" and code = ? ");
+				params.add(user.getCode());
+			}
+			if (null != user.getStatus()) {
+				sql.append(" and status = ? ");
+
+				params.add(user.getStatus());
+			}
+			if (null != user.getShopClass()) {
+				sql.append(" and shop_class = ? ");
+				params.add(user.getShopClass());
+			}
+			if (StringUtils.isNotEmpty(user.getMobile())) {
+				sql.append(" and mobile = ? ");
+				params.add(user.getMobile());
+			}
+
+			if (StringUtils.isNotEmpty(user.getName())) {
+				sql.append(" and name like ?");
+				params.add("%" + user.getName() + "%");
+
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_SHOPUSER));
+		sql.append("order by id desc                              ");
+		return dbHelper.getPage(sql.toString(), ShopUser.class, pageNo,
+				Page.DEFAULT_PAGESIZE, params.toArray());
+
+	}
+
+	/**
+	 * 创建商户管理员
+	 * 
+	 * @param shopClass
+	 *            商户类型1--业务门店 2--商户 3--渠道商
+	 * @param shopId
+	 *            商户ID
+	 * @param prefix
+	 *            用户名前缀
+	 */
+	/**
+	 * 创建商户用户
+	 * 
+	 * @param shopClass
+	 *            2--商户 3--渠道商
+	 * @param shopId
+	 *            商户ID
+	 * @param type
+	 *            1:商户管理员 2：普通用户
+	 * @return
+	 */
+	public ShopUser saveShopUser(Long shopClass, Long shopId, Long type) {
+		ShopUser shopUser = new ShopUser();
+		shopUser.setCode(shopUser.prefixMap.get(shopClass) + shopId);
+		shopUser.setPwd(ShopUser.INIT_PWD);
+		shopUser.setNickName(shopUser.prefixMap.get(shopClass) + shopId);
+		shopUser.setShopClass(shopClass);
+		shopUser.setUpdateTime(TimeStamp.getTime(14));
+		shopUser.setStatus(1l);
+		shopUser.setType(type);
+		shopUser.setShopId(shopId);
+		shopUserDao.save(shopUser);
+		if (type == 2L) {
+			String sql = config.getShopUserRole();
+			// sql = sql.replaceAll("userid", shopUser.getId().toString());
+			try {
+				dbHelper.execute(sql, shopUser.getId());
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return shopUser;
+
+	}
+
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public ShopUser findShopUserById(Long id) {
+		ShopUser shopUser = shopUserDao.findOne(id);
+
+		return shopUser;
+		}
+	/**
+	 * 
+	 * @param shopUser
+	 */
+	public void updateUserStatus(ShopUser shopUser) {
+		shopUserDao.save(shopUser);
+	}
+
+	
+	public ShopUser UpdateShopUserRegon(ShopUser user){
+		
+	return	shopUserDao.save(user);
+		
+	}
+}

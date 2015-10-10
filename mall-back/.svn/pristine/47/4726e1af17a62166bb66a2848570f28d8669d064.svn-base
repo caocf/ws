@@ -1,0 +1,952 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <head>
+    <ht:head/>
+    <script type="text/javascript"><!--
+    //提交Ajax获取该区域的价格设置,本版默认选择江苏省的
+    $(document).ready(function(){
+		// 区域代码写死为江苏省320000
+    	saleAreaCode= 320000;
+    	$.ajax({
+ 		   type: "POST",
+ 		   url: "getPrice/"+saleAreaCode,
+ 		   cache: false,
+ 		   dataType:"json",
+ 		   success: function(msg){
+ 			   var htmlStr="<table border='0' style='width:350px'   id='TbData' name='TbData'  cellpadding='0' cellspacing='0' >";
+ 			   for(var i=0;i<msg.length;i++){
+ 				   htmlStr=htmlStr+"<tr >"
+ 					   +"<td align='right'>"+msg[i].priceType+":</td><td><input name='priceTypeCode'   type='hidden' value='"+msg[i].priceTypeCode+"' /><input name='price'  value='0' onkeyup='if(this.value==this.value2)return;if(this.value.search(/^\\d*(?:\\.\\d{0,4})?$/)==-1)this.value=(this.value2)?this.value2:&quot;&quot;;else this.value2=this.value;' type='text' value='0' maxlength='50' />元</td>"
+ 					   +"</tr>";
+ 	    	  }
+ 			   htmlStr=htmlStr+" </table><span class='error' id='advice-required-price' style='display:none'></span>";
+ 			   
+ 			   $("#priceId").html(htmlStr);
+ 		   }
+ 		});
+    	//选择商品分类
+    	selectItemType("#typeName",function(id,txt){
+    		var storeId=$("#storeId").val();
+        	if(storeId==""){
+        		alert("请选择商户！");
+        		$("#storeName").focus();
+        		return;
+        	}
+    		$("#typeId").val(id);
+    		$("#typeName").val(txt);
+    		//加载分类属性
+    		$("#parameterId").load("${ctx}/item/item/loadProperty/"+id+"/"+storeId);
+    		
+    		$("#typeName").focus();
+    		$("#typeName").blur();
+    	});
+    	
+    		//选择货架类型
+    	var returnStoreShelf = selectStoreShelf("#goodTypeName","storeId",function(id,name){
+    		 $("#goodTypeName").val(name);
+    		 $("#goodTypeId").val(id);
+    	});
+    	
+    	//选择商户
+    	$("#storeName").click(function(){
+    		selectStoreCallBack("",function(storeId,storeName,shopClass){
+    			if( $("#storeId").val() && storeId != $("#storeId").val()){
+    				returnStoreShelf.clearTreeBox();
+    				//清空商品分类
+    				$("#typeId").val("");
+    	    		$("#typeName").val("");
+    	    		//清空货架分类
+    	    		 $("#goodTypeName").val("");
+    	    		 $("#goodTypeId").val("");
+    	    		 //清空分类加载的参数
+    	    		 $("#parameterId").empty();
+    	    		 //清空销售门店
+    	    		$("#saleShopIds").val("");
+    	    		$("#saleShopName").val("");
+    	    		//清空验证门店	
+    	    		$("#verifyShopName").val("");
+    	    		$("#verifyShopIds").val(""); 
+    			}
+    			$("#storeId").val(storeId);
+        		$("#storeName").val(storeName);
+        		$("#shopClass").val(shopClass);
+        		
+        		$("#storeName").focus();
+    	    	$("#storeName").blur();
+    		});
+			
+		});
+    	
+    	//商品类型
+		$("input[type='radio'][name='itemMode']").click(function(){
+			if(this.value==1){
+				//#$("#virtualTypeView").show();
+				
+				$("#sendCodeMode").val("2");
+				$("#selSendCode").show();
+				$("#selLogistics").hide(); 
+				$("#div_saleShopName").show();
+			}else{
+				//选择实物时，把虚拟产品类型置为不选中
+				//#$("input[type='radio'][name='virtualType']").attr("checked",false);//
+				//#$("#virtualTypeView").hide();
+				$("#sendCodeMode").val("0");
+				$("#selLogistics").show(); 
+				$("#selSendCode").hide();
+				$("#div_saleShopName").hide()
+			}
+		});
+		
+
+		//增加商品属性
+		$("#add").click(function() { 
+			if($("#shuxDivId").is(":hidden")){
+    			$("#shuxDivId").show();
+    		}
+    		var html=      "<div class='input' >"+
+
+            "  <select name='propertyId'>"+
+             "   <c:forEach items='${sysPropertyList}' var='item' varStatus='index'>"+
+              "   <option value='${item.id}'>${item.content}</option>"+
+                " </c:forEach>"+
+               " </select>："+
+           "  <input type='hidden'  name='flag' id='flag' value='0'/>"+
+           "    <input type='text'  name='itemProperyName' maxlength='100' class='small required'/>"+
+           "   <input class=\"file\" style=\"display: inline; width: 250px;\"></input>"+
+           " <a class=\"ui-input-file\"><input type=\"file\" size=\"40\" re=\"\" name=\"uploadPropertyPic\" style=\"position: relative; height: 28px; width: 200px; display: inline-table; cursor: pointer; opacity: 0; margin-left: -142px;\" ></input></a>"+
+           "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+
+           "      <a href='javascript:void(0);' id='del' onclick='delDiv(this)' title='删除'><font color='red'>删除</font></a>"+
+           "    <span class='error' id='advice-required-itemProperyName' style='display:none'></span>"+
+ 
+      " </div>"; 
+    		 $('#divAdd').append(html); 
+    	});	
+    	//增加自定义参数
+    	$("#addpara").click(function() {
+    		
+    		if($("#canshuDivId").is(":hidden")){
+    			$("#canshuDivId").show();
+    		}
+    		var html= "<div class='dl'><br /><span style='float:left'>参数名称：</span><input type='text' name='customparakey' class='required'  maxlength='10'/><span style='float:left'>参数值:</span><input type='text' name='customparavalue' class='required'  maxlength='10'/>"+
+    		"<a href='javascript:void(0);' id='del' onclick='delpara(this)' title='删除'><font color='red'>删除</font></a></div>";
+    		 $('#divAddpara').append(html); 
+    	});
+    	
+    	
+	
+    	
+    	//是否需要物流触发的事件
+        $(':radio[name="postFlag"]').click(function(){
+    	    var val= $(':radio[name="postFlag"]:checked').val(); 
+    	    if(val==0) {//选择不发码
+    	    	$("#logisticsType").attr("checked",'');//
+    		    $("#isPost").hide();
+    		    $("#postArea").val(""); 
+    		    $("#postAreaCode").val("");
+    		    $("#logisticsFee").val("");
+    	    }
+    	    if(val==1){
+    		    $("#isPost").show();  
+    		    $("#logisticsType").attr("checked",true);//
+    	    }
+        });
+		//码验证方式 @add_by macl@c-platform.com
+        $(':radio[name="radio-verify"]').click(function(){
+            var val = $(':radio[name="radio-verify"]:checked').val();
+			if(val==0){
+				$("#verifyTime").show();
+	    		$("#verifyDays").hide();
+			}else{
+				$("#verifyDays").show();
+				$("#verifyTime").hide();
+			}
+        });
+    	
+      //发码方式触发的事件
+        $(':radio[name="sendCodeMode"]').click(function(){
+    	    var val= $(':radio[name="sendCodeMode"]:checked').val(); 
+    	    if(val==0) {//选择不发码
+    	    	 //#改由“商品类型”触发
+        	    
+    		    $("#selLogistics").show(); 
+    		    $("#selSendCode").hide();
+    		    //发码方式
+    		    $("input[type='radio'][name='verifyCodeType']").attr("checked",false);
+    		    //发码方设置
+    		    $("input[type='radio'][name='sendCodeChannel']").attr("checked",false);
+    		    //验证开始时间
+    		    $("#verifyStartTime").val("");
+    		    //验证结束时间
+    		    $("#verifyStopTime").val("");
+    		    //验证天数
+    		    $("#verifyDay").val("");
+    		    //验证门店设置空
+    		    $("#verifyShopName").val("");
+    		    $("#verifyShopIds").val("");
+    		    //制码渠道
+    		    $("#select option[value='']").attr("selected","selected");
+    		    
+    		    
+    	    }else{
+        	    //#改由“商品类型”触发
+        	    
+    		    $("#selLogistics").hide(); 
+    		    $("#selSendCode").show();  
+    		    //是否需要物流
+    		    $("input[type='radio'][name='postFlag']").attr("checked",false);
+    		    //配送区域
+    		    $("#postArea").val("");
+    		    $("#postAreaCode").val("");
+    		    $("#logisticsFee").val("");
+    		    
+    		    
+    	    }
+        });
+        
+      //发码方设置触发的事件
+        $(':radio[name="sendCodeChannel"]').click(function(){
+    	    var val= $(':radio[name="sendCodeChannel"]:checked').val(); 
+    	    if(val==2) {
+    		    $("#sendCodeSrcId").show(); 
+    	    }else{
+    		    $("#sendCodeSrcId").hide(); 
+    		  //制码渠道
+    		    $("#select option[value='']").attr("selected","selected");
+    	    }
+        });
+      
+        $(':checkbox[name="buyLimit"]').click(function(){
+        	 if($("#checkbox-1").attr("checked")){
+        		 $("#userLimit").show(); 
+        	 }else{
+        		 $("#userLimit").hide(); 
+        		 $("input[type='checkbox'][name='userLimitCode']").attr("checked",false);
+        		 
+        	 }
+        	 if($("#checkbox-2").attr("checked")){
+        		 $("#areaLimit").show(); 
+        	 }else{
+        		 $("#areaLimit").hide(); 
+        		 $("#areaLimitName").val("");
+     		    $("#areaLimitCode").val("");
+        	 }
+        	 if($("#checkbox-3").attr("checked")){
+        		 $("#numLimit").show(); 
+        	 }else{
+        		 $("#numLimit").hide(); 
+        		 $("#userPerBuyNum").val("");
+        	 }
+        });
+        
+    	$("#saleShopName").click(function(){
+    		var storeId=$("#storeId").val();
+        	if(storeId==""){
+        		alert("请选择商户！");
+        		$("#storeName").focus();
+        		return;
+        	}
+        	selectShop(storeId,$("#saleShopIds").val(),function(ids,txts){
+        		$('#saleShopIds').val(ids.join(","));
+        		$('#saleShopName').val(txts.join(","));
+        	});
+    		
+    			
+    	});
+    	$("#verifyShopName").click(function(){
+    		var storeId=$("#storeId").val();
+        	if(storeId==""){
+        		alert("请选择商户！");
+        		$("#storeName").focus();
+        		return;
+        	}
+           selectShop(storeId,$("#verifyShopIds").val(),function(ids,txts){
+        		$('#verifyShopIds').val(ids.join(","));
+        		$('#verifyShopName').val(txts.join(","));
+        	});
+    	});
+    	//配送区域
+    	selectRegion("#postArea","postAreaCode","postArea",0,{index:1});
+    	//购买区域
+    	selectRegion("#areaLimitName","areaLimitCode","areaLimitName",0,{index:2});
+    	//销售区域==显示区域
+    	selectRegionCallBack("#saleAreaName",function(saleAreaCode,saleAreaName){
+    		$("#saleAreaCode").val(saleAreaCode);
+    		$("#saleAreaName").val(saleAreaName);
+    		
+    		$("#saleAreaName").focus();
+    		$("#saleAreaName").blur();
+
+    	},0,{index:3/*maxItems:1*/});
+    	//设置库存不限操作
+    	$("#unlimitedStockNum").click(function(){
+    		 if($("#unlimitedStockNum").attr("checked")=="checked"){
+    			 $("#stockNum").attr({ readonly: 'true' });  
+    			 $("#stockNum").val("0");
+    	        }else{
+    	        	$("#stockNum").removeAttr("readonly");    	
+    	        }
+    	});
+    	//选择品牌
+    	$("#brand").click(function(){
+    	  	 selectBrand("brand"); 
+    	  }
+    	);
+    	
+	});	
+    function sub(){
+    	var obj = document.getElementsByName("flag");
+    	var picObj =  document.getElementsByName("uploadPropertyPic");
+    	for(var i=0;i<obj.length;i++){
+    		if(picObj[i].value !='' && picObj[i].value!=null){
+    			obj[i].value = '1';
+    		}
+    	}
+    }
+    function delDiv(t){ 
+    	// del为删除input的id	
+    	$(t).parent().remove();
+    }
+    function delpara(t){ 
+    	$(t).parent().remove();
+    }
+    
+    --></script>
+ 
+    </head>
+<body >
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>添加商品</h5>
+    </div>
+    <!-- end box / title -->
+<form:form method="post" action="/item/item/add.do" id="fm" commandName="itemOrg" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate" enctype="multipart/form-data" onsubmit="sub()">
+       <form:hidden path="groupFlag" value="0"/>
+        <div class="form">
+            <div class="fields">
+            	<h3>1.基本信息</h3>	
+            <div class="field">
+						<div class="label">
+							<label for="shopId" class="req">所属商户：</label>
+						</div>
+						<div class="input">
+						    <form:hidden path="storeId" maxlength="100"/>
+							<form:hidden path="shopClass"  maxlength="100"/>
+							<form:input path="storeName" maxlength="100" readonly="true" cssClass="small required" />
+							<span class="error" id="advice-required-shopId" style="display:none"></span>
+						</div>
+				</div>
+                <div class="field"  id="typeIdDiv">
+						<div class="label">
+							<label for="typeId" class="req">商品分类：</label>
+						</div>
+						<div class="input">
+							<form:hidden path="typeId" cssClass="small required" maxlength="100"/>
+							<form:input path="typeName" maxlength="100" readonly="true" cssClass="small required" />
+							<span class="error" id="advice-required-typeName" style="display:none"></span>
+						</div>
+				</div>
+				<div class="field" style="display: none">
+						<div class="label">
+							<label for="goodTypeName" >货架分类：</label>
+						</div>
+						<div class="input">
+						    <form:hidden path="goodTypeId" />
+							<form:input path="goodTypeName" maxlength="100" readonly="true" cssClass="small" />
+						</div>
+				</div>
+				<div class="field">
+                   <div class="label label-radio">
+                        <label for="itemMode">商品类型：</label>
+                    </div>
+                    <div class="radios">
+                        <div class="radio">
+                        	<c:forEach items="${itemModeMap}" var="item" varStatus="index">
+                            <input type="radio" id="radio-${index.count }" name="itemMode" class="validate-one-required"  <c:if test="${index.count==1 }">checked="checked"</c:if> value="${item.key}"/><label for="radio-${index.count }">${item.value }</label>
+                            </c:forEach>
+                        </div>
+                        <span class="error" id="advice-validate-one-required-itemMode" style="display:none"></span>
+                         </div>
+                    </div>
+                    
+                    
+                    
+                    			<div class="field">
+							<div class="label">
+								<label for="saleStopTime" class="req">是否秒杀:</label>
+							</div>
+							<div class="select">
+									<select name="iseckill"
+									class="validate-selection">
+									<option value="">请选择</option>
+									<option value="1">是</option>
+									<option value="0">否</option>
+								</select>
+							</div>
+						</div>
+                    <!--  =============虚拟产品类型隐藏 =======
+                   <div class="field" id="virtualTypeView" style="display: none">
+                   <div class="label label-radio">
+                        <label for="virtualType" class="req">虚拟产品类型：</label>
+                    </div>
+                    <div class="radios">
+                        <div class="radio">
+                        	<c:forEach items="${virtualTypeMap}" var="item" varStatus="index">
+                             <input type="radio" id="radio-1${index.count }" name="virtualType" class="validate-one-required"   value="${item.key}"/><label for="radio-1${index.count }">${item.value }</label>
+                            </c:forEach>
+                        </div>
+                        <span class="error" id="advice-validate-one-required-virtualType" style="display:none"></span>
+                        <span class="error" id="advice-validate-one-required-itemMode" style="display:none"></span>
+                         </div>
+                    </div>
+                     =============虚拟产品类型隐藏 ======= -->
+                <div class="field">
+                    <div class="label">
+                        <label for="name" class="req">商品名称：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="name"  maxlength="100" cssClass="small required"/>
+                         <span class="error" id="advice-required-name" style="display:none"></span>
+                    </div>
+                </div>
+                
+                 <div class="field">
+                    <div class="label">
+                        <label for="shortName" class="req">商品简称：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="shortName" maxlength="50" cssClass="small required"/>
+                        <span class="error" id="advice-required-shortName" style="display:none"></span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="label">
+                        <label for="brand" class="req">品牌：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="brand" value="其它"  cssClass="small required" readonly="true"/><!-- <a href="javascript:void(0);" id="selectBrand">选择</a>  -->
+                         <span class="error" id="advice-required-name" style="display:none"></span>
+                    </div>
+                </div>
+                
+                   
+                    
+                  
+                    
+                    
+             
+				 <div class="field" >
+                    <div class="label">
+                    	<label for="uploadfile" class="req">商品封面图：</label>
+                    </div>
+                    <div class="input input-file">
+                        <input type="file"  name="uploadfile" size="40" class="required validate-file-jpg-png-gif"  />
+                        <span class="error" id="advice-required-uploadfile" style="display:none"></span>
+                        <span class="error" id="advice-validate-file-uploadfile" style="display:none"></span>
+                    </div>
+                </div>
+               <div class="field">
+                    <div class="label label-textarea">
+                        <label for="tag">标签（用";"隔开）：</label>
+                    </div>
+                    <div class="input">
+                        <form:input path="tag" maxlength="100" cssClass="small" />
+                         <span class="error" id="advice-required-tag" style="display:none"></span>
+                    </div>
+                </div>
+                
+               	 <div class="field">
+                <div class="label">
+                 <label for="marketContent">营销语：</label>
+                 </div>
+                <div class="input">
+                <form:input path="marketContent"  maxlength="10" size="100"/>
+                <span class="error" id="advice-required-marketContent" style="display:none"></span>
+                </div>
+                </div>
+                    
+                 <div class="field">
+                <div class="label">
+                 <label for="warmPrompt">温馨提示：</label>
+                 </div>
+                <div class="input">
+                <form:input path="warmPrompt"  maxlength="40" size="100"/>
+                <span class="error" id="advice-required-warmPrompt" style="display:none"></span>
+                </div>
+                </div>
+                <div class="field">
+                    <div class="label label-textarea">
+                        <label for="remark">商品介绍：</label>
+                    </div>
+                    <div class="input">
+                    	<ht:xheditor/>
+                        <form:textarea path="remark" cols="50" rows="8" cssClass="cxheditor max-length-300"/>
+                    </div>
+                </div>
+                    
+              
+            </div>
+        </div>
+        
+        <!-- 商品参数信息 -->
+        
+         <div class="form">
+        <div class="fields">
+             
+              <div id="parameterId">
+              <!-- 此处加载商品参数 -->
+              </div>      		
+        	 <div class="field">
+                    <div class="label">
+                        <label for="name">自定义参数</label>
+                    </div>
+                    <div class="input">
+                    		<a href="javascript:void(0);" id="addpara">增加一个参数</a> &nbsp;
+                    </div>
+            </div>
+            
+            <div class="field" id="canshuDivId" style="display: none;">
+             	<div class="label">
+                        <label for="name">&nbsp;</label>
+                </div>
+                <div class="input">
+	            	<div class="dl" id="divAddpara">
+	                </div>
+                </div>
+            </div>
+              
+            <!-- 
+        	<div class="field">
+                    <div class="label">
+                        <label for="name">商品属性</label>
+                    </div>
+                    <div class="input">
+                    		 <a href="javascript:void(0);" id="add">增加一个属性</a> &nbsp;
+                    </div>
+            </div>
+            
+            <div class="field" id="shuxDivId"  style="display: none;">
+                    <div class="label">
+                        <label for="name">&nbsp;</label>
+                    </div>
+	                <div class="dl" id="divAdd">
+	                
+	                </div>
+            </div>
+             -->
+            </div>
+              
+            </div>
+        </div>
+        
+        <div class="form">
+					<div class="fields">
+						<h3>2.销售信息</h3>	
+						<!-- ============不显示 发码方式======== start...-->
+						<input type="hidden" id="sendCodeMode" name="sendCodeMode" value="0">
+						<!-- 
+						<div class="field">
+							<div class="label label-radio">
+								<label for="sendCodeMode" class="req">发码方式:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-3" name="sendCodeMode" value="0"  class="validate-one-required" checked="checked" /><label for="radio-3">不发码</label> 
+									<input type="radio" id="radio-4" name="sendCodeMode" value="1"  class="validate-one-required"/><label for="radio-4">按照订单发码</label> 
+									<input type="radio" id="radio-5" name="sendCodeMode" value="2"  class="validate-one-required"/> <label for="radio-5">按照商品个数发码</label>
+								</div>
+								<span class="error" id="advice-validate-one-required-sendCodeMode"
+									style="display:none"></span>
+							</div>
+						</div>
+						 -->
+						 <!-- ============不显示 发码方式======== ...end-->
+						
+						<!-- 需要发码此div显示begin -->
+					<div id="selSendCode" style="display: none;">
+						
+						<!-- ======== 发码类型默认为“二维码”  ======start=== -->
+						<input type="hidden" name="verifyCodeType" value="2">
+						<!-- 
+						<div class="field">
+							<div class="label label-radio">
+								<label>发码类型设置:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-1" name="verifyCodeType" class="validate-one-required" value="1" /><label for="radio-1">一维码</label>
+									<input type="radio" id="radio-2" name="verifyCodeType" class="validate-one-required" value="2" /><label for="radio-2">二维码</label>
+								</div>
+								<span class="error" id="advice-validate-one-required-verifyCodeType" style="display:none"></span>
+							</div>
+						</div>
+						 -->
+						<!-- ======== 发码类型默认为“二维码”  ======end=== -->
+						
+						<!-- ======== 发码方默认为“方正码平台” ======start====== -->
+						<input type="hidden" name="sendCodeChannel" value="1">
+						<!-- 
+						<div class="field">
+							<div class="label label-radio">
+								<label>发码方设置:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-6" name="sendCodeChannel" class="validate-one-required" value="0"  /><label for="radio-6">平台自己</label>
+									<input type="radio" id="radio-7" name="sendCodeChannel" class="validate-one-required" value="1" /><label for="radio-7">方正码平台</label> 
+									<input type="radio" id="radio-8" name="sendCodeChannel" class="validate-one-required" value="2" /> <label for="radio-8">第三方应用</label>
+								</div>
+								<span class="error" id="advice-validate-one-required-sendCodeChannel"
+									style="display:none"></span>
+							</div>
+						</div>
+						 -->
+						<!-- 选择第三方应用此div显示begin -->
+						<!-- 
+						<div class="field" id="sendCodeSrcId" style="display: none;">
+							<div class="label">
+								<label for="select">选择制码渠道:</label>
+							</div>
+							<div class="select">
+								<select id="select" name="sendCodeSrc"
+									class="validate-selection">
+									<option value="">请选择</option>
+									<option value="10">85度C</option>
+									<option value="11">鲜芋仙</option>
+								</select>
+							</div>
+						</div>
+						 -->
+						<!-- 选择第三方应用此div显示 end-->
+						<!-- ======== 发码方默认为“房子码平台” ======end====== -->
+						
+						
+						<!-- =======验证时间和验证天数，二选一 start====== -->
+						<div class="field">
+							<div class="label">
+								 <label for="verifyStartTime" class="req">验证码有效期:</label>
+							</div>
+							 <div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-vt" name="radio-verify" class="validate-one-required" value="0"  /><label for="radio-vt">按时间验证</label>
+									<input type="radio" id="radio-vd" name="radio-verify" class="validate-one-required" value="1" /><label for="radio-vd">按天数验证 </label> 
+								</div>
+								<span class="error" id="advice-validate-one-required-sendCodeChannel"
+									style="display:none"></span>
+								<span class="error" id="advice-validate-one-required-radio-verify"></span>
+							</div>
+						</div>
+						
+						<div id="verifyTime" style="display:none">
+							<div class="field">
+								<div class="label">
+									<label for="verifyStartTime" class="req">验证开始时间:</label>
+								</div>
+								<div class="input">
+									<input type="text" id="verifyStartTime" name="verifyStartTime"
+										class="date required" readOnly
+										onfocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss' ,maxDate:'#F{$dp.$D(\'verifyStopTime\')||\'2020-10-01\'}'})" />
+								</div>
+							</div>
+							<div class="field">
+								<div class="label">
+									<label for="verifyStopTime" class="req">验证结束时间:</label>
+								</div>
+								<div class="input">
+									<input type="text" id="verifyStopTime" name="verifyStopTime" 
+										class="date required" readOnly
+										onfocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',minDate:'#F{$dp.$D(\'verifyStartTime\')}',maxDate:'2020-10-01'})" />
+								</div>
+							</div>
+						</div>
+						<div id="verifyDays" style="display:none">
+							<div class="field">	
+								<div class="label">
+									<label for="verifyDay" class="req">验证天数:</label>
+								</div>
+								
+								<div class="input">
+	                				<table border = "0">
+	                					<tr><td>购买成功起，</td>
+	                					<td><form:input path="verifyDay" cssClass="small required validate-pattern-/^\d+(\.\d+)?$/" maxlength="5" style="width:50px"/></td>
+	                					<td>天有效</td></tr>
+	                				</table>
+	                				<span class="error" id="advice-required-verifyDay" style="display:none"></span>
+								</div>
+								
+							</div>
+						</div>
+						<!-- =======验证时间和验证天数，二选一 start====== -->
+						
+						<div class="field">
+							<div class="label">
+								<label for="verifyShopName"  class="req">验证门店:</label>
+							</div>
+							<div class="input">
+								<form:input path="verifyShopName" cssClass="small required"
+									maxlength="100" readonly="true" />
+								<form:hidden path="verifyShopIds" />
+								<span class="error" id="advice-required-verifyShopName"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						</div>
+					<!-- 需要发码此div显示end -->
+
+						<!-- 不需要发码此div显示 begin -->
+                        <div id="selLogistics">
+
+						<!-- 不发码显示是否需要物流 -->
+						<div class="field">
+							<div class="label label-radio">
+								<label>物流信息:</label>
+							</div>
+							<div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-9" name="postFlag" value="0" class="validate-one-required"  checked="checked"/><label for="radio-9">用户自取</label> 
+									<input type="radio" id="radio-10" name="postFlag" value="1" class="validate-one-required" /><label for="radio-10">物流配送</label>
+								</div>
+								<span class="error" id="advice-validate-one-required-postFlag"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						<!-- 需要物流配送此div显示 begin-->
+						<div id="isPost" style="display: none;">
+							<div class="field">
+								<div class="label">
+									<label for="postArea" class="req">配送区域选择:</label>
+								</div>
+								<div class="input">
+									<form:input path="postArea" cssClass="small required"
+										maxlength="50" readonly="true"/><form:hidden path="postAreaCode"/>
+										
+									<span class="error" id="advice-required-postArea"
+										style="display:none"></span>
+								</div>
+							</div>	
+							<div class="field">	
+								<div class="label">
+									<label for="logisticsFee" class="req">物流运费:</label>
+								</div>
+								<div class="input">
+									 <form:input path="logisticsFee" cssClass=" required validate-pattern-/^\d+(\.\d+)?$/" maxlength="9"/>
+	                				 <input type="checkbox" id="logisticsType" name="logisticsType" value="1"   />累计计算
+									<span class="error"  id="advice-validate-pattern-logisticsFee" 
+										style="display:none" ></span>
+									 <span class="error" id="advice-required-logisticsFee" style="display:none"></span>
+								</div>
+								
+							</div>
+						</div>
+						<!-- 需要物流配送此div显示 end -->
+						</div>
+						<!-- 不需要发码此div显示  end-->
+						
+						
+						
+						<div class="field">
+							<div class="label">
+								<label for="saleStartTime" class="req">销售开始时间:</label>
+							</div>
+							<div class="input">
+								<input type="text" id="saleStartTime" name="saleStartTime"
+									 readOnly  class="date required"
+									onfocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',maxDate:'#F{$dp.$D(\'verifyStopTime\')||$dp.$D(\'saleStopTime\')||\'2020-10-01\'}'})" />
+							</div>
+						</div>
+						<div class="field">
+							<div class="label">
+								<label for="saleStopTime" class="req">销售结束时间:</label>
+							</div>
+							<div class="input">
+								<input type="text" id="saleStopTime" name="saleStopTime"  readOnly  class="date required"
+									onfocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',minDate:'#F{$dp.$D(\'saleStartTime\')}',maxDate:'2020-10-01'})" />
+							</div>
+						</div>
+						
+						
+						
+						
+						
+						<div class="field">
+							<div class="label">
+								<label for="saleAreaName" class="req">显示区域:</label>
+							</div>
+							<div class="input">
+								<form:input path="saleAreaName" cssClass="small required"
+									maxlength="100" readonly="true" />
+								<form:hidden path="saleAreaCode" />
+								<span class="error" id="advice-required-saleAreaName"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+					<div id="div_saleShopName" style="display: none;">
+						<div class="field">
+							<div class="label">
+								<label for="saleShopName" >销售门店:</label>
+							</div>
+							<div class="input">
+								<form:input path="saleShopName" cssClass="small"
+									maxlength="100" readonly="true" />
+								<form:hidden path="saleShopIds" />
+							</div>
+						</div>
+					</div>
+				<!-- 		
+				<div class="field">
+                    <div class="label label-checkbox">
+                        <label>购买用户限制:</label>
+                    </div>
+                    <div class="checkboxes">
+                        <div class="checkbox">
+                            <input type="checkbox" id="checkbox-1" name="buyLimit" value="0" /><label for="checkbox-1">会员级别限制</label> 
+							<input type="checkbox" id="checkbox-2" name="buyLimit" value="1"/><label for="checkbox-2">购买用户地市限制</label>
+							<input type="checkbox" id="checkbox-3" name="buyLimit" value="2" /><label for="checkbox-3">单个用户购买数量</label>
+                        </div>
+                        <span class="error" id="advice-validate-one-required-buyLimit" style="display:none"></span>
+                    </div>
+                </div>
+					 -->	
+						
+				<div class="field" id="userLimit" style="display: none;">
+                    <div class="label label-checkbox">
+                        <label>会员级别限制:</label>
+                    </div>
+                    <div class="checkboxes">
+                        <div class="checkbox">
+                            <input type="checkbox" id="checkbox-4" name="userLimitCode" value="0" class="validate-one-required" /><label for="checkbox-4">金会员</label> 
+							<input type="checkbox" id="checkbox-5" name="userLimitCode" value="1" class="validate-one-required"/><label for="checkbox-5">铜会员</label>
+							<input type="checkbox" id="checkbox-6" name="userLimitCode" value="2" class="validate-one-required"/><label for="checkbox-6">银会员</label>
+                        </div>
+                        <span class="error" id="advice-validate-one-required-userLimitCode" style="display:none"></span>
+                    </div>
+                </div>
+						
+						
+						<div class="field" id="areaLimit" style="display: none;">
+							<div class="label">
+								<label for="areaLimitName" class="req">购买用户地市限制:</label>
+							</div>
+							<div class="input">
+								<form:input path="areaLimitName" cssClass="small required"
+									maxlength="100" readonly="true" />
+								<form:hidden path="areaLimitCode" />
+								<span class="error" id="advice-required-areaLimitName"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						<div class="field" id="numLimit" style="display: none;">
+							<div class="label">
+								<label for="userPerBuyNum" class="req">单个用户购买数量:</label>
+							</div>
+							<div class="input">
+								<form:input path="userPerBuyNum" cssClass="required validate-pattern-/^\\d+$/"
+									maxlength="8"  />
+								<span class="error" id="advice-required-userPerBuyNum"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						<div class="field" >
+							<div class="label">
+								<label for="stockNum" class="req">商品库存:</label>
+							</div>
+							<div class="input">
+								<form:input path="stockNum" cssClass=" required validate-pattern-/^\\d+$/"
+									maxlength="8" /> <input type="checkbox" id="unlimitedStockNum" name="unlimitedStockNum" value="0"    >不限
+								<span class="error" id="advice-required-stockNum"
+									style="display:none"></span>
+								<span class="error" id="advice-validate-pattern-stockNum"
+									style="display:none"></span>
+							</div>
+						</div>
+						<div class="field" >
+							<div class="label">
+								<label for="marketPrice" class="req">市场价:</label>
+							</div>
+							<div class="input">
+								<form:input path="marketPrice" cssClass="required validate-pattern-/^\d+(\.\d+)?$/"
+									maxlength="9" />元
+								<span class="error"  id="advice-validate-pattern-marketPrice" 
+									style="display:none" ></span>
+								<span class="error" id="advice-required-marketPrice"
+									style="display:none"></span>
+							</div>
+						</div>
+						<div class="field" >
+							<div class="label">
+								<label for="shopPrice" class="req">商城价:</label>
+							</div>
+							<div class="input">
+								<form:input path="shopPrice" cssClass="required validate-pattern-/^\d+(\.\d+)?$/"
+									maxlength="9" />元
+								<span class="error"  id="advice-validate-pattern-shopPrice" 
+									style="display:none" ></span>
+								<span class="error" id="advice-required-shopPrice"
+									style="display:none"></span>
+							</div>
+						</div>
+						<!-- 
+						<div class="field" >
+							<div class="label">
+								<label for="settlePrice" class="req">结算价:</label>
+							</div>
+							<div class="input">
+								<form:input path="settlePrice" cssClass="required validate-pattern-/^\d+(\.\d+)?$/"
+									maxlength="9" />
+								<span class="error" id="advice-required-settlePrice"
+									style="display:none"></span>
+							</div>
+						</div>
+						 -->
+						<div class="field" >
+							<div class="label">
+								<label for="stockNum" class="req">支付价格配置:</label>
+							</div>
+							<div class="input" id="priceId">
+								&nbsp; 
+							</div>
+						</div>
+						<!-- 
+                <div class="field">
+                    <div class="label label-radio">
+                        <label>选择费率:</label>
+                    </div>
+                    
+                    <div class="select">
+                    <select name="feeType">
+                    <c:forEach items="${feeList }" var="item">
+					      <option value="${item.id }">${item.name }</option>              
+                    </c:forEach>
+                    
+                    </select>
+                    </div>
+               </div>	
+ -->
+						   <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight"  value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                   <input type="button" class="common_btn" onClick="history.back();" value="返回" />
+                </div>
+					</div>
+				</div>
+        
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+</body>
+</html>

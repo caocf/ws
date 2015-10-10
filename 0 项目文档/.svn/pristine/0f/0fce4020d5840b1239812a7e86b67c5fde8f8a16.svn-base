@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx__pay_order_01 ON "LIFE".t_pay_order(act_order_id);

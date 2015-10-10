@@ -1,0 +1,124 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <head>
+    <ht:head/>
+    <ht:xheditor />
+    </head>
+<body>
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>
+        ${tp=='view'?"查看公告":"审核公告" }</h5>
+    </div>
+    <!-- end box / title -->
+
+        <div class="form">
+            <div class="fields">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">${sysAnnouncement.id}</div>
+                </div>
+
+                <div class="field">
+                    <div class="label noinput">发布对象：</div>
+                    <div class="input">${destMap[sysAnnouncement.pubDest]}</div>
+                </div>
+
+                <div class="field">
+                    <div class="label noinput">公告标题：</div>
+                    <div class="input">${sysAnnouncement.title}</div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        <label >公告内容：</label>
+                    </div>
+                    <div class="input">
+                        <textarea class="cxheditorprev" name="description" style="width:100%;height:400px;">${sysAnnouncement.description}</textarea>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label noinput">状态：</div>
+                    <div class="input">${statusMap[sysAnnouncement.pubStatus]}</div>
+                </div>
+
+                <c:if test="${not empty pubUser}">
+                <div class="field">
+                    <div class="label noinput">发布人：</div>
+                    <div class="input">${pubUser.userName}(${pubUser.userCode})</div>
+                </div>
+                </c:if>
+                <c:if test="${not empty sysAnnouncement.pubTime}">
+                <div class="field">
+                    <div class="label noinput">发布时间：</div>
+                    <div class="input"><ct:time source="${sysAnnouncement.pubTime}"/></div>
+                </div>
+                </c:if>
+                <c:if test="${not empty sysAnnouncement.endTime}">
+                <div class="field">
+                    <div class="label noinput">结束时间：</div>
+                    <div class="input"><ct:time source="${sysAnnouncement.endTime}"/></div>
+                </div>
+                </c:if>
+
+                <c:if test="${not empty auditUser}">
+                <div class="field">
+                    <div class="label noinput">审核人：</div>
+                    <div class="input">${auditUser.userName}(${auditUser.userCode})</div>
+                </div>
+                </c:if>
+                <c:if test="${not empty sysAnnouncement.auditTime}">
+                <div class="field">
+                    <div class="label noinput">审核时间：</div>
+                    <div class="input"><ct:time source="${sysAnnouncement.auditTime}"/></div>
+                </div>
+                </c:if>
+
+                <c:if test="${tp=='audit'}">
+                    <form method="post" id="fm" action="?" htmlEscape="true" acceptCharset="utf-8" class="required-validate">
+                        <input type="hidden" name="id" value="${sysAnnouncement.id}"/>
+                        <div class="field">
+                            <div class="label" class="req">
+                                <label for="auditResult">审核结果:</label>
+                            </div>
+                            <div class="select">
+                                <select name="auditResult" id="auditResult">
+                                    <option value="1">通过</option>
+                                    <option value="0">驳回</option>
+                                </select>
+                            </div>
+                        </div>
+
+
+                    <div class="buttons">
+                        <div class="highlight">
+                            <input type="submit" name="submit.highlight" value="提交" />
+                        </div>
+                        <a href="${ctx}/websys/announcement" class="btnAnchor">返回</a>
+                    </div>
+                    </form>
+                </c:if>
+                <c:if test="${tp=='view'}">
+
+                    <div class="buttons">
+                        <a href="${ctx}/websys/announcement" class="btnAnchor">返回</a>
+                    </div>
+                </c:if>
+
+            </div>
+        </div>
+</div>
+<!-- end forms -->
+</div>
+
+
+</body>
+</html>

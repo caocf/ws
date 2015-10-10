@@ -1,0 +1,202 @@
+package com.cplatform.mall.back.utils.data;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysUnit;
+
+public class RoleDataUtils {
+
+	private static RoleDataConfig dataConfig = RoleDataConfig.getInstance();
+
+	/**
+	 * 用户列表模块
+	 */
+	public static String MODULE_USER = "user";
+
+	/**
+	 * 商户账号模块
+	 */
+	public static String MODULE_SHOPUSER = "shopUser";
+
+	/**
+	 * 门店评论模块
+	 */
+	public static String MODULE_SHOPCOMMENT = "shopComment";
+
+	/**
+	 * 会员管理模块
+	 */
+	public static String MODULE_MEMBER = "member";
+
+	/**
+	 * 楼层管理模块
+	 */
+	public static String MODULE_FLOOR = "floor";
+
+	/**
+	 * 频道分类管理模块
+	 */
+	public static String MODULE_CHANNELTYPE = "channelType";
+
+	/**
+	 * 频道楼层分类管理模块
+	 */
+	public static String MODULE_CHANNELCATALOGCONFIG = "ChannelCatalogConfig";
+
+	/**
+	 * 频道图片管理模块
+	 */
+	public static String MODULE_CHANNELPIC = "ChannelPic";
+	
+	/**
+	 * 商品评论模块
+	 */
+	public static String MODULE_ITEMCOMMENT = "itemComment";
+	
+	
+
+	/**
+	 * 彩信模块
+	 */
+	public static String MODULE_BATCH_TASK = "batch_task";
+
+	/** 商户模块 */
+	public static String MODULE_STORE = "store";
+
+	/** 门店模块 */
+	public static String MODULE_SHOP = "shop";
+
+	/** 抽奖模块 */
+	public static String MODULE_LOTTERY = "lottery_list";
+
+	/** 商品模块 */
+	public static String MODULE_ITEM = "item";
+
+	/** 商户审核模块 */
+	public static String MODULE_STORE_AUDIT = "store_audit";
+
+	/** 内容源 */
+	public static String MODUE_CONTSRC = "contsrc";
+
+	/** 彩信内容 */
+	public static String MODUE_MMSCONTENT = "mmscontent";
+
+	/** 短信内容 */
+	public static String MODUE_SMSCONTENT = "smscontent";
+	
+	/** 短信购 */
+	public static String MODUE_SMSBUY = "smsbuy";
+
+	/**广告*/
+	public static String SYS_AD ="sysad";
+	
+	/** 礼品卡需求 */
+	public static String MODUE_GIFT_REQUIRED = "gift_required";
+	
+	/**
+	 * 根据模块名称获得不同全新啊
+	 * 
+	 * @param module
+	 * @param request
+	 * @return
+	 */
+	public static String getRoleData(String module, HttpServletRequest request) {
+
+		// debug 重新加载配置文件，方便测试
+		// TODO 线上系统不用热加载配置文件，可以注释此句。
+		dataConfig.reload();
+
+		SessionUser user = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		if (user == null) {// 没有登录,不会返回任何数据
+			return " and  1=2 ";
+		}
+		if (StringUtils.isEmpty(module)) {
+			return "";
+		}
+		// 如果是超级管理员，则没有限制
+		if (user.isSuperAdmin()) {
+			return "";
+		}
+
+		String unitType = String.valueOf(user.getSysUnit().getUnitType());
+
+		String key = module + "-" + unitType;
+		RoleData data = dataConfig.getModuleRule(key);
+		if (data == null) {
+			return "";
+		}
+
+		if (StringUtils.isEmpty(data.getOpStr())) {
+			return "";
+		}
+
+		// 注入当前需求的字段内容
+		return " " + data.getOperate() + " " + replacePlaceHolder(data.getOpStr(), request);
+
+	}
+
+	/**
+	 * 获取模块的数据访问条件
+	 * 
+	 * @param module
+	 * @return
+	 */
+	public static String getRoleData(String module) {
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+		return getRoleData(module, request);
+	}
+
+	private static String replacePlaceHolder(String opStr, HttpServletRequest request) {
+		SessionUser user = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		// 替换当前登录用户单位编号
+		opStr = opStr.replaceAll(" #currentUnitId#", String.valueOf(user.getUnitId()));
+		// 替换当前登录用户用户子单位
+		opStr = opStr.replaceAll("#chidrenUnitId#", listUnit2str(user.getChidrenUnitList()));
+		// 替换地市区域
+		opStr = opStr.replaceAll("#regions#", listArea2str(user.getAreaList()));
+		return opStr;
+	}
+
+	/**
+	 * 转化单位编号为in str
+	 * 
+	 * @param unitList
+	 * @return
+	 */
+	private static String listUnit2str(List<SysUnit> unitList) {
+		if (unitList.isEmpty()) {
+			return "-1";
+		}
+		StringBuilder buffer = new StringBuilder();
+		for (SysUnit unit : unitList) {
+			buffer.append(unit.getId()).append(",");
+		}
+
+		return buffer.toString().subSequence(0, buffer.toString().length() - 1).toString();
+	}
+
+	/**
+	 * 系统区域列表
+	 * 
+	 * @param regionList
+	 * @return
+	 */
+	private static String listArea2str(List<SysRegion> regionList) {
+		if (regionList == null || regionList.isEmpty()) {
+			return "";
+		}
+		StringBuilder buffer = new StringBuilder();
+		for (SysRegion region : regionList) {
+			buffer.append("'").append(region.getRegionCode()).append("',");
+		}
+		return buffer.toString().subSequence(0, buffer.toString().length() - 1).toString();
+	}
+}

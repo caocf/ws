@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+    <appender name="console" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="DP - %d %c%n%-5p: %m%n%n"/>
+        </layout>
+    </appender>
+
+
+    <appender name="INFO" class="com.cplatform.log.DatedFileAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <param name="File" value="${catalina.home}/log/b2c/%yyyy%mm/%dd/info.log"/>
+        <param name="Append" value="true"/>
+        <param name="BufferedIO" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %p %c %t %m%n"/>
+        </layout>
+
+    </appender>
+
+    <appender name="ERROR" class="com.cplatform.log.DatedFileAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <param name="File" value="${catalina.home}/log/b2c/%yyyy%mm/%dd/error.log"/>
+        <param name="Append" value="true"/>
+        <param name="BufferedIO" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %p %c %t %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="DEBUG"/>
+            <param name="LevelMax" value="FATAL"/>
+        </filter>
+    </appender>
+
+    <appender name="OrderLog" class="com.cplatform.log.DatedFileAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <param name="File" value="${catalina.home}/log/b2c/%yyyy%mm/%dd/order.log"/>
+        <param name="Append" value="true"/>
+        <param name="BufferedIO" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %p %c %t %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="DEBUG"/>
+            <param name="LevelMax" value="FATAL"/>
+        </filter>
+    </appender>
+
+    <appender name="businessLogFile" class="com.cplatform.log.DatedFileAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <param name="File" value="${catalina.home}/log/b2c/%yyyy%mm/%dd/business.log"/>
+        <param name="Append" value="true"/>
+        <param name="BufferedIO" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %p %c %t %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="DEBUG"/>
+            <param name="LevelMax" value="FATAL"/>
+        </filter>
+    </appender>
+
+    <appender name="httpLogFile" class="com.cplatform.log.DatedFileAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <param name="File" value="${catalina.home}/log/b2c/%yyyy%mm/%dd/http.log"/>
+        <param name="Append" value="true"/>
+        <param name="BufferedIO" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %p %c %t %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="DEBUG"/>
+            <param name="LevelMax" value="FATAL"/>
+        </filter>
+    </appender>
+
+    <logger name="com.cplatform.order">
+        <level value="DEBUG"/>
+        <appender-ref ref="OrderLog"/>
+    </logger>
+    <logger name="com.cplatform.pay">
+        <level value="DEBUG"/>
+        <appender-ref ref="OrderLog"/>
+    </logger>
+    <logger name="com.cplatform.code">
+        <level value="DEBUG"/>
+        <appender-ref ref="OrderLog"/>
+    </logger>
+
+    <logger name="com.cplatform.b2c">
+        <level value="DEBUG"/>
+        <appender-ref ref="INFO"/>
+    </logger>
+
+    <logger name="business">
+        <level value="INFO"/>
+        <appender-ref ref="businessLogFile"/>
+    </logger>
+    <logger name="http">
+        <level value="INFO"/>
+        <appender-ref ref="httpLogFile"/>
+    </logger>
+
+    <root>
+        <priority value="INFO"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="INFO"/>
+    </root>
+
+</log4j:configuration>

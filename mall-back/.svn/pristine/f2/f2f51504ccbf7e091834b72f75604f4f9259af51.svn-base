@@ -1,0 +1,76 @@
+@charset "utf-8";
+/* CSS Document */
+
+body, h4 {
+	margin: 0;
+	padding: 0;
+}
+
+#content {
+}
+.r-page {
+	font-size: 12px;
+}
+.model-block {
+	margin-bottom: 10px;
+}
+.model-block .block-head {
+	border-bottom: 1px solid #CCCCCC;
+    line-height: 30px;
+}
+.block-head h4 {
+	font-family: "Microsoft YaHei";
+    font-size: 14px;
+    padding-left: 10px;
+}
+.model-block .block-body {
+	margin: 5px 10px;
+}
+.block-body .info-list {
+	border-bottom: 1px solid #EBEBEB;
+    color: #666666;
+    padding: 5px 0;
+}
+.info-list-widght {
+	display: inline-block;
+}
+.info-list-widght .info-list-title {
+	display: inline-block;
+    font-weight: bold;
+    text-align: right;
+    width: 100px;
+}
+.info-list-widght .info-list-desc {
+	display: inline-block;
+    min-width: 300px;
+}
+.block-body table {
+	border-top: 1px solid #CCCCCC;
+	border-left: 1px solid #CCCCCC;
+    width: 100%;
+}
+.block-body table tr {
+	
+}
+.block-body table th {
+	background: #EBEBEB;
+    height: 28px;
+    line-height: 28px;
+	border-bottom: 1px solid #CCCCCC;
+	border-right: 1px solid #CCCCCC;
+}
+.block-body table td {
+	padding: 3px 5px;
+	border-bottom: 1px solid #CCCCCC;
+	border-right: 1px solid #CCCCCC;
+}
+.block-body table a {
+	color: #2366A8;
+    text-decoration: none;
+}
+.block-body table a:hover {
+	text-decoration: underline;
+}
+td.center {
+	text-align:center;
+}

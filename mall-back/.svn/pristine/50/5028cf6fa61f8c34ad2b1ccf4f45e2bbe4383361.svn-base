@@ -1,0 +1,64 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.entity.SysPos;
+
+/**
+ * 终端相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:58:59
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class SysPosService {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	/**
+	 * 终端查询
+	 * 
+	 * @param sysType
+	 *            分类实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysPos> findSysPos(SysPos param, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from t_sys_pos where 1=1 ");
+		List params = new ArrayList();
+		if (null != param) {
+			if (StringUtils.isNotEmpty(param.getSrc())) {
+				sql.append(" and src like ? ");
+				params.add("%" + param.getSrc().trim() + "%");
+			}
+			if (StringUtils.isNotEmpty(param.getType())) {
+				sql.append(" and type = ? ");
+				params.add(param.getType().trim());
+			}
+		}
+		sql.append(" order by id desc ");
+		return dbHelper.getPage(sql.toString(), SysPos.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+}

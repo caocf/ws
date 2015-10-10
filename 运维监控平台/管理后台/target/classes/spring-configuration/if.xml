@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+
+        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+    <bean id="codeServiceClient" class="com.cplatform.verifycode.CodeServiceClient">
+        <property name="serverAddress" value="${verify_server.address}" />
+        <property name="retryTimes" value="${verify_server.retry_times}" />
+        <property name="timeout" value="${verify_server.timeout}" />
+        <property name="retryInterval" value="${verify_server.retry_interval}" />
+    </bean>
+
+    <bean class="com.cplatform.order.ActOrderServiceClient">
+        <property name="serverAddress" value="${order_server.address}" />
+        <property name="retryInterval" value="${order_server.retry_interval}" />
+        <property name="retryTimes" value="${order_server.retry_times}" />
+        <property name="timeout" value="${order_server.timeout}" />
+    </bean>
+
+</beans>

@@ -1,0 +1,156 @@
+package com.cplatform.mall.back.smsbuy.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.smsbuy.dao.SmsbuyHelpDao;
+import com.cplatform.mall.back.smsbuy.entity.SmsbuyHelp;
+import com.cplatform.mall.back.sys.dao.SysRegionDao;
+import com.cplatform.mall.back.sys.dao.SysSpcodeDao;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysSpcode;
+
+@Service
+public class SmsbuyHelpService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private SmsbuyHelpDao smsbuyHelpDao;
+
+	@Autowired
+	private SysRegionDao sysRegionDao;
+
+	@Autowired
+	private SysSpcodeDao sysSpcodeDao;
+
+	/**
+	 * 列表
+	 * 
+	 * @param smsbuyHelp
+	 * @param page
+	 * @param defaultPagesize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SmsbuyHelp> list(SmsbuyHelp smsbuyHelp, Integer page, int pagesize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT *  FROM T_SMSBUY_HELP WHERE 1=1");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsbuyHelp != null) {
+			if (StringUtils.isNotEmpty(smsbuyHelp.getHelpSpcode())) {
+				sql.append(" AND HELP_SPCODE LIKE '%" + smsbuyHelp.getHelpSpcode().trim() + "%'");
+			}
+			if (StringUtils.isNotEmpty(smsbuyHelp.getRecommendType())) {
+				sql.append(" AND RECOMMEND_TYPE= ?");
+				paramsList.add(smsbuyHelp.getRecommendType());
+			}
+		}
+		return dbHelper.getPage(sql.toString(), SmsbuyHelp.class, page, pagesize, paramsList.toArray());
+	}
+
+	/**
+	 * 添加
+	 * 
+	 * @param smsbuyHelp
+	 */
+	public void add(SmsbuyHelp smsbuyHelp) {
+		String rootSpcode = smsbuyHelp.getRootSpcode() != null ? smsbuyHelp.getRootSpcode() : "";
+		smsbuyHelp.setHelpSpcode(rootSpcode + smsbuyHelp.getHelpSpcode());
+
+		smsbuyHelpDao.save(smsbuyHelp);
+	}
+
+	/**
+	 * 删除
+	 * 
+	 * @param helpSpcode
+	 */
+	public void delete(String helpSpcode, String helpArea) {
+		SmsbuyHelp smsbuyHelp = smsbuyHelpDao.findByHelpSpcodeAndHelpArea(helpSpcode, helpArea);
+
+		smsbuyHelpDao.delete(smsbuyHelp);
+	}
+
+	/**
+	 * 查看
+	 * 
+	 * @param helpSpcode
+	 */
+	public void view(String helpSpcode, String helpArea, Model model) {
+		SmsbuyHelp smsbuyHelp = smsbuyHelpDao.findByHelpSpcodeAndHelpArea(helpSpcode, helpArea);
+		String helpAreas = smsbuyHelp.getHelpArea();
+		String[] actAreaStrs = helpAreas.split(",");
+		String areaName = "";
+		for (String areaIdStr : actAreaStrs) {
+			SysRegion sysRegion = sysRegionDao.findByRegionCode(areaIdStr);
+			if (sysRegion != null) {
+				areaName += sysRegion.getRegionName() + ",";
+			}
+		}
+		if (areaName.length() > 0) {
+			smsbuyHelp.setHelpAreaName(areaName.substring(0, areaName.lastIndexOf(",")));
+		}
+
+		model.addAttribute("smsbuyHelp", smsbuyHelp);
+	}
+
+	/**
+	 * 预修改
+	 * 
+	 * @param helpSpcode
+	 * @param model
+	 */
+	public void preEdit(String helpSpcode, String helpArea, Model model) {
+		SmsbuyHelp smsbuyHelp = smsbuyHelpDao.findByHelpSpcodeAndHelpArea(helpSpcode, helpArea);
+		String helpAreas = smsbuyHelp.getHelpArea();
+		String[] actAreaStrs = helpAreas.split(",");
+		String areaName = "";
+		for (String areaIdStr : actAreaStrs) {
+			SysRegion sysRegion = sysRegionDao.findByRegionCode(areaIdStr);
+			if (sysRegion != null) {
+				areaName += sysRegion.getRegionName() + ",";
+			}
+			// areaName +=
+			// sysRegionDao.findByRegionCode(areaIdStr).getRegionName() + ",";
+		}
+
+		if (areaName.length() > 0) {
+			smsbuyHelp.setHelpAreaName(areaName.substring(0, areaName.lastIndexOf(",")));
+		}
+
+		String[] spcode = smsbuyHelp.getHelpSpcode().split("-");
+		if (spcode.length > 1) {
+			smsbuyHelp.setRootSpcode(spcode[0]);
+			smsbuyHelp.setHelpSpcode(spcode[1]);
+		}
+
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		model.addAttribute("recommendTypeMap", SmsbuyHelp.recommendTypeMap);
+		model.addAttribute("smsbuyHelp", smsbuyHelp);
+		model.addAttribute("method", "edit");
+	}
+
+	/**
+	 * @param model
+	 */
+	public void preAdd(Model model) {
+		SmsbuyHelp smsbuyHelp = new SmsbuyHelp();
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		model.addAttribute("recommendTypeMap", SmsbuyHelp.recommendTypeMap);
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		model.addAttribute("smsbuyHelp", smsbuyHelp);
+		model.addAttribute("method", "add");
+
+	}
+}

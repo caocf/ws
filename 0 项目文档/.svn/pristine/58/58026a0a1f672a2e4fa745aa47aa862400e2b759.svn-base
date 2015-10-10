@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_t_act_order_01 ON "LIFE".t_act_order(user_id);

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_verify_code_info ON "LIFE".t_verify_code_info(act_order_id);

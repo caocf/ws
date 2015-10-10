@@ -1,0 +1,49 @@
+body{ background:#D3D1CE; text-align:center; }
+#survey_wrapper{ background:#F3F3F3; margin:20px auto; text-align:left; width:720px;}
+
+	#survey_wrapper dl{  
+		border-top: 1px dashed #CCCCCC;
+		color: #666666;
+		overflow: hidden;
+		padding:15px 20px;
+	}
+		#survey_wrapper dl dt{ margin-bottom:10px; font-weight:700;}
+		
+		#survey_wrapper dl dd:after{ content:".";display:block;height:0px;clear:both;visibility:hidden;}
+			#survey_wrapper dl dd span{  display:block; position:relative; line-height:16px; min-height:16px; padding:4px 0;}
+			#survey_content	dd span input{ position:relative; top:-2px; }
+			
+			#survey_submit{ text-align:center;padding:10px 0;  border-top: 1px dashed #CCCCCC;}
+			#survey_btn{
+				background: none repeat scroll 0 0 transparent;
+				border: 0 none;
+				cursor: pointer;
+				display: inline-block;
+				height: auto;
+				margin: 0;
+				outline: medium none;
+				overflow: visible;
+				padding: 0;
+				text-align: center;
+				vertical-align: middle;
+				white-space: nowrap;
+			}
+			.survey_textarea{ width:675px; border:1px #CCC solid;  margin-top:5px;}
+			
+			#survey_btn span{overflow: hidden;
+			background: url("../img/default.gif") repeat-x scroll 50% 0 transparent;
+   	 		color: #EEEEEE;
+	 		border-radius: 4px 4px 4px 4px;
+	 		box-shadow: 0 0 5px #444444;
+			    height: 32px;
+    line-height: 32px; display:block; padding:0 28px;
+			}
+			
+			
+			#survey_btn:hover span{ background: url("../img/default.gif") repeat-x scroll 50% -32px transparent;}
+			
+			#survey_end{ padding:20px 150px;border-top:1px #CCC dotted; }
+			#ssurvey_end:after{ content:".";display:block;height:0px;clear:both;visibility:hidden;}
+				#survey_end img{ float:left; padding:10px 20px 40px 0;}
+				#survey_end h1{ font-size:24px; line-height:1.5em; margin:10px 0; color:#007BC7;}
+				#survey_end p{ color:#333; margin-bottom:12px;}

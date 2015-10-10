@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_act_order_history

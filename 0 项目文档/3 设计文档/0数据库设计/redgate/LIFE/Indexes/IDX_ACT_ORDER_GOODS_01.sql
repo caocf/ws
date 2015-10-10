@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_act_order_goods_01 ON "LIFE".t_act_order_goods(act_order_id);

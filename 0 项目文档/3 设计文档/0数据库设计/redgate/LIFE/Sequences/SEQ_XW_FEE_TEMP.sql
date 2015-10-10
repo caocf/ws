@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_xw_fee_temp

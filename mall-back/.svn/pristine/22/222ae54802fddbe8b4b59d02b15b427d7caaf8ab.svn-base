@@ -1,0 +1,121 @@
+# sso server, not end with /
+sso.server=http://192.168.1.204:8080/mall-back-sso
+#sso inner ticket address
+sso.ticket.server=http://192.168.1.204:8080/mall-back-sso
+# this application's url, not end with /, sso will access this url to check service and send ticket
+sso.client=http://localhost:8111/mall-back
+
+
+# fack login enable? must disable for online distribution
+test.facklogin=true
+
+#
+res.root=d:/data/
+res.web.root=/data/
+
+
+#xheditor 上传参数
+xheditor.upload.ext = 7z,bmp,csv,doc,docx,gif,gz,gzip,jpeg,jpg,pdf,png,ppt,pptx,rar,tar,tgz,txt,xls,xlsx,zip,dat,jar
+xheditor.upload.img.ext = bmp,gif,jpeg,jpg,png
+
+xheditor.upload.maxsize = 20971520
+xheditor.upload.dir = ${res.root}itemimg/richfiles/
+xheditor.upload.path = ${res.web.root}itemimg/richfiles/
+xheditor.domain = localhost
+
+
+#默认的每页显示记录数
+page.size = 20
+
+#特服号前缀
+sms.sp.code = 10658888
+mms.sp.code = 10658888
+
+#上传相关
+upload.tmp.dir = ${res.root}tmp/
+upload.tmp.path = ${res.web.root}tmp/
+
+upload.img.dir = ${res.root}images/
+upload.img.path = ${res.web.root}images/
+
+#ad
+upload.ad.dir = ${res.root}adimg/
+upload.ad.path = ${res.web.root}adimg/
+#brand
+upload.brand.dir = ${res.root}brandimg/
+upload.brand.path = ${res.web.root}brandimg/
+#task
+upload.task.dir = ${res.root}upload/bsend/
+upload.task.path = ${res.web.root}upload/bsend/
+#channel pic
+upload.channel.dir = ${res.root}channelimg/
+upload.channel.path = ${res.web.root}channelimg/
+#item img
+upload.item.dir = ${res.root}itemimg/
+upload.item.path = ${res.web.root}itemimg/
+#shop img
+upload.shop.dir = ${res.root}shopimg/
+upload.shop.path = ${res.web.root}shopimg/
+
+#lottery img
+upload.lottery.dir = ${res.root}lotteryimg/
+upload.lottery.path = ${res.web.root}lotteryimg/
+
+
+upload.maxsize = 1024000
+
+#上传文件存储路径
+upload.file.dir=${res.root}file/
+
+#上传文件访问路径
+upload.file.path=${res.web.root}file/
+
+#模版文件路径
+upload.template.dir=${res.root}template
+
+# 内容库 - 彩信物理路径
+CONT.MMS.PATH= ${res.root}mms/
+# 彩信临时文件目录
+CONT.MMS.TMP=singleupload
+# 内容库 - 彩信web访问路径 
+CONT.MMS.WEBPATH=${res.web.root}mms/
+# 内容库 - 彩信默认彩信规格
+CONT.MMS.DEFAULT.SIZE=128x128
+# 内容库 - 彩信默认大小上限，100K
+CONT.MMS.MAX.SIZE=102400
+# 内容库 - 彩信图片默认大小上限，80K
+CONT.MMS.PIC.MAX.SIZE=81920
+# 内容库 - 彩信声音默认大小上限，80K
+CONT.MMS.SOUND.MAX.SIZE=81920
+
+# 找回密码邮件验证码有效时间(分钟)
+RETAKE_PWD_CODE_EFFECTIVE_TIME=30
+
+
+#同步高阳接口地址
+SYNC_GY_URL=http://221.131.129.149:61010/uus/psg/service
+#同步高阳接口_用户名
+SYNC_GY_USERID=0026
+#同步高阳接口_密钥
+SYNC_GY_KEY=ltoZ0Ta9Cj
+#会员boss积分查询接口url
+MEMBER_SCORE_QUERY_URL=http://172.16.1.16:18912/queryScore
+#商城币查询接口url
+MEMBER_COIN_QUERY_URL=http://172.16.1.16:18912/queryCoin
+#mapabc key url
+MAPABC_KEY_URL=http\://app.mapabc.com/apis?t\=javascriptmap&v\=3.1.1&key\=f03346eb3a99be025979045e8fa1a281c5159611a2b384d2536d3087d68bc93d7779b1bf1c44bada
+#页面静态化调用接口url
+PAGE_STATIC_URL=http\://192.168.1.14/notice/item/gen.chtml
+#业务编号
+SYNC_GY_SERVICE_ID=0026
+#会员等级
+MEMBER_USER_LEVEL=0
+#生成商户店铺静态接口   
+MAKE_STORE_SHOP_URL=http\://192.168.1.14/notice/shop/gen.chtml?shopId\=
+#普通门店用户设置权限 
+SHOP_USER_ROLE=insert into t_shop_user_role t (id, user_id, role_id) select seq_comm_id.nextval, ?, id  from t_sys_store_role where shop_class = 1
+
+refreshFrontPageUrl=http\://172.16.1.14\:8080/notice/shop/gen.chtml
+#会员等级（商品会员限制需要的格式“编码,名称@编码,名称”）
+USER_GRADE=L1,红钻会员
+STORE_BROWSE_URL =http://192.168.1.14/shop/gen.chtml?action=preview&shopId=

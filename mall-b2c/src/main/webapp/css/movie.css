@@ -1,0 +1,827 @@
+#movie .movie_title {
+	border-bottom: 2px solid #B2354E;
+	line-height: 40px;
+}
+
+#movie .movie_title h1 {
+	font-size: 16px;
+	line-height: 40px;
+}
+
+#movie .movie_title .fast_movie_title {
+	height: 40px;
+	margin-top: 10px;
+	border-left: 1px #ccc solid;
+}
+
+#movie .movie_title .fast_movie_title li a {
+	float: left;
+	display: block;
+	line-height: 39px;
+	height: 39px;
+	width: 180px;
+	text-align: center;
+	border-top: 1px #ccc solid;
+	border-right: 1px #ccc solid;
+	background: #efefef;
+	font-size: 18px;
+	border-bottom: none;
+}
+
+#movie .movie_title .fast_movie_title li.active a,#movie .movie_title .fast_movie_title li a:hover
+	{
+	background: #B2354E;
+	border-top: 1px #B2354E solid;
+	border-right: 1px #B2354E solid;
+	color: #fff;
+	border-bottom: none;
+}
+
+#movie .pay_movie_title {
+	height: 40px;
+	background: url(../img/movie.png) 0 -205px repeat-x #eee;
+	width: 999px;
+	margin-top: 10px;
+	border-right: 1px #ddd solid;
+}
+
+#movie .pay_movie_title li {
+	float: left;
+	width: 333px;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+}
+
+#movie .pay_movie_title li.first {
+	border-left: 1px #ddd solid;
+	width: 332px;
+}
+
+#movie .pay_movie_title li.last {
+	width: 333px;
+}
+
+#movie .pay_movie_title li#hover {
+	background: url(../img/movie.png) 0 -245px repeat-x;
+}
+
+#movie .pay_movie_title li#hover.first {
+	border-left: 0;
+	background: url(../img/movie.png) 0 -285px repeat-x;
+}
+
+#movie .pay_movie_title li#hover.last {
+	border-right: 10;
+	background: url(../img/movie.png) 0 -245px repeat-x;
+}
+
+#movie .pay_movie_title li a {
+	color: #666;
+}
+
+#movie .pay_movie_title li a:hover {
+	color: #c00;
+}
+
+#movie .pay_movie_title li#hover a,#movie .pay_movie_title li#hover a:hover
+	{
+	color: #fff;
+}
+
+#movie #pay_movie_content {
+	border: 1px solid #ddd;
+	margin-top: 10px;
+}
+
+#movie #pay_movie_kj {
+	width: 650px;
+	float: left;
+}
+
+#movie #pay_movie_kj .info {
+	padding: 10px;
+	border-top: 1px dashed #ccc;
+}
+
+#movie #pay_movie_kj .info li {
+	line-height: 30px;
+}
+
+#movie #pay_movie_userinfo {
+	width: 290px;
+	padding: 10px;
+	float: right;
+	height: 100%;
+	background: #eee;
+	line-height: 24px;
+}
+
+#movie #pay_movie_userinfo ul img {
+	float: left;
+	padding: 0 10px 10px 0;
+}
+
+#movie #pay_movie_userinfo ul span {
+	color: #999;
+}
+
+#movie #pay_movie_userinfo ul span.red {
+	color: #900;
+}
+
+#movie #pay_movie_userinfo h2 {
+	font-size: 16px;
+	line-height: 36px;
+}
+
+#movie #pay_movie_userinfo h2 a {
+	color: #c00;
+}
+
+#movie #pay_movie_userinfo h2 a:hover {
+	color: #900;
+}
+
+#movie #pay_movie_userinfo dd {
+	padding: 10px 20px;
+}
+
+#movie #pay_movie_userinfo dd a {
+	float: left;
+	height: 30px;
+	line-height: 30px;
+	width: 110px;
+	border: 1px #c00 solid;
+	margin: 0 10px 5px 0;
+	display: inline;
+	text-align: center;
+	background: #fff;
+	color: #900;
+}
+
+#movie #pay_movie_userinfo dd a:hover {
+	border: #c00 1px solid;
+	background: #c00;
+	color: #fff;
+}
+
+#movie #pay_movie_userinfo .f14 {
+	color: #900;
+}
+
+#movie #pay_movie_userinfo .pay_movie_userinfo_phone {
+	padding: 20px 0;
+	border-top: 1px dashed #ddd;
+	margin-top: 10px;
+}
+
+#movie #pay_movie_userinfo .pay_movie_userinfo_phone img {
+	display: inline;
+}
+
+#movie #pay_movie_userinfo .pay_movie_userinfo_phone input {
+	height: 30px;
+	color: #333;
+	line-height: 30px;
+	font-size: 14px;
+	padding: 0 5px;
+	border: 1px #ddd solid;
+}
+
+#movie #pay_movie_userinfo .pay_movie_userinfo_phone a {
+	background: none repeat scroll 0 0 #990000;
+	color: #FFFFFF;
+	display: inline-block;
+	padding: 2px 5px;
+	text-align: center;
+	margin: 10px 80px;
+}
+
+#movie #cart_movie_content {
+	
+}
+
+#movie #cart_movie_content table {
+	line-height: 24px;
+	border-top: #ddd solid 1px;
+	border-right: #ddd solid 1px;
+}
+
+#movie #cart_movie_content th {
+	background: #eee;
+}
+
+#movie #cart_movie_content td,#movie #cart_movie_content th {
+	padding: 10px 15px;
+	border-left: #ddd solid 1px;
+	border-bottom: #ddd solid 1px;
+}
+
+#movie #cart_movie_content td {
+	text-align: left;
+}
+
+#movie #cart_movie_content td.tc {
+	text-align: center;
+}
+
+#movie #cart_movie_content td .f16 {
+	color: #c00;
+}
+
+#movie #cart_movie_content td span {
+	color: #999;
+}
+
+body#movie.cart_ticket .btn {
+	color: #fff;
+	background: #900;
+	padding: 5px 10px;
+}
+
+body#movie.cart_ticket .btn:hover {
+	background: #f00;
+	color: #fff;
+}
+
+body#movie #movie_cate_cinema {
+	float: left;
+	width: 640px;
+}
+
+body#movie #movie_cate_cinema_area {
+	padding: 10px;
+	border: 1px #ddd solid;
+	margin: 10px 0;
+}
+
+body#movie.pay_ticket #movie_cate_cinema_area {
+	margin: 0;
+}
+
+body#movie #movie_cate_cinema_area dl {
+	position: relative;
+	z-index: 3;
+	line-height: 30px;
+	padding: 5px 0 5px 100px;
+}
+
+body#movie #movie_cate_cinema_area dl.bb1px {
+	border-bottom: 1px #ddd dashed;
+}
+
+body#movie #movie_cate_cinema_area dl dt {
+	position: absolute;
+	top: 5px;
+	width: 100px;
+	left: 0;
+	z-index: 5;
+	line-height: 24px;
+	color: #999;
+}
+
+body#movie #movie_cate_cinema_area dl dd {
+	line-height: 30px;
+}
+
+body#movie #movie_cate_cinema_area dl dd a {
+	width: 80px;
+	margin: 0 5px 5px 0;
+	text-align: center;
+	display: block;
+	float: left;
+	text-align: center;
+}
+
+body#movie #movie_cate_cinema_area dl dd a:hover,body#movie #movie_cate_cinema_area dl dd a.hover
+	{
+	background: none repeat scroll 0 0 #F5E9E9;
+	color: #900;
+}
+
+body#movie #movie_cate_cinema_area dl input.txt {
+	background: #f6f6f6;
+	padding: 0 5px;
+	width: 160px;
+	border: 1px solid #ddd;
+	border-right: 0;
+	line-height: 28px;
+	height: 28px;
+}
+
+body#movie #movie_cate_cinema_area dl input.btn {
+	background: url(../img/movie.png) -372px 0 no-repeat;
+	width: 30px;
+	height: 30px;
+	border: 1px #ddd solid;
+	border-left: 0;
+	display: inline-block;
+	cursor: pointer;
+}
+
+body#movie #movie_cate_cinema_res {
+	line-height: 36px;
+	background: #eee;
+	font-size: 14px;
+	height: 36px;
+	padding: 0 10px;
+}
+
+body#movie #movie_cate_cinema_res th a {
+	border: 1px #ddd solid;
+	padding: 0 5px;
+	margin-left: 5px;
+	color: #999;
+}
+
+body#movie #movie_cate_cinema_res th a:hover,body#movie #movie_cate_cinema_res th a.hover
+	{
+	color: #f00;
+	border: 1px #f00 solid;
+}
+
+body#movie #movie_cate_cinema_res_list li {
+	line-height: 24px;
+	border-bottom: 1px dashed #eee;
+	padding-bottom: 10px;
+	margin: 5px 0;
+}
+
+body#movie #movie_cate_cinema_res_list ul li p {
+	margin: 0;
+}
+
+body#movie #movie_cate_cinema_res_list ul li em {
+	background: url(../img/movie.png) -250px 3px no-repeat;
+	width: 50px;
+	height: 24px;
+	display: inline-block;
+	float: left;
+}
+
+body#movie #movie_cate_cinema_res_list ul li h2 {
+	position: relative;
+	font-size: 16px;
+	line-height: 36px;
+	padding-left: 30px;
+}
+
+body#movie #movie_cate_cinema_res_list ul li h2 span {
+	background: url(../img/movie.png) no-repeat -332px 3px;
+	height: 30px;
+	line-height: 30px;
+	text-align: center;
+	width: 25px;
+	display: block;
+	position: absolute;
+	z-index: 5px;
+	left: 0;
+	top: 0;
+	font-size: 14px;
+	color: #fff;
+}
+
+body#movie #movie_cate_cinema_res_list li p {
+	padding-left: 30px;
+	line-height: 30px;
+}
+
+body#movie #movie_cate_cinema_res_list .movie_cate_cinema_info {
+	color: #999;
+	padding-left: 30px;
+	margin-bottom: 10px;
+}
+
+body#movie #movie_cate_cinema_res_list .btn_xz {
+	display: inline-block;
+	background: #900;
+	padding: 2px 15px;
+	color: #fff;
+	margin-left: 30px;
+}
+
+body#movie #movie_cate_cinema_res_list .btn_dhq {
+	display: inline-block;
+	background: #F99;
+	padding: 2px 15px;
+	color: #fff;
+	margin-left: 10px;
+}
+
+body#movie #movie_cate_cinema_res_list .btn_xz:hover,body#movie #movie_cate_cinema_res_list .btn_dhq:hover
+	{
+	background: #c00;
+}
+
+body#movie #movie_cate_cinema_sidebar {
+	float: right;
+	width: 340px;
+	margin-top: 10px;
+}
+
+#movie .movie_pagenav {
+	text-align: center;
+	margin: 5px 0;
+}
+
+#movie .movie_pagenav a {
+	background: none repeat scroll 0 0 #999;
+	color: #FFFFFF;
+	display: inline-block;
+	font-size: 16px;
+	font-weight: normal;
+	height: 30px;
+	line-height: 30px;
+	margin: 2px;
+	text-align: center;
+	width: 30px;
+}
+
+#movie .movie_pagenav a:hover,#movie .movie_pagenav a.hover {
+	background: none repeat scroll 0 0 #c00;
+	color: #fff;
+}
+
+#movie #movie_movie {
+	border: 1px solid #ddd;
+	margin: 10px 0;
+	padding: 10px 300px;
+	z-index: 3;
+	position: relative;
+	line-height: 24px;
+	min-height: 240px;
+}
+
+#movie #movie_movie h2 {
+	font-size: 18px;
+	line-height: 36px;
+	margin-bottom: 12px;
+	position: relative;
+}
+
+#movie #movie_movie .red {
+	color: #c00;
+}
+
+#movie #movie_movie #movie_movie_img {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	z-index: 5;
+	width: 260px;
+}
+
+#movie #movie_movie #movie_cinema_img a {
+	display: block;
+	text-align: center;
+	color: #999;
+}
+
+#movie #movie_movie #movie_cinema_img a:hover {
+	color: #c00;
+}
+
+#movie #movie_cinema #movie_cinema_map {
+	position: absolute;
+	right: 10px;
+	top: 50px;
+	z-index: 5;
+	width: 255px;
+}
+
+#movie #movie_cinema {
+	border: 1px solid #ddd;
+	margin: 0 0 10px 0;
+	padding: 10px 300px;
+	z-index: 3;
+	position: relative;
+	line-height: 24px;
+	min-height: 240px;
+}
+
+#movie.movie_details #movie_cinema {
+	min-height: 350px;
+}
+
+#movie #movie_cinema h2 {
+	font-size: 18px;
+	line-height: 36px;
+	margin-bottom: 12px;
+	position: relative;
+}
+
+#movie #movie_cinema .red {
+	color: #c00;
+}
+
+#movie #movie_cinema #movie_cinema_img {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	z-index: 5;
+	width: 260px;
+}
+
+#movie #movie_cinema #movie_cinema_img a {
+	display: block;
+	text-align: center;
+	color: #999;
+}
+
+#movie #movie_cinema #movie_cinema_img a:hover {
+	color: #c00;
+}
+
+#movie #movie_cinema #movie_cinema_map {
+	position: absolute;
+	right: 10px;
+	top: 50px;
+	z-index: 5;
+	width: 255px;
+}
+
+#movie #movie_cinema p {
+	margin-bottom: 20px;
+}
+
+#movie #movie_cinema a.btn_dp {
+	line-height: 36px;
+	background: #900;
+	color: #fff;
+	font-size: 14px;
+	height: 36px;
+	padding: 3px 20px;
+	margin-right: 10px;
+}
+
+#movie #movie_cinema a.btn_dp:hover {
+	background: #c00;
+}
+
+#movie_tab_content .movie_content {
+	display: none;
+	line-height: 24px;
+}
+
+#movie_tab_content #movie_ticket_show_c {
+	display: block;
+}
+
+#movie_tab_content #movie_show1.movie_content {
+	display: block;
+}
+
+#movie_tab_content .movie_content .p20 {
+	padding: 20px;
+}
+
+#movie_tab_content .movie_content .p20 p {
+	margin-bottom: 12px;
+	border-bottom: 1px solid #ddd;
+	padding-bottom: 12px;
+}
+
+#movie_tab_content .movie_content .p20 h2 {
+	font-size: 14px;
+	line-height: 36px;
+}
+
+#movie_tab_content .movie_content .p20 td {
+	text-align: left;
+	vertical-align: top;
+}
+
+#movie_tab_content .movie_content .red {
+	color: #c00;
+}
+
+#movie_tab_content #movie_show3 dl {
+	padding: 10px 10px 10px 100px;
+	position: relative;
+	z-index: 3;
+	border-bottom: 1px solid #ddd;
+}
+
+#movie_tab_content #movie_show3 dl dt {
+	position: absolute;
+	left: 10px;
+	top: 15px;
+}
+
+#movie_tab_content #movie_show3 dl dt img {
+	width: 64px;
+	height: 64px;
+}
+
+#movie_tab_content #movie_show3 dl dd span {
+	color: #999;
+}
+
+#movie_tab_content #movie_show3 dl dd span.red {
+	color: #c00;
+}
+
+#movie_tab_content #movie_show3 dl dd h3 a {
+	color: #B2354E;
+	font-size: 14px;
+	line-height: 24px;
+}
+
+#movie_tab_content #movie_show3 .totla_star {
+	color: #fff;
+	font-size: 14px;
+	height: 24px;
+	background: url(../img/movie.png) 0px -158px no-repeat;
+	z-index: 7;
+	width: 75px;
+}
+
+#movie_tab_content #movie_show3 .movie_star {
+	height: 24px;
+	background: url(../img/movie.png) 0px -135px no-repeat;
+	top: 0;
+	z-index: 8;
+}
+
+#movie .movie_content .p20 {
+	padding: 5px 15px;
+}
+
+#movie .movie_content h4 {
+	font-size: 16px;
+	line-height: 36px;
+	padding: 0 30px;
+	border-bottom: 1px solid #ddd;
+	margin-bottom: 10px;
+}
+
+#movie  #movie_jssy li {
+	float: left;
+	text-align: center;
+	width: 190px;
+	margin-bottom: 20px;
+}
+
+#movie  #movie_jssy li a {
+	display: block;
+	line-height: 24px;
+}
+
+#movie  #movie_jssy li a img {
+	display: block;
+	margin: 0px 30px 12px;
+}
+
+#movie  #movie_jssy li .red {
+	color: #c00;
+}
+
+#movie input.count_i {
+	height: 24px;
+	line-height: 24px;
+	border: 1px #ddd solid;
+	text-align: center;
+	width: 24px;
+	background: #eee;
+	color: #333;
+	cursor: pointer;
+}
+
+#movie input.count_u {
+	width: 80px;
+	height: 24px;
+	line-height: 24px;
+	border: 1px #ddd solid;
+	text-align: center;
+	color: #333;
+}
+
+#movie input.count_a {
+	height: 24px;
+	line-height: 24px;
+	border: 1px #ddd solid;
+	text-align: center;
+	width: 24px;
+	background: #eee;
+	color: #333;
+	cursor: pointer;
+}
+
+#movie #movie_ticket_table tr.hover td {
+	background: #FFC;
+	position: relative;
+}
+
+#movie #movie_ticket_table tr.hover td .pr {
+	position: relative;
+}
+
+#movie .price_tips {
+	position: absolute;
+	top: -25px;
+	background: #fff;
+	width: 150px;
+	left: 50%;
+	margin-left: -75px;
+	border: 1px #F93 solid;
+	color: #F93;
+	padding: 0 5px;
+}
+
+#movie .star_un {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: url(../img/movie.png) 0 -300px no-repeat;
+}
+
+#movie .star_active {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: url(../img/movie.png) 0 -135px no-repeat;
+}
+
+#movie .search_main {
+	width: 720px;
+	float: left;
+}
+
+#movie .search_main h2.searchmovie_title {
+	line-height: 36px;
+	height: 36px;
+	padding: 0 20px;
+	font-size: 14px;
+	border-top: 1px solid #ccc;
+}
+
+#movie .search_main h2.searchmovie_title .red {
+	color: #B2354E;
+}
+
+#movie .search_main #movie_cate_cinema_res_list li {
+	padding: 0 20px;
+}
+
+#movie .search_main #movie_cate_cinema_res_list li h2 {
+	font-size: 14px;
+}
+
+#movie .search_main #movie_cate_cinema_res_list .movie_cate_cinema_info
+	{
+	padding: 0;
+}
+
+#movie .search_pro {
+	width: 240px;
+	float: right;
+	padding: 9px;
+	border: 1px solid #ddd;
+	margin-top: 50px;
+}
+
+#movie .search_pro dl {
+	position: relative;
+	padding: 0 0 10px 0;
+	border-bottom: 1px #ddd dashed;
+	min-height: 150px;
+	margin-bottom: 15px;
+}
+
+#movie .search_pro dl.seachpro_movie {
+	position: relative;
+	padding: 0 0 10px 120px;
+	border-bottom: 1px #ddd dashed;
+	min-height: 150px;
+	margin-bottom: 15px;
+}
+
+#movie .search_pro dt {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+#movie .search_pro dd h6 {
+	font-size: 14px;
+	height: 36px;
+	line-height: 18px;
+	overflow: hidden;
+}
+
+#movie .search_pro dd p {
+	color: #999;
+}
+
+#movie .search_pro dd a.btn {
+	background: none repeat scroll 0 0 #990000;
+	color: #FFFFFF;
+	display: inline-block;
+	margin-top: 10px;
+	padding: 2px 15px;
+}
+
+#movie .search_pro dd a.btn:hover {
+	background: none repeat scroll 0 0 #cc0000;
+}

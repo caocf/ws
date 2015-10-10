@@ -1,0 +1,11 @@
+var http_request=false;function send_request(methodName,httpMethod,thisUrl,isSynchronous,sendXml){if(window.XMLHttpRequest){http_request=new XMLHttpRequest();if(http_request.overrideMimeType){http_request.overrideMimeType('text/xml');}}else if(window.ActiveXObject){try{http_request=new ActiveXObject("Msxml2.XMLHTTP");}catch(e){try{http_request=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){}}}
+if(!http_request){window.alert("不能创建XMLHttpRequest对象实例.");return false;}
+http_request.onreadystatechange=methodName;http_request.open(httpMethod,thisUrl,isSynchronous);http_request.send(sendXml);}
+var request2=false;function sentRequest(methodName,httpMethod,thisUrl,isSynchronous,sendXml){if(window.XMLHttpRequest){request2=new XMLHttpRequest();if(request2.overrideMimeType){request2.overrideMimeType('text/xml');}}else if(window.ActiveXObject){try{request2=new ActiveXObject("Msxml2.XMLHTTP");}catch(e){try{request2=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){}}}
+if(!request2){window.alert("不能创建XMLHttpRequest对象实例.");return false;}
+request2.onreadystatechange=methodName;request2.open(httpMethod,thisUrl,isSynchronous);request2.send(sendXml);}
+var httpRequest=false;function sendRequest(methodName,httpMethod,thisUrl,isSynchronous,sendXml){if(window.XMLHttpRequest){httpRequest=new XMLHttpRequest();if(httpRequest.overrideMimeType){httpRequest.overrideMimeType('text/xml');}}else if(window.ActiveXObject){try{httpRequest=new ActiveXObject("Msxml2.XMLHTTP");}catch(e){try{httpRequest=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){}}}
+if(!httpRequest){window.alert("不能创建XMLHttpRequest对象实例.");return false;}
+httpRequest.onreadystatechange=methodName;httpRequest.open(httpMethod,thisUrl,isSynchronous);httpRequest.send(sendXml);}
+function show(pageUrl,targetObject,isadd){var showAjax=new ajax();showAjax.url=pageUrl;showAjax.callback=showResult;showAjax.cache=true;showAjax.send();function showResult(){if(showAjax.req.readyState==4){if(showAjax.req.status==200){var returnText=showAjax.req.responseText;if(isadd){obji(targetObject).innerHTML=obji(targetObject).innerHTML+returnText;}else{obji(targetObject).innerHTML=returnText;}
+showAjax=null;}else{alert("您所请求的页面有异常。"+targetObject);}}}}

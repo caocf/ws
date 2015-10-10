@@ -1,0 +1,228 @@
+package com.cplatform.mall.back.smsschedule.entity;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import org.springframework.data.annotation.Transient;
+
+import com.cplatform.mall.back.entity.IdEntity;
+
+/**
+ * Title. 短信排期表<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-8-21 下午14:04:08
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: jisn
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Entity
+@Table(name = "T_BATCH_TASK_SCHEDULE")
+public class BatchTaskSchedule extends IdEntity {
+	public static final int STATUS_DELETED = 0;// 删除
+	public static final int STATUS_VALID = 1;// 有效(待处理)
+	public static final int STATUS_INVALID = 2;// 无效(取消)
+	public static final int STATUS_PROCESSING = 3;// 处理中
+	public static final int STATUS_PROCESS_SUCESSED = 4;// 处理完成
+	public static final int STATUS_PROCESS_FAILURE = 5;// 处理失败
+	public static final int DEFAULT_LIMIT = 1;// 默认收到多少条短信的用户被过滤
+
+	public static Map<Integer, String> statusMap = new HashMap<Integer, String>();
+	static {
+		statusMap.put(1, "待处理");
+		statusMap.put(2, "取消");
+		statusMap.put(3, "处理中");
+		statusMap.put(4, "处理完成");
+		statusMap.put(5, "处理失败");
+	}
+
+	private String userCode;// 创建帐号
+	private Integer status;// 状态 0-删除;1-有效(未处理);2-无效(不处理);3-处理中;4-处理完成;5-处理失败
+	private Integer uploadTerminalCount;// 上传号码数(由后台进程维护)
+	private Integer resultTerminalCount;// 处理结果实际过滤号码数(由后台进程维护)
+	private String createTime;// 开始时间(录入系统时间)
+	private String endTime;// 结束时间(后台进程处理完时间)
+	private String uploadFilePath;// 上传文件路径
+	private String resultFilePath;// 进程处理结果文件路径
+	private String dateTime;// 处理日期
+	private Integer filterType;// 0-全过滤(不限类型);1-普通短信;2-短信购;
+	
+
+	private Integer limit;// 定义收到多少条短信的用户被过滤
+	private String failureReason;// 进程处理失败原因
+	private String remark;// 备注
+	private Integer taskType;
+
+	private String smsContent;
+
+	@Column(name = "CONTENT")
+	public String getSmsContent() {
+		return smsContent;
+	}
+
+	public void setSmsContent(String smsContent) {
+		this.smsContent = smsContent;
+	}
+
+	// Constructors
+	@Column(name = "TASK_TYPE")
+	public Integer getTaskType() {
+		return taskType;
+	}
+
+	public void setTaskType(Integer taskType) {
+		this.taskType = taskType;
+	}
+
+	/** default constructor */
+	public BatchTaskSchedule() {
+	}
+
+	@Column(name = "USER_CODE")
+	public String getUserCode() {
+		return this.userCode;
+	}
+
+	public void setUserCode(String userCode) {
+		this.userCode = userCode;
+	}
+
+	@Column(name = "STATUS")
+	public Integer getStatus() {
+		return this.status;
+	}
+
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
+
+	@Column(name = "UPLOAD_TERMINAL_COUNT")
+	public Integer getUploadTerminalCount() {
+		return this.uploadTerminalCount;
+	}
+
+	public void setUploadTerminalCount(Integer uploadTerminalCount) {
+		this.uploadTerminalCount = uploadTerminalCount;
+	}
+
+	@Column(name = "RESULT_TERMINAL_COUNT")
+	public Integer getResultTerminalCount() {
+		return this.resultTerminalCount;
+	}
+
+	public void setResultTerminalCount(Integer resultTerminalCount) {
+		this.resultTerminalCount = resultTerminalCount;
+	}
+
+	@Column(name = "CREATE_TIME")
+	public String getCreateTime() {
+		return this.createTime;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+	@Column(name = "END_TIME")
+	public String getEndTime() {
+		return this.endTime;
+	}
+
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
+	}
+
+	@Column(name = "UPLOAD_FILE_PATH")
+	public String getUploadFilePath() {
+		return this.uploadFilePath;
+	}
+
+	public void setUploadFilePath(String uploadFilePath) {
+		this.uploadFilePath = uploadFilePath;
+	}
+
+	@Column(name = "RESULT_FILE_PATH")
+	public String getResultFilePath() {
+		return this.resultFilePath;
+	}
+
+	public void setResultFilePath(String resultFilePath) {
+		this.resultFilePath = resultFilePath;
+	}
+
+	@Column(name = "DATE_TIME")
+	public String getDateTime() {
+		return this.dateTime;
+	}
+
+	public void setDateTime(String dateTime) {
+		this.dateTime = dateTime;
+	}
+	
+	@Column(name = "FILTER_TYPE")
+	public Integer getFilterType() {
+		return filterType;
+	}
+
+	public void setFilterType(Integer filterType) {
+		this.filterType = filterType;
+	}
+
+	@Column(name = "LIMIT")
+	public Integer getLimit() {
+		return this.limit;
+	}
+
+	public void setLimit(Integer limit) {
+		this.limit = limit;
+	}
+
+	@Column(name = "FAILURE_REASON")
+	public String getFailureReason() {
+		return this.failureReason;
+	}
+
+	public void setFailureReason(String failureReason) {
+		this.failureReason = failureReason;
+	}
+
+	@Column(name = "REMARK")
+	public String getRemark() {
+		return this.remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+
+	/*@Transient
+	private List<Integer> filterTypes = new ArrayList<Integer>();
+
+	public List<Integer> getFilterTypes() {
+		return filterTypes;
+	}
+
+	public void setFilterTypes(List<Integer> filterTypes) {
+		this.filterTypes = filterTypes;
+	}
+
+	public void formatFilterType() {
+		if (filterTypes.size() == 1) {
+			filterType = filterTypes.get(0);
+		} else if (filterTypes.size() == 2) {
+			filterType = 0;
+		}
+	}*/
+
+}

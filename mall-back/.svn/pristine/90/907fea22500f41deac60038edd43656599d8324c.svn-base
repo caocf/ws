@@ -1,0 +1,184 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <head>
+    <ht:head/>
+ 	<script type="text/javascript">
+ 	
+		
+</script>
+    </head>
+<body>
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>查看卡需求</h5>
+    </div>
+	
+		  <form:form action="${ctx}/gift/required/add" method="post" id="fm" commandName="giftRequired" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate">
+        <div class="form">
+					<div class="fields">
+					  <div class="field">
+                    <div class="label noinput">批次号:</div>
+                    <div class="input">${giftRequired.batchNo}</div>
+                </div>
+	
+ 					<div class="field" >
+							<div class="label">
+								<label for="modelNo" >卡型号:</label>
+							</div>
+							<div class="input">
+							${giftRequired.modelNo}&nbsp;
+					</div>
+					</div>	
+								
+								
+				<div class="field" >
+							<div class="label">
+								<label for="cardNum" >礼品卡需求数量:</label>
+							</div>
+							<div class="input">
+							${giftRequired.cardNum}&nbsp;
+							</div>
+					</div>	
+					
+						<div class="field" >
+							<div class="label">
+								<label for="issuingTime" >期望发卡时间:</label>
+							</div>
+							<div class="input">
+								<ct:time source="${giftRequired.issuingTime}" sfmt="yyyyMMddHHmmss" tfmt="yyyy-MM-dd" />&nbsp;
+							</div>
+					</div>	
+						<div class="field" >
+							<div class="label">
+								<label for="effortDate">礼品卡生效日期:</label>
+							</div>
+							<div class="input">
+								<ct:time source="${giftRequired.effortDate }" sfmt="yyyyMMddHHmmss" tfmt="yyyy-MM-dd" />&nbsp;
+							</div>
+					</div>	
+						<div class="field" >
+							<div class="label">
+								<label for="expiryDate" >礼品卡失效日期:</label>
+							</div>
+							<div class="input">
+								<ct:time source="${giftRequired.expiryDate}" sfmt="yyyyMMddHHmmss" tfmt="yyyy-MM-dd" />&nbsp;
+							</div>
+					</div>	
+						<div class="field" >
+							<div class="label">
+								<label for="exchangeModeName" >礼品兑换方式 :</label>
+							</div>
+							<div class="input">
+								${giftRequired.exchangeModeName}&nbsp;
+							</div>
+					</div>	
+						<div class="field" >
+							<div class="label">
+								<label for="statusName" >状态 :</label>
+							</div>
+							<div class="input">
+								${giftRequired.statusName}&nbsp;
+							</div>
+					</div>	
+							
+					
+					<div class="field" >
+							<div class="label">
+								<label for="printFaceStatusName" >封套印刷状态:</label>
+							</div>
+							<div class="input">
+								${giftRequired.printFaceStatusName}&nbsp;
+							</div>
+					</div>	
+					
+					<div class="field" >
+							<div class="label">
+								<label for="bindItemStatusName" >是否已绑定商品 :</label>
+							</div>
+							<div class="input">
+								${giftRequired.bindItemStatusName}&nbsp;
+							</div>
+					</div>	
+					
+					
+					<div class="field" >
+							<div class="label">
+								<label for="makeCardStatusName" >制卡状态:</label>
+							</div>
+							<div class="input">
+								${giftRequired.makeCardStatusName}&nbsp;
+							</div>
+					</div>	
+					
+					<div class="field" >
+							<div class="label">
+								<label for="parValue" >面额:</label>
+							</div>
+							<div class="input">
+								${giftRequired.parValue}元&nbsp;
+							</div>
+					</div>	
+					
+					<div class="field" >
+							<div class="label">
+								<label for="requiredUser" >客户名:</label>
+							</div>
+							<div class="input">
+								${giftRequired.requiredUser}&nbsp;
+							</div>
+					</div>	
+					
+					
+					<div class="field" >
+							<div class="label">
+								<label for="regionCodeName" >所属区域:</label>
+							</div>
+							<div class="input">
+								${regionCodeName}&nbsp;
+							</div>
+					</div>	
+					
+					
+					
+							<div class="field">
+							<div class="label label-textarea">
+								<label for="cardFaceMsg">卡面封套要求：</label>
+							</div>
+							<div class="input">
+								${giftRequired.cardFaceMsg}&nbsp;
+							</div>
+						</div>		
+					
+					
+					
+								<div class="field">
+							<div class="label label-textarea">
+								<label for="remark">兑换礼品描述：</label>
+							</div>
+							<div class="input">
+								${giftRequired.remark}&nbsp;
+							</div>
+						</div>		
+						
+				
+						<div class="buttons">
+							
+                    			<input type="button" class="common_btn" onclick="history.back();" value="返回" />
+							
+						</div>	
+				</div>
+		</div>
+		</div>		
+    </form:form>
+</div>
+
+</div>
+</body>
+</html>

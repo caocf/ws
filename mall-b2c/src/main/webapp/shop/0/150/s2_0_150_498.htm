@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="/mall-b2c/css/base.css" rel="stylesheet" type="text/css" />
+<link href="/mall-b2c/css/layout.css" rel="stylesheet" type="text/css" />
+<link href="/mall-b2c/css/shop.css" rel="stylesheet" type="text/css" />
+<link href="/mall-b2c/css/shop_sidebar.css" rel="stylesheet" type="text/css" />
+<link href="/mall-b2c/css/pro.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript">
+var shopId = '300498';
+var WEB_ROOT = '/mall-b2c';
+var s2_flag = true;
+var SHOP_URL = '/shop/s_0_150_498.htm';
+var SHOP2_URL = '/shop/s2_0_150_498.htm';
+</script>
+<script type="text/javascript" src="/mall-b2c/js/jquery.min.js"></script>
+<script type="text/javascript" src="/mall-b2c/js/jquery.jqzoom.js"></script>
+<link rel="stylesheet" type="text/css" href="/mall-b2c/css/zoom.css" />
+<script type="text/javascript" src="/mall-b2c/js/shop.js"></script>
+<script type="text/javascript" src="/mall-b2c/js/pro.js"></script>
+<title></title>
+</head>
+<body id="product">
+<div class="wrapper mauto" >
+    <div class="breadcrumb"> <strong><a href=" ">首页</a></strong><span>&nbsp;&gt;&nbsp;<a href=" ">商铺</a>&nbsp;&gt;&nbsp;<a href=" ">商铺详情</a></div>
+    <div id="shop_container" class="w bt10">
+        <div id="shop_banner"> <img src="/mall-b2c/upload/images/SHOP_PIC/20130618/20130618201733.jpg" /> <span class="clr"></span> </div>
+    </div>
+    <div id="shop_nav">
+        <h3>苏州中移鼎讯</h3>
+        <div id="shop_nav_menu">
+        	<a href="/mall-b2c/shop/s_0_150_498.htm">首页</a>
+        	<a class="active" href="/mall-b2c/shop/s2_0_150_498.htm">全部商品</a>
+        </div>
+    </div>
+    </div>
+   <div class="wrapper mauto" > 
+  <div class="alert_windows" style="margin-top:-50px;">
+	<a href="javascript:void(0);" onclick="$('.alert_windows').hide();" class="close"></a>
+	<div class="content">
+    	<p id="favoritetips">收藏成功！</p>
+        <a class="btn" onclick="$('.alert_windows').hide();">确定</a> 
+    </div>
+</div> 
+    <div id="shop_main" class="fr  w750">
+        <div id="shop_pro_banner"> <span class="clr"></span> </div>
+        <div class="shop_search" style="display: none;">
+     		<p>商品筛选: <input class="text" type="text" placeholder="搜索内容" id="s_name" /> 
+			             <input class="text" type="text" placeholder="价格低" id="s_price_low"  /> - <input  class="text" typetype="text" placeholder="价格高" id="s_price_high" /> 
+			             <input src="/mall-b2c/img/btn_search.jpg" alt="搜索" type="image" onclick="initOnePage( '1' );" />
+			</p>
+       	</div>
+        <div class="shop_detail">
+        
+            <div class="shop_tab">
+                <div class="shop_tab_nav" id="all_product">
+                    <ul class="tab">
+                        <li class="curr"><a href="#info1">全部商品</a></li>
+                        <select class="shop_tab_nav_select" onchange="javascript:sortProductList(this.value)" name="orderbyType">
+                          <option selected="selected" value="">排序方式</option>
+			              <option value="price_asc">价格从低到高</option>
+			              <option value="price_desc">价格从高到低</option>
+			              <option value="createTime_asc">最新上架在前</option>
+			              <option value="createTime_desc">最新上架在后</option>
+			             </select>
+                    </ul>
+                </div>
+                
+                <div class="shop_tab_wrap">
+					<div class="shop_content">
+						<div class="item_wrap">
+						</div>
+					</div>
+				</div>
+            </div>      
+                        
+        </div>
+    </div>
+    <div id="sidebar" class="w240 fl">
+        <div id="sidebar_shop" class="mb10">
+            <div class="related-content">
+                <dl>
+                    <dt>商户名称</dt>
+                    <dd>苏州中移鼎讯</dd>
+                </dl>
+                <dl>
+                    <dt>公司名称</dt>
+                    <dd>苏州中移鼎讯</dd>
+                </dl>
+                <dl>
+                    <dt>所在地</dt>
+                    <dd>江苏省 苏州市 吴中区</dd>
+                </dl>
+                <a class="btn_fav" href="javascript:void(0);" onclick="mark();">
+                	<img src="/mall-b2c/img/btn_fav.jpg" />
+                </a>
+            </div>
+        </div>
+        <div class="related-title">
+            <h3>货架分类</h3>
+        </div>
+		<!-- 此处初始化分类数据 -->
+    </div>
+
+    <span class="clr"></span> </div>
+</div>
+
+<script type="text/javascript">
+// 初始化分类
+var sortUrl ='/mall-b2c/shop/sorts.chtml';
+initSorts(sortUrl, shopId);
+var _GET = $.urlGet(); 
+var name = decodeURIComponent(_GET['name']?_GET['name']:''); 
+var priceLow = decodeURIComponent(_GET['priceLow']?_GET['priceLow']:''); 
+var priceHigh = decodeURIComponent(_GET['priceHigh']?_GET['priceHigh']:'');
+var shelfId = _GET['shelfId']?_GET['shelfId']:'';
+if(shelfId && ( shelfId == parseInt(shelfId)) ){
+	shelfId = parseInt(shelfId);
+	name = "";
+	priceLow = "";
+	priceHigh = "";
+}
+
+if(name || priceLow || priceHigh){
+	$("#s_name").val(name);
+	$("#s_price_low").val(priceLow);
+	$("#s_price_high").val(priceHigh);
+	$(".shop_search").show();
+}else{
+	$("#s_name").val('');
+	$("#s_price_low").val('');
+	$("#s_price_high").val('');
+	$(".shop_search").hide();
+}
+
+// 初始化商品列表
+var onePageUrl = "/mall-b2c/shop/page.chtml";
+initOnePage( "1" );
+</script>
+</body>
+</html>

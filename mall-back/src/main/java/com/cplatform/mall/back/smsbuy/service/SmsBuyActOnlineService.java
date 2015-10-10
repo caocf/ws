@@ -1,0 +1,679 @@
+package com.cplatform.mall.back.smsbuy.service;
+
+import java.io.FileNotFoundException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import jxl.common.Logger;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.item.dao.ItemManageDao;
+import com.cplatform.mall.back.smsbuy.dao.SmsBuyActOnlineDao;
+import com.cplatform.mall.back.smsbuy.dao.SmsbuyItemRouterDao;
+import com.cplatform.mall.back.smsbuy.entity.SmsBuyActOnline;
+import com.cplatform.mall.back.smsbuy.entity.SmsbuyItemRouter;
+import com.cplatform.mall.back.sys.dao.SysRegionDao;
+import com.cplatform.mall.back.sys.dao.SysSpcodeDao;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysSpcode;
+import com.cplatform.mall.back.utils.ReadExcel;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+/**
+ * 短信购活动服务类. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-17 上午10:16:26
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: wuyn@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class SmsBuyActOnlineService {
+
+	private static final Logger log = Logger.getLogger(SmsBuyActOnlineService.class);
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private SysRegionDao sysRegionDao;
+
+	@Autowired
+	private SmsbuyItemRouterDao smsbuyItemRouterDao;
+
+	@Autowired
+	private SmsBuyActOnlineDao smsBuyActOnlineDao;
+
+	@Autowired
+	private SysSpcodeDao sysSpcodeDao;
+
+	@Autowired
+	private ItemManageDao itemManageDao;
+
+	/**
+	 * 商品指令列表
+	 * 
+	 * @param smsBuyActOnline
+	 * @param page
+	 * @param defaultPagesize
+	 * @param model
+	 * @throws SQLException
+	 */
+	public Page<SmsBuyActOnline> listSmsBuyAct(SmsBuyActOnline smsBuyActOnline, Integer page, int pagesize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT *  FROM T_SMSBUY_ACT_ONLINE WHERE 1=1");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsBuyActOnline != null) {
+			if (smsBuyActOnline.getActName() != null) {
+				sql.append(" AND UPPER(ACT_NAME) LIKE '%'||UPPER('" + smsBuyActOnline.getActName().trim() + "')||'%'");
+			}
+			if (smsBuyActOnline.getStatus() != null && !"".equals(smsBuyActOnline.getStatus())) {
+				sql.append(" AND STATUS=?");
+				paramsList.add(smsBuyActOnline.getStatus());
+			}
+
+			if (StringUtils.isNotEmpty(smsBuyActOnline.getStartTime())) {
+				sql.append(" AND START_TIME >?");
+				paramsList.add(smsBuyActOnline.getStartTime());
+			}
+
+			if (StringUtils.isNotEmpty(smsBuyActOnline.getEndTime())) {
+				sql.append(" AND END_TIME <?");
+				paramsList.add(smsBuyActOnline.getEndTime());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_SMSBUY));
+		sql.append(" ORDER BY ACT_ID DESC");
+		return dbHelper.getPage(sql.toString(), SmsBuyActOnline.class, page, pagesize, paramsList.toArray());
+	}
+
+	/**
+	 * 商品指令列表
+	 * 
+	 * @param smsbuyItemRouter
+	 * @param page
+	 * @param defaultPagesize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SmsbuyItemRouter> routerList(SmsbuyItemRouter smsbuyItemRouter, Integer page, int pagesize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("SELECT ROUTER.*,ACT.ACT_NAME  FROM T_SMSBUY_ITEM_ROUTER ROUTER,T_SMSBUY_ACT_ONLINE ACT WHERE 1=1 AND ROUTER.ACT_ID=ACT.ACT_ID");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsbuyItemRouter != null) {
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getItemName())) {
+				sql.append(" AND UPPER(ITEM_NAME) LIKE '%'||UPPER('" + smsbuyItemRouter.getItemName() + "')||'%'");
+			}
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getCommand())) {
+				sql.append(" AND UPPER(COMMAND) LIKE '%'||UPPER('" + smsbuyItemRouter.getCommand() + "')||'%'");
+			}
+
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getActName())) {
+				sql.append(" AND UPPER(ACT.ACT_NAME) LIKE '%'||UPPER('" + smsbuyItemRouter.getActName() + "')||'%'");
+			}
+
+			if (smsbuyItemRouter.getCmdOptType() != null) {
+				sql.append(" AND ACT.CMD_OPT_TYPE=?");
+				paramsList.add(smsbuyItemRouter.getCmdOptType());
+			}
+			if (smsbuyItemRouter.getActId() != null) {
+				sql.append(" AND ACT.ACT_ID=?");
+				paramsList.add(smsbuyItemRouter.getActId());
+			}
+
+			if (smsbuyItemRouter.getItemId() != null && !"".equals(smsbuyItemRouter.getItemId())) {
+				sql.append(" AND ROUTER.ITEM_id=?");
+				paramsList.add(smsbuyItemRouter.getItemId());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_SMSBUY));
+		sql.append(" ORDER BY ROUTER.ID DESC");
+		return dbHelper.getPage(sql.toString(), SmsbuyItemRouter.class, page, pagesize, paramsList.toArray());
+	}
+
+	/**
+	 * 商品指令列表
+	 * 
+	 * @param smsbuyItemRouter
+	 * @param page
+	 * @param defaultPagesize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SmsbuyItemRouter> itemRouterList(SmsbuyItemRouter smsbuyItemRouter, Integer page, int pagesize, String itemStatus)
+	        throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("select t.*,t2.act_name,t1.taskCount ");
+		sql.append("from T_SMSBUY_ITEM_ROUTER t,");
+		sql.append("(select ROUTER.Id, count(task.id) taskCount ");
+		sql.append("from T_SMSBUY_ITEM_ROUTER ROUTER left join t_batch_task task on ROUTER.Id = task.router_id ");
+		sql.append("group by ROUTER.Id) ");
+		sql.append("t1,T_SMSBUY_ACT_ONLINE t2 where t.id = t1.id and t.act_id = t2.act_id and t2.status = 'online'");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsbuyItemRouter != null) {
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getItemName())) {
+				sql.append(" AND UPPER(t.ITEM_NAME) LIKE '%'||UPPER('" + smsbuyItemRouter.getItemName() + "')||'%'");
+			}
+
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getActName())) {
+				sql.append(" AND UPPER(t2.ACT_NAME) LIKE '%'||UPPER('" + smsbuyItemRouter.getActName() + "')||'%'");
+			}
+
+			if (smsbuyItemRouter.getActId() != null) {
+				sql.append(" AND t2.ACT_ID=?");
+				paramsList.add(smsbuyItemRouter.getActId());
+			}
+
+			if (smsbuyItemRouter.getItemId() != null && !"".equals(smsbuyItemRouter.getItemId())) {
+				sql.append(" AND t.ITEM_id=?");
+				paramsList.add(smsbuyItemRouter.getItemId());
+			}
+
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getStartTime())) {
+				sql.append(" AND t2.START_TIME >?");
+				paramsList.add(smsbuyItemRouter.getStartTime());
+			}
+
+			if (StringUtils.isNotEmpty(smsbuyItemRouter.getStopTime())) {
+				sql.append(" AND t2.END_TIME <?");
+				paramsList.add(smsbuyItemRouter.getStopTime());
+			}
+
+			if (StringUtils.isEmpty(smsbuyItemRouter.getItemStatus())) {
+				sql.append(" AND t.ITEM_STATUS = 'online' ");
+			} else {
+				if (!"0".equals(smsbuyItemRouter.getItemStatus())) {
+					sql.append(" AND t.ITEM_STATUS = ? ");
+					paramsList.add(smsbuyItemRouter.getItemStatus());
+				}
+			}
+
+		}
+		sql.append(" order by t.id desc");
+
+		return dbHelper.getPage(sql.toString(), SmsbuyItemRouter.class, page, pagesize, paramsList.toArray());
+	}
+
+	/**
+	 * 添加短信购活动配置 q
+	 * 
+	 * @param smsBuyActOnline
+	 * @param session
+	 */
+	public void addAct(SmsBuyActOnline smsBuyActOnline) {
+		smsBuyActOnline.setStatus("audit");// 待审核状态
+		smsBuyActOnline.setStoreId(0L);// 后台管理系统中商户编号默认填“0”
+		smsBuyActOnline.setStartTime(TimeUtil.format(smsBuyActOnline.getStartTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		smsBuyActOnline.setEndTime(TimeUtil.format(smsBuyActOnline.getEndTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		smsBuyActOnlineDao.save(smsBuyActOnline);
+	}
+
+	/**
+	 * 添加短信购活动以及商品指令
+	 */
+	@Transactional
+	public String addActAndItem(SmsBuyActOnline smsBuyActOnline, MultipartFile uploaditemfile, String filepath) {
+		smsBuyActOnline.setStatus("audit");// 待审核状态
+		smsBuyActOnline.setStoreId(0L);// 后台管理系统中商户编号默认填“0”
+		smsBuyActOnline.setStartTime(TimeUtil.format(smsBuyActOnline.getStartTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		smsBuyActOnline.setEndTime(TimeUtil.format(smsBuyActOnline.getEndTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		SmsBuyActOnline info = smsBuyActOnlineDao.save(smsBuyActOnline);
+		return this.addBatchItemRouter(uploaditemfile, info.getActId(), filepath, smsBuyActOnline.getSpCode());
+	}
+
+	/**
+	 * 批量添加商品指令
+	 * 
+	 * @param smsbuyItemRouter
+	 */
+	public String addBatchItemRouter(MultipartFile uploaditemfile, Long actId, String filepath, String spCode) {
+		String msg = "";
+		if (uploaditemfile != null) {
+			try {
+				List<String[]> resultList = ReadExcel.getData2(uploaditemfile.getInputStream(), 1, filepath);
+				for (String[] str : resultList) {
+					if (str[0] != null && !"".equals(str[0])) {
+						SmsbuyItemRouter smsbuyItemRouter = new SmsbuyItemRouter();
+						// 通过商品编号获取商品信息
+						List itemList = itemManageDao.findNameById(Long.parseLong(str[0]));
+						if (itemList.size() > 0) {
+							smsbuyItemRouter.setActId(actId);
+							smsbuyItemRouter.setItemId(str[0]);
+							smsbuyItemRouter.setItemName(itemList.get(0).toString());
+							smsbuyItemRouter.setSpCode(spCode);
+							smsbuyItemRouter.setCommand(str[1]);
+							if ("积分".equals(str[2])) {
+								smsbuyItemRouter.setPayType(1);
+							} else if ("话费".equals(str[2])) {
+								smsbuyItemRouter.setPayType(3);
+							} else {
+								smsbuyItemRouter.setPayType(2);
+							}
+							smsbuyItemRouter.setItemPrice(Double.parseDouble(str[3]) * 100);
+							smsbuyItemRouter.setPriority(100l);
+							// 审核状态
+							smsbuyItemRouter.setItemStatus("audit");
+							if (smsbuyItemRouter.getCommand().toUpperCase().indexOf("Y") > -1
+							        || smsbuyItemRouter.getCommand().toUpperCase().indexOf("N") > -1
+							        || smsbuyItemRouter.getCommand().toUpperCase().indexOf("DZ") > -1) {
+								msg += "商品编号" + str[0] + "Y、N、DZ不能作为商品指令！";
+								continue;
+							}
+							if (smsbuyItemRouterDao.findBySpCodeAndCommand(smsbuyItemRouter.getSpCode(), smsbuyItemRouter.getCommand()).size() > 0) {
+								msg += "商品编号" + str[0] + "指令已存在，上传失败！";
+							} else {
+								smsbuyItemRouterDao.save(smsbuyItemRouter);
+								msg += "商品编号" + str[0] + "上传成功！";
+							}
+						} else {
+							msg += "商品编号" + str[0] + "不存在，上传失败！";
+						}
+					}
+				}
+			}
+			catch (FileNotFoundException e) {
+				log.error(e.getMessage());
+			}
+			catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+		return msg;
+	}
+
+	/**
+	 * 活动预编辑
+	 * 
+	 * @param actId
+	 * @param model
+	 */
+	public void preEditAct(Long actId, Model model) {
+
+		SmsBuyActOnline smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+
+		/** 将数据库时间转换成页面展示格式 yyyymmddhhmiss -> yyyy-mm-dd hh:mi:ss */
+		smsBuyActOnline.setStartTime(TimeUtil.format(smsBuyActOnline.getStartTime(), TimeUtil.SOURCE_1, TimeUtil.TARGET_1));
+		smsBuyActOnline.setEndTime(TimeUtil.format(smsBuyActOnline.getEndTime(), TimeUtil.SOURCE_1, TimeUtil.TARGET_1));
+
+		String actAreas = smsBuyActOnline.getActArea();
+
+		smsBuyActOnline.setAreaName(getAreaNames(actAreas));
+
+		model.addAttribute("smsBuyActOnline", smsBuyActOnline);
+		model.addAttribute("method", "edit");
+	}
+
+	/**
+	 * 商品指令列表查询
+	 * 
+	 * @param actId
+	 * @param model
+	 * @throws SQLException
+	 */
+	public void itemRouterList(Long actId, Integer page, Model model) throws SQLException {
+		SmsbuyItemRouter smsbuyItemRouter = new SmsbuyItemRouter();
+		smsbuyItemRouter.setActId(actId);
+		Page<SmsbuyItemRouter> smsbuyItemRouterList = routerList(smsbuyItemRouter, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", smsbuyItemRouterList);
+		model.addAttribute("actId", actId);
+	}
+
+	/**
+	 * 商品指令预添加、修改
+	 * 
+	 * @param actId
+	 * @param model
+	 * @throws SQLException
+	 */
+	public void preAddAndUpdateItemRouter(Long actId, Long id, Integer page, Model model) throws SQLException {
+		SmsbuyItemRouter smsbuyItemRouter = new SmsbuyItemRouter();
+		// 修改商品指令
+		if (id != null) {
+			SmsbuyItemRouter router = smsbuyItemRouterDao.findOne(id);
+			model.addAttribute("router", router);
+		}
+		smsbuyItemRouter.setActId(actId);
+		SmsBuyActOnline actOnline = smsBuyActOnlineDao.findOne(actId);
+		smsbuyItemRouter.setSpCode(actOnline.getSpCode());
+		model.addAttribute("smsbuyItemRouter", smsbuyItemRouter);
+		model.addAttribute("cmdOptTypeMap", SmsbuyItemRouter.cmdOptTypeMap);
+		model.addAttribute("payTypeMap", SmsbuyItemRouter.payTypeMap);
+		model.addAttribute("actId", actId);
+	}
+
+	/**
+	 * 商品指令预添加、修改
+	 * 
+	 * @param actId
+	 * @param model
+	 * @throws SQLException
+	 */
+	public void preAddItemRouter(Long actId, Long id, Integer page, Model model) throws SQLException {
+
+		SmsbuyItemRouter smsbuyItemRouter = new SmsbuyItemRouter();
+		// 修改商品指令
+		if (id != null) {
+			SmsbuyItemRouter router = smsbuyItemRouterDao.findOne(id);
+			// smsbuyItemRouter.setItemId(router.getItemId());
+			// smsbuyItemRouter.setItemName(router.getItemName());
+			model.addAttribute("router", router);
+		}
+		smsbuyItemRouter.setActId(actId);
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		Page<SmsbuyItemRouter> smsbuyItemRouterList = routerList(smsbuyItemRouter, page, Page.DEFAULT_PAGESIZE);
+
+		model.addAttribute("pageData", smsbuyItemRouterList);
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		model.addAttribute("smsbuyItemRouter", smsbuyItemRouter);
+		model.addAttribute("cmdOptTypeMap", SmsbuyItemRouter.cmdOptTypeMap);
+		model.addAttribute("payTypeMap", SmsbuyItemRouter.payTypeMap);
+		model.addAttribute("method", "add");
+		model.addAttribute("actId", actId);
+	}
+
+	/**
+	 * 添加商品指令
+	 * 
+	 * @param smsbuyItemRouter
+	 */
+	public void addItemRouter(SmsbuyItemRouter smsbuyItemRouter) {
+		// 商品特服号直接从活动传值过来
+		// String rootSpcode = smsbuyItemRouter.getRootSpcode();
+		// smsbuyItemRouter.setSpCode(rootSpcode +
+		// smsbuyItemRouter.getSpCode());
+		smsbuyItemRouter.setPriority(100l);
+		// 审核状态
+		smsbuyItemRouter.setItemStatus("audit");
+		smsbuyItemRouterDao.save(smsbuyItemRouter);
+	}
+
+	/**
+	 * 商品指令预编辑
+	 * 
+	 * @param id
+	 * @param model
+	 */
+	public void preEditRouter(Long id, Model model) {
+		if (null != id) {
+
+			SmsbuyItemRouter smsbuyItemRouter = smsbuyItemRouterDao.findOne(id);
+			String spCode = smsbuyItemRouter.getSpCode();
+			if (StringUtils.isNotEmpty(spCode)) {
+				smsbuyItemRouter.setSpCode(spCode.substring(8));
+			}
+			model.addAttribute("smsbuyItemRouter", smsbuyItemRouter);
+		}
+
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		model.addAttribute("cmdOptTypeMap", SmsbuyItemRouter.cmdOptTypeMap);
+		model.addAttribute("payTypeMap", SmsbuyItemRouter.payTypeMap);
+		model.addAttribute("method", "add");
+	}
+
+	/**
+	 * 删除活动
+	 * 
+	 * @param actId
+	 */
+	public String deleteAct(Long actId) {
+
+		String msg = "删除成功！";
+		SmsBuyActOnline smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+		if ("online".equals(smsBuyActOnline.getStatus())) {
+			msg = "商用状态不允许删除！";
+		} else {
+			List<SmsbuyItemRouter> itemRouterList = smsbuyItemRouterDao.findByActId(actId);
+			if (itemRouterList.size() > 0) {
+				smsbuyItemRouterDao.delete(itemRouterList);
+			}
+			if (smsBuyActOnline != null) {
+				smsBuyActOnlineDao.delete(smsBuyActOnline);
+			}
+		}
+
+		return msg;
+
+	}
+
+	/**
+	 * 查看活动
+	 * 
+	 * @param actId
+	 * @param model
+	 * @throws SQLException
+	 */
+	public void viewAct(Integer page, Long actId, Model model) throws SQLException {
+		SmsBuyActOnline smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+
+		SmsbuyItemRouter smsbuyItemRouter = new SmsbuyItemRouter();
+		smsbuyItemRouter.setActId(actId);
+
+		Page<SmsbuyItemRouter> smsbuyItemRouterList = routerList(smsbuyItemRouter, page, Page.DEFAULT_PAGESIZE);
+
+		String actAreas = smsBuyActOnline.getActArea();
+		smsBuyActOnline.setAreaName(getAreaNames(actAreas));
+
+		model.addAttribute("pageData", smsbuyItemRouterList);
+		model.addAttribute("smsBuyActOnline", smsBuyActOnline);
+	}
+
+	/**
+	 * 获取地区名
+	 * 
+	 * @param actAreas
+	 * @return
+	 */
+	private String getAreaNames(String actAreas) {
+		String[] actAreaStrs = actAreas.split(",");
+		String areaName = "";
+		for (String areaIdStr : actAreaStrs) {
+			SysRegion sysRegion = sysRegionDao.findByRegionCode(areaIdStr);
+			if (sysRegion != null) {
+				areaName += sysRegion.getRegionName() + ",";
+			}
+		}
+		if (areaName != "") {
+			return areaName.substring(0, areaName.lastIndexOf(","));
+
+		} else {
+			return actAreas;
+		}
+	}
+
+	/**
+	 * 删除商品指令
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public String deleteRouter(Long id) {
+		SmsbuyItemRouter smsbuyItemRouter = smsbuyItemRouterDao.findOne(id);
+		if (smsbuyItemRouter != null) {
+			smsbuyItemRouterDao.delete(id);
+		}
+		return "/smsbuy/act/preAddItemRouter.do?actId=" + smsbuyItemRouter.getActId();
+	}
+
+	/**
+	 * 查看商品指令
+	 * 
+	 * @param id
+	 * @param model
+	 */
+	public void viewRouter(Long id, Model model) {
+		SmsbuyItemRouter smsbuyItemRouter = smsbuyItemRouterDao.findOne(id);
+		model.addAttribute("smsbuyItemRouter", smsbuyItemRouter);
+	}
+
+	public SmsBuyActOnline findById(Long id) {
+		return smsBuyActOnlineDao.findOne(id);
+	}
+
+	/**
+	 * 审核活动
+	 * 
+	 * @param actId
+	 * @param string
+	 */
+	public void updateActStatus(Long actId, String status) {
+		SmsBuyActOnline smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+		smsBuyActOnline.setStatus(status);
+		smsBuyActOnlineDao.save(smsBuyActOnline);
+	}
+
+	/**
+	 * 商品指令审核
+	 * 
+	 * @param actId
+	 * @param string
+	 */
+	public String updateItemRouter(Long id, String itemStatus) {
+		String str = "";
+		SmsbuyItemRouter itemRouter = smsbuyItemRouterDao.findOne(id);
+		if ("rebutAudit".equals(itemStatus)) {
+			if (!"online".equals(itemRouter.getItemStatus())) {
+				itemRouter.setItemStatus(itemStatus);
+				smsbuyItemRouterDao.save(itemRouter);
+				str = itemRouter.getItemName() + "驳回成功！";
+			} else {
+				str = itemRouter.getItemName() + "已上线不可驳回！";
+			}
+		} else {
+			itemRouter.setItemStatus(itemStatus);
+			smsbuyItemRouterDao.save(itemRouter);
+		}
+		return str;
+	}
+
+	/**
+	 * 修改活动状态
+	 * 
+	 * @param actId
+	 * @param string
+	 */
+	public String updateStatus(Long actId, String status) {
+		List<SmsbuyItemRouter> routerList = smsbuyItemRouterDao.findByActId(actId);
+		String msg = "上线成功！";
+		if (routerList.size() > 0) {
+			SmsBuyActOnline smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+			smsBuyActOnline.setStatus(status);
+			smsBuyActOnlineDao.save(smsBuyActOnline);
+		} else {
+			msg = "活动下未配置指令，不允许上线！";
+		}
+		return msg;
+	}
+
+	public String preAdd(Long actId, Model model) {
+		String url = "";
+		SmsBuyActOnline smsBuyActOnline = null;
+		if (actId != null) {
+			url = "/smsbuy/act/act-add1";
+			smsBuyActOnline = smsBuyActOnlineDao.findOne(actId);
+		} else {
+			url = "/smsbuy/act/act-add";
+			smsBuyActOnline = new SmsBuyActOnline();
+		}
+
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		model.addAttribute("sysSpcodeList", sysSpcodeList);
+		model.addAttribute("smsBuyActOnline", smsBuyActOnline);
+		model.addAttribute("actId", actId);
+		model.addAttribute("method", "add");
+		return url;
+	}
+
+	public Page<SmsbuyItemRouter> listSmsBuySmsbuyItemRouter(SmsbuyItemRouter smsbuyItemRouter, Integer page, int pagesize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append(" select t.*,s.ACT_NAME actName from T_SMSBUY_ITEM_ROUTER t,T_SMSBUY_ACT_ONLINE s where s.act_id = t.act_id");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsbuyItemRouter != null) {
+			if (smsbuyItemRouter.getActName() != null && !"".equals(smsbuyItemRouter.getActName())) {
+				sql.append(" and s.ACT_NAME LIKE ?");
+				paramsList.add("%" + smsbuyItemRouter.getActName().trim() + "%");
+			}
+			if (smsbuyItemRouter.getActId() != null) {
+				sql.append(" and t.act_id = ?");
+				paramsList.add(smsbuyItemRouter.getActId());
+			}
+			if (smsbuyItemRouter.getItemName() != null && !"".equals(smsbuyItemRouter.getItemName())) {
+				sql.append(" and UPPER(t.ITEM_NAME) LIKE ?");
+				paramsList.add("%" + smsbuyItemRouter.getItemName().trim() + "%");
+			}
+			if (smsbuyItemRouter.getSpCode() != null && !"".equals(smsbuyItemRouter.getSpCode())) {
+				sql.append(" and t.SP_CODE  = ?");
+				paramsList.add(smsbuyItemRouter.getSpCode().trim());
+			}
+			if (smsbuyItemRouter.getItemStatus() != null && StringUtils.isNotEmpty(smsbuyItemRouter.getItemStatus())) {
+				sql.append(" and t.ITEM_STATUS=?");
+				paramsList.add(smsbuyItemRouter.getItemStatus());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_SMSBUY));
+		sql.append(" order by t.id desc");
+		return dbHelper.getPage(sql.toString(), SmsbuyItemRouter.class, page, pagesize, paramsList.toArray());
+
+	}
+
+	/**
+	 * 活动群发管理
+	 * 
+	 * @param smsBuyActOnline
+	 * @param page
+	 * @param defaultPagesize
+	 * @param model
+	 * @throws SQLException
+	 */
+	public Page<SmsBuyActOnline> listActBatchTask(SmsBuyActOnline smsBuyActOnline, Integer page, int pagesize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("select act.*, task.taskCount ");
+		sql.append("from T_SMSBUY_ACT_ONLINE ACT,");
+		sql.append("(select ACT.Act_Id, count(task.id) taskCount ");
+		sql.append("from T_SMSBUY_ACT_ONLINE ACT left join T_BATCH_TASK task ");
+		sql.append("on act.act_id = task.act_id and task.TASK_TYPE = 1 ");
+		sql.append("group by act.act_id) task ");
+		sql.append("where ACT.Act_Id = task.Act_Id");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (smsBuyActOnline != null) {
+			if (smsBuyActOnline.getActId() != null) {
+				sql.append(" AND ACT.Act_Id = ?");
+				paramsList.add(smsBuyActOnline.getActId());
+			}
+
+			if (smsBuyActOnline.getActName() != null) {
+				sql.append(" AND UPPER(ACT.ACT_NAME) LIKE '%'||UPPER('" + smsBuyActOnline.getActName().trim() + "')||'%'");
+			}
+			if (StringUtils.isNotEmpty(smsBuyActOnline.getStatus()) && !"0".equals(smsBuyActOnline.getStatus())) {
+				sql.append(" AND ACT.STATUS=?");
+				paramsList.add(smsBuyActOnline.getStatus());
+			}
+			if (StringUtils.isNotEmpty(smsBuyActOnline.getStartTime())) {
+				sql.append(" AND ACT.START_TIME >?");
+				paramsList.add(smsBuyActOnline.getStartTime());
+			}
+			if (StringUtils.isNotEmpty(smsBuyActOnline.getEndTime())) {
+				sql.append(" AND ACT.END_TIME <?");
+				paramsList.add(smsBuyActOnline.getEndTime());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_SMSBUY));
+		sql.append(" ORDER BY ACT.Act_Id DESC");
+		return dbHelper.getPage(sql.toString(), SmsBuyActOnline.class, page, pagesize, paramsList.toArray());
+	}
+}

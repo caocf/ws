@@ -1,0 +1,7 @@
+CREATE TABLE "LIFE".t_sys_template_group (
+  "ID" VARCHAR2(255 CHAR) NOT NULL,
+  gname VARCHAR2(255 CHAR),
+  memo VARCHAR2(255 CHAR),
+  PRIMARY KEY ("ID")
+);
+ALTER TABLE "LIFE".t_sys_template_group ADD SUPPLEMENTAL LOG GROUP ggs_240457 ("ID") ALWAYS;

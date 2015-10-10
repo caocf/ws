@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index2_verify_card_code_common ON "LIFE".t_verify_card_code_common(order_id);

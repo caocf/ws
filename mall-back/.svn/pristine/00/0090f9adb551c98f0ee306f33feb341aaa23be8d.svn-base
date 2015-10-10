@@ -1,0 +1,774 @@
+package com.cplatform.mall.back.batch.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.batch.dao.BatchTaskDao;
+import com.cplatform.mall.back.batch.entity.BatchTask;
+import com.cplatform.mall.back.batch.service.BatchTaskService;
+import com.cplatform.mall.back.batch.web.validator.BatchTaskValidator;
+import com.cplatform.mall.back.cont.entity.ContMms;
+import com.cplatform.mall.back.cont.service.ContMmsService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.sys.dao.SysFilterWordDao;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * Title. 群发任务管理<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-20 下午4:58:32
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: BaiJie
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping("/batch")
+public class BatchTaskController {
+
+	@Autowired
+	private BatchTaskDao batchTaskDao;
+
+	@Autowired
+	private BatchTaskService batchTaskService;
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private ContMmsService contMmsService;
+
+	@Autowired
+	SysFilterWordDao filterDao;
+
+	@Autowired
+	private BsFileService bsFileService;
+
+	@Autowired
+	private BatchTaskValidator taskValidator;
+
+	@Autowired
+	private AppConfig appConfig;
+
+	/**
+	 * 进入短信群发任务增加页面
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	public String toAdd(Model model) throws IOException, Exception {
+		BatchTask task = new BatchTask();
+		task.setStartTime(TimeStamp.getTime(14));
+		// task.setStopTime(TimeStamp.getTime(14));
+		model.addAttribute("task", task);
+		// 跳转到列表页面
+		return "batch/sms_batch_task_add";
+	}
+
+	/**
+	 * 短信群发任务增加操作
+	 * 
+	 * @param uploadfile
+	 * @param uploadblackfile
+	 * @param uploadwhitefile
+	 * @param task
+	 * @param model
+	 * @param request
+	 * @param result
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object add(MultipartFile uploadfile, MultipartFile uploadblackfile, MultipartFile uploadwhitefile, @ModelAttribute("task") BatchTask task,
+	        Model model, HttpServletRequest request, BindingResult result) throws IOException, Exception {
+
+		try {
+			// 短信内容过滤
+			if (filterDao.countFilterwordNum(task.getTitle()) > 0) {
+				return JsonRespWrapper.successAlert("短信内容包含敏感字！");
+			}
+			SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+			String unitId = sessionUser.getUnitId().toString();
+			task.setCreatorId(sessionUser.getId());
+			task.setUnitId(unitId);
+			task.setIsNewTerminalId("1");
+			taskValidator.validate(task, result);
+			if (result.hasErrors()) {
+				return JsonRespWrapper.error(result.getFieldErrors());
+
+			}
+			batchTaskService.saveTask(task, uploadfile, uploadblackfile, uploadwhitefile);
+			// 跳转到列表页面
+			return JsonRespWrapper.success("操作成功", "/batch/smsbatchlist");
+		}
+		catch (Exception ex) {
+			// 如何上传群发号码文件内容为空，会抛出异常，
+			// 新增数据信息保存到数据库信息不完整(没有号码附件)，要删除该条数据
+			// batchTaskDao.delete(task.getId());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 进入短信群发任务修改页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/edit/{id}", method = RequestMethod.GET)
+	public String edit(@PathVariable Long id, Model model) throws SQLException {
+		BatchTask bt = batchTaskDao.findOne(id);
+		bt.setService(bt.getServiceId() + "|" + bt.getFeeType() + "|" + bt.getFee());
+		model.addAttribute("task", bt);
+		return "batch/sms_batch_task_upd";
+	}
+
+	/**
+	 * 完成短信群发任务修改
+	 * 
+	 * @param uploadfile
+	 * @param uploadblackfile
+	 * @param uploadwhitefile
+	 * @param task
+	 * @param model
+	 * @param request
+	 * @param result
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/edit/{id}", method = RequestMethod.POST)
+	@ResponseBody
+	public Object update(MultipartFile uploadfile, MultipartFile uploadblackfile, MultipartFile uploadwhitefile,
+	        @ModelAttribute("task") BatchTask task, Model model, HttpServletRequest request, BindingResult result) throws IOException, Exception {
+		try {
+			// 短信内容过滤
+			if (filterDao.countFilterwordNum(task.getTitle()) > 0) {
+				return JsonRespWrapper.success("短信内容包含敏感字！", "");
+			}
+			BatchTask oldTask = batchTaskDao.findOne(task.getId());
+			SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+			String unitId = sessionUser.getUnitId().toString();
+			task.setCreatorId(sessionUser.getId());
+			task.setUnitId(unitId);
+			task.setBlackListFile(oldTask.getBlackListFile());
+			task.setSubmitCnt(oldTask.getSubmitCnt());
+			task.setWhiteListFile(oldTask.getWhiteListFile());
+			task.setMobileListFile(oldTask.getMobileListFile());
+			taskValidator.validate(task, result);
+			if (result.hasErrors()) {
+				return JsonRespWrapper.error(result.getFieldErrors());
+
+			}
+			batchTaskService.saveTask(task, uploadfile, uploadblackfile, uploadwhitefile);
+			// 跳转到列表页面
+			return JsonRespWrapper.success("操作成功", "/batch/smsbatchlist");
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 短信群发任务删除
+	 * 
+	 * @param id
+	 * @param path
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/delete/{id}/{path}")
+	@ResponseBody
+	public Object delete(@PathVariable Long id, @PathVariable String path, Model model) {
+		try {
+			batchTaskDao.delete(id);
+			return JsonRespWrapper.success("操作成功", "/batch/" + path);
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 群发任务审核、恢复、取消、暂停操作
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param advice
+	 * @param status
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/process/{optype}/{id}")
+	@ResponseBody
+	public Object process(@PathVariable Long id, @PathVariable String optype, @RequestParam(required = false) String advice,
+	        @RequestParam(required = false) Long status, Model model, HttpServletRequest request) {
+		try {
+			BatchTask bt = batchTaskDao.findOne(id);
+			if ("renew".equals(optype)) {// 恢复
+				bt.setStatus(1L);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/smsmanagerlist");
+			} else if ("pause".equals(optype)) {// 暂停
+				bt.setStatus(3L);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/smsmanagerlist");
+			} else if ("audit".equals(optype)) {// 审核通过
+				SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+				Long auditorId = sessionUser.getId();
+				bt.setStatus(status);
+				bt.setAdvice(advice);
+				bt.setAuditorId(auditorId);
+				bt.setAuditTime(TimeStamp.getTime(14));
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/smsauditlist");
+			} else if ("cancel".equals(optype)) {// 取消
+				bt.setStatus(9L);
+				bt.setAdvice(advice);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/smsmanagerlist");
+			} else {
+				return null;
+			}
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 短信群发任务申请列表
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "smsbatchlist", "/", "" })
+	public String smsTaskList(@ModelAttribute("task") BatchTask task, @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+	        Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(1l);
+		Page<BatchTask> pageList = batchTaskService.findBatchTask(task, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("taskPage", pageList);
+		return "batch/sms_batch_task_list";
+	}
+
+	/**
+	 * 短信群发任务查看
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/view/{optype}/{id}")
+	public String smsView(@PathVariable Long id, @PathVariable String optype, Model model) throws IOException, Exception {
+		BatchTask bt = batchTaskDao.findOne(id);
+		model.addAttribute("bt", bt);
+		// 跳转到列表页面
+		if (optype.equals("batchList")) {
+			model.addAttribute("optype", "batchList");
+		} else if (optype.equals("suditList")) {
+			model.addAttribute("optype", "auditList");
+		} else if (optype.equals("controlList")) {
+			model.addAttribute("optype", "controlList");
+		}
+		return "batch/sms_batch_task_view";
+	}
+
+	/**
+	 * 下载号码文件
+	 * 
+	 * @param savename
+	 * @param id
+	 * @param flag
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/downfile/{id}/{flag}")
+	public ModelAndView downFile(@PathVariable Long id, @PathVariable String flag, HttpServletRequest request, HttpServletResponse response)
+	        throws IOException, Exception {
+		String contentType = "application/octet-stream";
+		BatchTask bt = batchTaskDao.findOne(id);
+
+		if ("1".equals(flag)) {// 群发号码下载
+			System.out.println("[群发号码下载路径]--------" + bt.getMobileListFile());
+			bsFileService.download(request, response, appConfig.getUploadTaskDir() + bt.getMobileListFile(), "terminal_id.txt");
+		}
+		if ("2".equals(flag)) {// 白名单下载
+			bsFileService.download(request, response, appConfig.getUploadTaskDir() + bt.getWhiteListFile(), "black_terminal.txt");
+		}
+		if ("3".equals(flag)) {// 黑名单下载
+			bsFileService.download(request, response, appConfig.getUploadTaskDir() + bt.getBlackListFile(), "white_terminal.txt");
+		}
+		return null;
+	}
+
+	/**
+	 * 短信群发任务审核列表页
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "smsauditlist", "/", "" })
+	public String smsTaskAuditList(@ModelAttribute("task") BatchTask task,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(1l);
+		Page<BatchTask> pagelist = batchTaskService.findBatchTask(task, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("taskPage", pagelist);
+		return "batch/sms_batch_task_audit_list";
+	}
+
+	/**
+	 * 进入短信群发任务审核填写意见页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/audit/{id}", method = RequestMethod.GET)
+	public String toSmsAudit(@PathVariable Long id, Model model) throws IOException, Exception {
+		BatchTask task = batchTaskDao.findOne(id);
+		model.addAttribute("task", task);
+		// 跳转到列表页面
+		return "batch/sms_auditing";
+	}
+
+	/**
+	 * 短信群发管理列表页
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "smsmanagerlist", "/", "" })
+	public String smsTaskManagerList(@ModelAttribute("task") BatchTask task,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(1l);
+		Page<BatchTask> pageList = batchTaskService.findBatchTask(task, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("taskPage", pageList);
+		return "batch/sms_batch_task_control_list";
+	}
+
+	/**
+	 * 彩信群发任务申请列表页
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "mmsbatchlist", "/", "" })
+	public String mmsTaskList(@ModelAttribute("task") BatchTask task, @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+	        Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(2l);
+		Page<BatchTask> pageList = batchTaskService.findBatchTask(task, page, 10);
+		model.addAttribute("taskPage", pageList);
+		return "batch/mms_batch_task_list";
+	}
+
+	/**
+	 * 进入彩信群发任务修改页面
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/addmms", method = RequestMethod.GET)
+	public String toAddMMS(Model model) throws IOException, Exception {
+		BatchTask task = new BatchTask();
+		task.setStartTime(TimeStamp.getTime(14));
+		// task.setStopTime(TimeStamp.getTime(14));
+		model.addAttribute("task", task);
+		// 跳转到列表页面
+		return "batch/mms_batch_task_add";
+	}
+
+	/**
+	 * 选择彩信列表页
+	 * 
+	 * @param contMms
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "mmsInfoList", "/", "" })
+	public String mmsInfoList(@ModelAttribute("contMms") ContMms contMms,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (StringUtils.isEmpty(contMms.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -7).getTime());
+			contMms.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (StringUtils.isEmpty(contMms.getEndTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			contMms.setEndTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		contMms.setStartTime(contMms.getStartTime().replaceAll("-", "").replace(" ", "") + "000000");
+		contMms.setEndTime(contMms.getEndTime().replaceAll("-", "").replace(" ", "") + "235959");
+		contMms.setStatus(ContMms.ASTATUS_OK);
+		Page<ContMms> pageList = contMmsService.listContMms(contMms, page, 5);
+		model.addAttribute("mmsinfo", pageList);
+		return "batch/mms_info_list";
+	}
+
+	/**
+	 * 完成彩信群发增加
+	 * 
+	 * @param uploadfile
+	 * @param uploadblackfile
+	 * @param uploadwhitefile
+	 * @param task
+	 * @param mmsvalue
+	 *            选择的彩信id
+	 * @param model
+	 * @param request
+	 * @param result
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/addmms", method = RequestMethod.POST)
+	@ResponseBody
+	public Object addMMS(MultipartFile uploadfile, MultipartFile uploadblackfile, MultipartFile uploadwhitefile,
+	        @ModelAttribute("task") BatchTask task, @RequestParam(required = false) Long mmsvalue, Model model, HttpServletRequest request,
+	        BindingResult result) throws IOException, Exception {
+		try {
+			if (null == mmsvalue || "".equals(mmsvalue)) {
+				return JsonRespWrapper.success("请选择要群发的彩信！", "");
+			}
+			SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+			String unitId = sessionUser.getUnitId().toString();
+			task.setUnitId(unitId);
+			task.setCreatorId(sessionUser.getId());
+			task.setIsNewTerminalId("1");
+			batchTaskService.saveMsmTask(task, uploadfile, uploadblackfile, uploadwhitefile, mmsvalue);
+
+			// 跳转到列表页面
+			return JsonRespWrapper.success("操作成功", "/batch/mmsbatchlist");
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 进入彩信群发任务修改页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/editmms/{id}", method = RequestMethod.GET)
+	public String editMms(@PathVariable Long id, Model model) throws SQLException {
+		BatchTask bt = batchTaskDao.findOne(id);
+		bt.setService(bt.getServiceId() + "|" + bt.getFeeType() + "|" + bt.getFee());
+		model.addAttribute("task", bt);
+		return "batch/mms_batch_task_upd";
+	}
+
+	/**
+	 * 完成彩信群发任务修改
+	 * 
+	 * @param uploadfile
+	 * @param uploadblackfile
+	 * @param uploadwhitefile
+	 * @param task
+	 * @param mmsvalue
+	 *            选择的彩信id
+	 * @param model
+	 * @param request
+	 * @param result
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/editmms/{id}", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updateMms(MultipartFile uploadfile, MultipartFile uploadblackfile, MultipartFile uploadwhitefile,
+	        @ModelAttribute("task") BatchTask task, @RequestParam(required = false) Long mmsvalue, Model model, HttpServletRequest request,
+	        BindingResult result) throws IOException, Exception {
+		try {
+			BatchTask oldTask = batchTaskDao.findOne(task.getId());
+			SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+			String unitId = sessionUser.getUnitId().toString();
+			task.setUnitId(unitId);
+			task.setCreatorId(sessionUser.getId());
+			task.setBlackListFile(oldTask.getBlackListFile());
+			task.setSubmitCnt(oldTask.getSubmitCnt());
+			task.setWhiteListFile(oldTask.getWhiteListFile());
+			task.setMobileListFile(oldTask.getMobileListFile());
+			task.setTitle(oldTask.getTitle());
+			task.setContent(oldTask.getContent());
+			task.setSmil(oldTask.getSmil());
+
+			batchTaskService.saveMsmTask(task, uploadfile, uploadblackfile, uploadwhitefile, mmsvalue);
+
+			// 跳转到列表页面
+			return JsonRespWrapper.success("操作成功", "/batch/mmsbatchlist");
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 彩信群发任务审核列表页
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "mmsauditlist", "/", "" })
+	public String mmsTaskAuditList(@ModelAttribute("task") BatchTask task, Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(2l);
+		Page<BatchTask> page = batchTaskService.findBatchTask(task, 1, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("taskPage", page);
+		return "batch/mms_batch_task_audit_list";
+	}
+
+	/**
+	 * 进入彩信群发任务审核填写审核意见页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/auditMms/{id}", method = RequestMethod.GET)
+	public String toMmsAudit(@PathVariable Long id, Model model) throws IOException, Exception {
+		BatchTask task = batchTaskDao.findOne(id);
+		model.addAttribute("task", task);
+		// 跳转到列表页面
+		return "batch/mms_auditing";
+	}
+
+	/**
+	 * 群发任务审核、恢复、取消、暂停操作
+	 * 
+	 * @param id
+	 *            彩信id
+	 * @param optype
+	 *            操作类型
+	 * @param advice
+	 *            审核意见
+	 * @param status
+	 *            状态
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/processmms/{optype}/{id}")
+	@ResponseBody
+	public Object processMms(@PathVariable Long id, @PathVariable String optype, @RequestParam(required = false) String advice,
+	        @RequestParam(required = false) Long status, Model model, HttpServletRequest request) {
+		try {
+			BatchTask bt = batchTaskDao.findOne(id);
+			if ("renew".equals(optype)) {// 恢复
+				bt.setStatus(1L);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/mmsmanagerlist");
+			} else if ("pause".equals(optype)) {// 暂停
+				bt.setStatus(3L);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/mmsmanagerlist");
+			} else if ("audit".equals(optype)) {// 审核通过
+				SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+				Long auditorId = sessionUser.getId();
+				bt.setStatus(status);
+				bt.setAdvice(advice);
+				bt.setAuditorId(auditorId);
+				bt.setAuditTime(TimeStamp.getTime(14));
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/mmsauditlist");
+			} else if ("cancel".equals(optype)) {// 取消
+				bt.setStatus(9L);
+				bt.setAdvice(advice);
+				batchTaskDao.save(bt);
+				return JsonRespWrapper.success("操作成功", "/batch/mmsmanagerlist");
+			} else {
+				return null;
+			}
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 彩信群发管理列表页
+	 * 
+	 * @param task
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = { "mmsmanagerlist", "/", "" })
+	public String mmsTaskManagerList(@ModelAttribute("task") BatchTask task,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (!StringUtils.isNotEmpty(task.getStartTime())) {
+
+			String stime = sdf.format(TimeStamp.getAddTime(Calendar.getInstance(), 6, -6).getTime());
+			task.setStartTime(stime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputStartTime", stime);
+		}
+		if (!StringUtils.isNotEmpty(task.getStopTime())) {
+			String etime = sdf.format(Calendar.getInstance().getTime());
+			task.setStopTime(etime.replaceAll("-", "").replace(" ", ""));
+			model.addAttribute("inputEndTime", etime);
+		}
+		task.setTaskType(2l);
+		Page<BatchTask> pageList = batchTaskService.findBatchTask(task, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("taskPage", pageList);
+		return "batch/mms_batch_task_control_list";
+	}
+
+	/**
+	 * 彩信群发任务查看
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/viewMms/{optype}/{id}")
+	public String mmsView(@PathVariable Long id, @PathVariable String optype, Model model) throws IOException, Exception {
+		BatchTask bt = batchTaskDao.findOne(id);
+		model.addAttribute("bt", bt);
+		// 跳转到列表页面
+		if (optype.equals("batchList")) {
+			model.addAttribute("optype", "batchList");
+		} else if (optype.equals("suditList")) {
+			model.addAttribute("optype", "auditList");
+		} else if (optype.equals("controlList")) {
+			model.addAttribute("optype", "controlList");
+		}
+		return "batch/mms_batch_task_view";
+	}
+
+}

@@ -1,0 +1,535 @@
+package com.cplatform.mall.back.store.web;
+
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.model.SyncGYResponseBean;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.entity.StoreFee;
+import com.cplatform.mall.back.store.service.StoreFeeService;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.store.web.validator.StoreFeeValidator;
+import com.cplatform.mall.back.sys.entity.SysFee;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.SyncInterface;
+import com.cplatform.settle_interface.bean.MerchantFeeInfo;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 费率管理 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-7-9 下午7:07:05
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "/store/storeFee")
+public class StoreFeeController {
+
+	@Autowired
+	StoreFeeService storeFeeService;
+
+	@Autowired
+	StoreService storeService;
+
+	@Autowired
+	StoreFeeValidator storeFeeValidator;
+
+	@Autowired
+	private SyncInterface syncInterface;
+
+	/**
+	 * 结算信息列表
+	 * 
+	 * @param store
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/auditlist")
+	public String auditlist(StoreFee storeFee, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+		Page<StoreFee> pageData = storeFeeService.listStoreFee(storeFee, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("syncGyFlagMap", StoreFee.syncGyFlagMap);
+		model.addAttribute("statusMap", StoreFee.statusMap);
+		return "/store/fee/fee-audit-list";
+	}
+
+	/**
+	 * 费率列表页面
+	 * 
+	 * @param storeId
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/feeList/{storeId}")
+	public Object feeList(StoreFee storeFee, @PathVariable Long storeId,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		storeFee.setStoreId(storeId);
+		Store store = this.storeService.findStoreById(storeId);
+		Page<StoreFee> storeFeeList = this.storeFeeService.listStoreFee(storeFee, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("store", store);
+		model.addAttribute("storeFeeList", storeFeeList);
+		// model.addAttribute("syncGyFlagMsg", Store.syncGyFlagMsg);
+		return "/store/fee/fee-list";
+
+	}
+
+	/**
+	 * 跳转到添加渠道商结算信息页面
+	 * 
+	 * @param storeId
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/feeAdd", method = RequestMethod.GET)
+	public Object feeAdd(@RequestParam(value = "storeId") Long storeId, HttpSession session, Model model) throws SQLException {
+
+		Store store = this.storeService.findStoreById(storeId);
+
+		model.addAttribute("store", store);
+		StoreFee vo = new StoreFee();
+		vo.setCapitalType1(1L);
+		vo.setCapitalType2(1L);
+		vo.setCapitalType3(1L);
+		vo.setStoreId(store.getId());
+		// 设置默认值开始
+		vo.setClearType("P");
+		vo.setTradeMode(0L);
+		// vo.setProductionTypeName("商品");
+		vo.setEffortdate(TimeStamp.getTime(TimeStamp.YYYYMMDD));
+		vo.setFeedrtflag("D");
+		vo.setFeeperiodunit("2");
+		vo.setFeemothod(1L);
+		vo.setFeeType("01");
+		vo.setFcName("1");
+		vo.setFeemode(1L);
+		vo.setFeelevelflag("1");
+		vo.setBeganamount("0");
+		vo.setMinfeeamount("0");
+		vo.setMaxfeeamount("99999999999");
+		// 设置默认值结束
+		List<SysFee> feeList = storeService.getSysFeeList(storeId);
+		model.addAttribute("feeList",feeList );
+		model.addAttribute("storeFee", vo);
+		return "/store/fee/fee-add";
+
+	}
+
+	/**
+	 * 添加费率
+	 * 
+	 * @param po
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws InvocationTargetException
+	 * @throws IllegalAccessException
+	 */
+	@RequestMapping(value = "/feeAdd", method = RequestMethod.POST)
+	@ResponseBody
+	public Object feeSave(@ModelAttribute("storeFee") StoreFee po, HttpServletRequest request, Model model, BindingResult result) {
+		storeFeeValidator.validate(po, result);
+		if (result.hasErrors()) {
+			return JsonRespWrapper.error(result.getFieldErrors());
+		}
+
+		po.setCreateUser(SessionUser.getSessionUser().getId());
+		po.setCreateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		po.setStatus(0L);
+		po.setSyncGyFlag1(0L);
+		po.setSyncGyFlag2(0L);
+		po.setSyncGyFlag3(0L);
+		po.setEffortdate(po.getEffortdate().replaceAll("-", ""));
+		po.setExpirydate(po.getExpirydate().replaceAll("-", ""));
+		if (po.getCapitalType1() == null) {
+			po.setCapitalType1(0L);
+		}
+		if (po.getCapitalType2() == null) {
+			po.setCapitalType2(0L);
+		}
+		if (po.getCapitalType3() == null) {
+			po.setCapitalType3(0L);
+		}
+		// if ("P".equals(po.getClearType())) {
+		// po.setProductionType("01");
+		// }
+		// po.setTradeMode(0L);
+		po.setFeebasicflag(Long.valueOf(po.getFeelvlbasicflag()));
+		this.storeService.addOrUpdateStoreFee(po);
+		return JsonRespWrapper.success("操作成功", "/store/storeFee/feeList/" + po.getStoreId());
+	}
+
+	@RequestMapping(value = "/feeEdit", method = RequestMethod.GET)
+	public String feeEdit(@RequestParam(value = "id") Long id, HttpSession session, Model model) throws SQLException {
+		StoreFee vo = this.storeService.findStoreFeeById(id);
+		model.addAttribute("storeFee", vo);
+		// if ("01".equals(vo.getProductionType())) {
+		// vo.setProductionTypeName("商品");
+		// } else {
+		SysFee fee = storeService.findSysFeeByid(Long.parseLong(vo.getProductionType()));
+		model.addAttribute("productionTypeName", fee.getName());
+		// }
+
+		List<SysFee> feeList = storeService.getSysFeeList(vo.getStoreId());
+		model.addAttribute("feeList",feeList );
+
+		return "/store/fee/fee-add";
+
+	}
+
+	@RequestMapping(value = "/feeEdit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object feeUpdate(@ModelAttribute("storeFee") StoreFee po, HttpSession session, Model model, BindingResult result) {
+		// po.setEffortdate(po.getEffortdate().replaceAll("-", ""));
+		// po.setExpirydate(po.getExpirydate().replaceAll("-", ""));
+		storeFeeValidator.validate(po, result);
+		if (result.hasErrors()) {
+			return JsonRespWrapper.error(result.getFieldErrors());
+		}
+		// if ("P".equals(po.getClearType())) {
+		// po.setProductionType("01");
+		// }
+		if (po.getCapitalType1() == null) {
+			po.setCapitalType1(0L);
+		}
+		if (po.getCapitalType2() == null) {
+			po.setCapitalType2(0L);
+		}
+		if (po.getCapitalType3() == null) {
+			po.setCapitalType3(0L);
+		}
+		StoreFee oldpo = this.storeService.findStoreFeeById(po.getId());
+		po.setCreateUser(oldpo.getCreateUser());
+		po.setCreateTime(oldpo.getCreateTime());
+		po.setSyncGyFlag1(oldpo.getSyncGyFlag1());
+		po.setSyncGyFlag2(oldpo.getSyncGyFlag2());
+		po.setSyncGyFlag3(oldpo.getSyncGyFlag3());
+		po.setMerchid(oldpo.getMerchid());
+		po.setSyncTime(oldpo.getSyncTime());
+		po.setStatus(0L);
+		// po.setTradeMode(oldpo.getTradeMode());
+		po.setFeebasicflag(oldpo.getFeebasicflag());
+		po.setFeebasicflag(Long.valueOf(po.getFeelvlbasicflag()));
+		this.storeService.addOrUpdateStoreFee(po);
+		return JsonRespWrapper.success("操作成功", "/store/storeFee/feeList/" + po.getStoreId());
+
+	}
+
+	@RequestMapping(value = "/feeView/{id}")
+	public String feeView(@PathVariable(value = "id") Long id, Model model) {
+		StoreFee vo = this.storeService.findStoreFeeById(id);
+		model.addAttribute("storeFee", vo);
+		// if ("01".equals(vo.getProductionType())) {
+		// model.addAttribute("productionTypeName", "商品");
+		// } else {
+		SysFee fee = storeService.findSysFeeByid(Long.parseLong(vo.getProductionType()));
+		model.addAttribute("productionTypeName", fee.getName());
+		// }
+
+		Store store = this.storeService.findStoreById(vo.getStoreId());
+		model.addAttribute("store", store);
+		model.addAttribute("syncGyFlagMsg", Store.syncGyFlagMsg);
+		return "/store/fee/fee-view";
+
+	}
+
+	@RequestMapping(value = "/feeDel/{id}")
+	@ResponseBody
+	public Object feeDel(@PathVariable Long id, Model model) {
+		StoreFee po = storeService.findStoreFeeById(id);
+		if (po.getStatus() == 3L) {
+			return JsonRespWrapper.successAlert("当前费率信息已经审核通过，不能被删除");
+		}
+
+		if (po.getSyncGyFlag1() != 0L || po.getSyncGyFlag2() != 0L || po.getSyncGyFlag3() != 0L) {
+			return JsonRespWrapper.successAlert("当前费率信息已经同步过清结算系统，不能被删除");
+		}
+		storeService.delStoreFeeById(id);
+		return JsonRespWrapper.success("操作成功", "/store/storeFee/feeList/" + po.getStoreId());
+	}
+
+	@RequestMapping(value = "/auditPage/{id}")
+	public String toAuditPage(@PathVariable Long id, Model model) {
+		model.addAttribute("id", id);
+		return "/store/fee/fee_audit";
+	}
+
+	@RequestMapping(value = "/feeAudit")
+	@ResponseBody
+	public Object settleAudit(@RequestParam(value = "id") Long id, @RequestParam(value = "status") Long status, Model model) {
+		StoreFee po = this.storeService.findStoreFeeById(id);
+		po.setStatus(status);
+		this.storeService.addOrUpdateStoreFee(po);
+
+		return JsonRespWrapper.success("操作成功", "/store/storeFee/auditlist");
+	}
+
+	@RequestMapping(value = "/sync")
+	@ResponseBody
+	public Object sync(@RequestParam(value = "ids") String ids, Model model) {
+		String msg = "操作完成。";
+		SyncGYResponseBean bean = null;
+		String[] idarray = ids.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if ("".equals(id)) {
+					continue;
+				}
+				StoreFee vo = this.storeService.findStoreFeeById(Long.valueOf(id));
+				if (vo != null) {
+					Store store = this.storeService.findStoreById(vo.getStoreId());
+					if (store == null) {
+						continue;
+					}
+					if (store.getMerchid() == null) {
+						msg += vo.getId() + "该商户基本信息未同步成功，暂不能同步。";
+						continue;
+					}
+					// if (store.getSyncGyFlag() != 3L) {
+					// msg += vo.getId() + "该商户基本信息清结算平台未审核通过，暂不能同步。";
+					// continue;
+					// }
+					if (vo.getStatus() != 3) {
+						msg += vo.getId() + "状态：未审核通过，暂不能同步。";
+						continue;
+					}
+					if (vo.getMerchid() == null) {
+						vo.setMerchid(store.getMerchid());
+					}
+					if (vo.getCapitalType1() == 1L) {// 现金
+						vo.setCapitalType(1L);
+						if (vo.getSyncGyFlag1() == 0L) {
+							bean = this.syncInterface.syncAddFee(vo);
+						} else {
+							bean = this.syncInterface.syncUpdateFee(vo);
+						}
+						if (bean != null) {
+							if (bean.isSyncSuccess()) {
+								vo.setSyncGyFlag1(1L);
+								vo.setMerchid(bean.getMerchid());
+								vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+								storeService.addOrUpdateStoreFee(vo);
+							}
+							msg += vo.getId() + "现金类型:" + bean.getMsg();
+						} else {
+							msg += vo.getId() + "现金类型同步失败。";
+						}
+					}
+					if (vo.getCapitalType2() == 1L) {// 商城币
+						vo.setCapitalType(2L);
+						if (vo.getSyncGyFlag2() == 0L) {
+
+							bean = this.syncInterface.syncAddFee(vo);
+						} else {
+
+							bean = this.syncInterface.syncUpdateFee(vo);
+						}
+						if (bean != null) {
+							if (bean.isSyncSuccess()) {
+								vo.setSyncGyFlag2(1L);
+								vo.setMerchid(bean.getMerchid());
+								vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+							}
+							this.storeService.addOrUpdateStoreFee(vo);
+							msg += vo.getId() + "商城币类型:" + bean.getMsg();
+						} else {
+							msg += vo.getId() + "商城币类型同步失败。";
+						}
+					}
+
+					if (vo.getCapitalType3() == 1L) {// 积分
+						vo.setCapitalType(3L);
+						if (vo.getSyncGyFlag3() == 0L) {
+							bean = this.syncInterface.syncAddFee(vo);
+						} else {
+							bean = this.syncInterface.syncUpdateFee(vo);
+						}
+						if (bean != null) {
+							if (bean.isSyncSuccess()) {
+								vo.setSyncGyFlag3(1L);
+								vo.setMerchid(bean.getMerchid());
+								vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+								this.storeService.addOrUpdateStoreFee(vo);
+							}
+							msg += vo.getId() + "积分类型:" + bean.getMsg();
+						} else {
+							msg += vo.getId() + "积分类型同步失败。";
+						}
+					}
+
+				}
+			}
+		}
+
+		return JsonRespWrapper.success(msg, "/store/storeFee/auditlist");
+	}
+
+	@RequestMapping(value = "/syncQuery")
+	@ResponseBody
+	public Object syncQuery(@RequestParam(value = "ids") String ids, Model model) {
+		String msg = "操作完成。";
+		Long backStoreId = null;
+		SyncGYResponseBean bean = null;
+		String[] idarray = ids.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if ("".equals(id)) {
+					continue;
+				}
+				StoreFee vo = this.storeService.findStoreFeeById(Long.valueOf(id));
+				if (vo != null) {
+
+					if (vo.getStoreId().equals(backStoreId)) { // 同一商户只需要一次查询，返回的list是该商户下的所有费率
+						continue;
+					}
+					backStoreId = vo.getStoreId();
+					if (vo.getMerchid() == null) {
+						msg += vo.getId() + "该费率未同步成功，暂不能查询。";
+						continue;
+					}
+					if (vo.getStatus() != 3) {
+						msg += vo.getId() + "状态：未审核通过，暂不能查询。";
+						continue;
+					}
+					bean = this.syncInterface.queryStoreFee(vo);
+					if (bean != null) {
+						List<MerchantFeeInfo> list = bean.getMerchantFeeInfoList();
+						if (list != null && list.size() > 0) {
+							String filtersql = "";
+							for (MerchantFeeInfo info : list) {
+								bean.setStatus(info.getStatus());
+								if ("1".equals(info.getCapitaltype())) {
+									if (bean.isSyncSuccess()) {
+										filtersql = " and t.capital_type1 = 1 ";
+										StoreFee fee = this.storeFeeService.getStoreFee(vo.getStoreId(), info.getProductiontype(),
+										                                                info.getEffortdate(), info.getExpirydate(), filtersql);
+										if (fee == null) {
+											continue;
+										}
+										fee.setSyncGyFlag1(bean.getFeeInfoStatus());
+										fee.setMerchid(bean.getMerchid());
+										fee.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+										storeService.addOrUpdateStoreFee(fee);
+										msg += fee.getId() + "现金状态：" + StoreFee.syncGyFlagMap.get(fee.getSyncGyFlag1()) + "。";
+									} else {
+										msg += vo.getId() + bean.getMsg();
+									}
+								}
+								if ("2".equals(info.getCapitaltype())) {
+									if (bean.isSyncSuccess()) {
+										filtersql = " and t.capital_type2 = 1 ";
+										StoreFee fee = this.storeFeeService.getStoreFee(vo.getStoreId(), info.getProductiontype(),
+										                                                info.getEffortdate(), info.getExpirydate(), filtersql);
+										if (fee == null) {
+											continue;
+										}
+										fee.setSyncGyFlag2(bean.getFeeInfoStatus());
+										fee.setMerchid(bean.getMerchid());
+										fee.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+										storeService.addOrUpdateStoreFee(fee);
+										msg += fee.getId() + "商城币状态：" + StoreFee.syncGyFlagMap.get(fee.getSyncGyFlag2()) + "。";
+									} else {
+										msg += vo.getId() + bean.getMsg();
+									}
+								}
+								if ("3".equals(info.getCapitaltype())) {
+									if (bean.isSyncSuccess()) {
+										filtersql = " and t.capital_type3 = 1 ";
+										StoreFee fee = this.storeFeeService.getStoreFee(vo.getStoreId(), info.getProductiontype(),
+										                                                info.getEffortdate(), info.getExpirydate(), filtersql);
+										if (fee == null) {
+											continue;
+										}
+										fee.setSyncGyFlag3(bean.getFeeInfoStatus());
+										fee.setMerchid(bean.getMerchid());
+										fee.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+										storeService.addOrUpdateStoreFee(fee);
+										msg += fee.getId() + "积分状态：" + StoreFee.syncGyFlagMap.get(fee.getSyncGyFlag3()) + "。";
+									} else {
+										msg += vo.getId() + bean.getMsg();
+									}
+								}
+							}
+						}
+					} else {
+						msg += vo.getId() + "费率查询失败。";
+					}
+					//
+					// if (vo.getCapitalType1() == 1L) {// 现金
+					// vo.setCapitalType(1L);
+					// bean = this.syncInterface.queryStoreFee(vo);
+					// if (bean != null) {
+					// vo.setSyncGyFlag1(Long.valueOf(bean.getCode()));
+					// vo.setMerchid(bean.getMerchid());
+					// vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+					// storeService.addOrUpdateStoreFee(vo);
+					// msg += vo.getId() + "现金类型查询成功。";
+					// } else {
+					// msg += vo.getId() + "现金类型查询成功。";
+					// }
+					// }
+					// if (vo.getCapitalType2() == 1L) {// 商城币
+					// vo.setCapitalType(2L);
+					// bean = this.syncInterface.queryStoreFee(vo);
+					// if (bean != null) {
+					// vo.setSyncGyFlag2(Long.valueOf(bean.getCode()));
+					// vo.setMerchid(bean.getMerchid());
+					// vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+					// this.storeService.addOrUpdateStoreFee(vo);
+					// msg += vo.getId() + "商城币类型查询成功。";
+					// } else {
+					// msg += vo.getId() + "商城币类型查询成功。";
+					// }
+					// }
+					//
+					// if (vo.getCapitalType3() == 1L) {// 积分
+					// vo.setCapitalType(3L);
+					// bean = this.syncInterface.queryStoreFee(vo);
+					// if (bean != null) {
+					// vo.setSyncGyFlag3(Long.valueOf(bean.getCode()));
+					// vo.setMerchid(bean.getMerchid());
+					// vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+					// this.storeService.addOrUpdateStoreFee(vo);
+					// msg += vo.getId() + " 积分类型查询成功。";
+					// } else {
+					// msg += vo.getId() + " 积分类型查询成功。";
+					// }
+					// }
+
+				}
+			}
+		}
+
+		return JsonRespWrapper.success(msg, "/store/storeFee/auditlist");
+
+	}
+}

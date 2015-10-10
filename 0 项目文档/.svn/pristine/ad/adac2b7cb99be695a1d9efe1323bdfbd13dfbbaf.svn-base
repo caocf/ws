@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Expires" content="Fri, Jan 01 1900 00:00:00 GMT" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />     
+<title> 苏州生活网 苏州生活网论坛|苏州来福团购|苏州小吃美食|12580商城|移动3G手机|汽车|购物|房产|休闲|娱乐|文化|教育－移动你我,精彩生活</title>
+<meta name="keywords" content="苏州移动生活网,苏州论坛,苏州小吃美食,苏州团购,来福团,12580商城,移动3G手机,汽车,购物,房产,休闲,娱乐,苏州文化,教育" />
+<meta name="description" content=" 苏州生活网 苏州生活网聚焦苏州百姓生活，提供苏州小吃美食、购物、房产、休闲、娱乐、教育全面资讯，是整合苏州团购(来福团),12580商城,美食商铺,汽车品牌等的苏州论坛(门户网)。 - 苏州生活网" />
+
+<link href="http://ebuy.139life.com/css/index.min.css" rel="stylesheet"/>
+<style type="text/css">
+.jiagequjian h4{margin:5px 0!important;padding-left:15px;font-size:12px}
+.jiagequjian ul{overflow:hidden}.
+jiagequjian ul li{float:left;width:80px;padding-left:15px;margin:1px 0}
+</style>
+<link href="images/all.css" rel="stylesheet" />
+
+<!--[if IE 6]>
+<script src="js/DD_belatedPNG.js"></script>
+<script>
+  DD_belatedPNG.fix('*');
+</script>
+<![endif]-->
+<script src="js/jquery-1.7.2.min.js"></script>
+<script>
+	$(document).ready(function(){
+			$(".ban_btn a").click(function(){
+					$(this).addClass("hover").siblings("a").removeClass("hover")
+				});
+			$(".numBox a").click(function(){
+					$(this).addClass("cur").siblings("a").removeClass("cur")
+				});
+		})
+
+function show_box(num){
+
+	for(var i=1; i<=3; i++){
+		
+		if(num==i){
+			document.getElementById("btn"+num).className="now";
+			document.getElementById("cont"+num).style.display="block";
+           }else{
+			document.getElementById("btn"+i).className=" ";
+			document.getElementById("cont"+i).style.display="none";
+		}
+	}
+}
+</script>
+</head>
+<body>
+
+
+
+<div class="page">
+	<div class="banner">
+		<img src="images/banner.jpg" />
+	</div>
+	
+    <div class="main_tab clearfixs">
+    <ul>
+     <li onclick="show_box(1)" id="btn1" class="now"><a href="javascript:" class="tab1"></a></li>
+     <li onclick="show_box(2)" id="btn2"><a href="javascript:" class="tab2"></a></li>
+     <li onclick="show_box(3)" id="btn3"><a href="javascript:" class="tab3"></a></li>
+    </ul>   
+    </div>
+        
+	<div class="content">
+		<div class="aside">
+          <div class="list_cons clearfixs" id="cont1" style="display:block" >
+          	<ul>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_over.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_begin.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             <li>
+             	<table width="0" border="0" class="tab_list">
+                  <tr>
+                    <td colspan="2"><a href="#"><img src="images/ad1.jpg" /></a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="title">商品名称</a></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><a href="#" class="news">商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容商品描述内容</a></td>
+                  </tr>
+                  <tr>
+                    <td class="money">&yen; 0.0</td>
+                    <th><a href="#"><img src="images/btn_see.gif" /></a></th>
+                  </tr>
+                  <tr>
+                    <td>7折 <span class="lt">&yen;123</span></td>
+                    <th><span class="num">123人已购买</span></th>
+                  </tr>
+                </table>
+             </li>
+             
+            </ul>
+			<div class="numBox clearfixs">
+         		<a href="#">首页</a>
+         		<a href="#">上一页</a>
+         		<a href="#" class="cur">1</a>
+         		<a href="#">2</a>
+         		<a href="#">3</a>
+         		<a href="#">4</a>
+         		<a href="#">5</a>
+         		<a href="#">下一页</a>
+			 </div>
+          </div>
+		  <div class="list_cons clearfixs" id="cont2">
+		  </div>
+          <div class="list_cons clearfixs" id="cont3">
+		  </div>
+		</div>
+		
+		
+		<div class="mod_main">
+        <div style="text-align:center;margin-bottom:15px"><img src="images/pic_1.gif" /></div>
+			<div class="mod_con">
+				<div class="bdxq_tit"><div class="tit_ico1">精品榜单</div></div>
+				<div class="con_top con_bot">
+					<ul class="sncb">
+						<li class="sncb_item">
+							<table width="0" border="0" class="tab_cons">
+                            <col width="57%" /><col />
+                              <tr>
+                                <td colspan="2"><span class="ico_num">1</span><a href="#" class="title">商品描述商品描述</a></td>
+                              </tr>
+                              <tr>
+                                <td rowspan="2"><a href="#"><img src="images/pic_2.gif" /></a></td>
+                                <td class="money">&yen; 123</td>
+                              </tr>
+                              <tr>
+                                <td class="num">123人已购买</td>
+                              </tr>
+                            </table>
+						</li>
+						<li class="sncb_item">
+							<table width="0" border="0" class="tab_cons">
+                            <col width="57%" /><col />
+                              <tr>
+                                <td colspan="2"><span class="ico_num">2</span><a href="#" class="title">商品描述商品描述</a></td>
+                              </tr>
+                              <tr>
+                                <td rowspan="2"><a href="#"><img src="images/pic_2.gif" /></a></td>
+                                <td class="money">&yen; 123</td>
+                              </tr>
+                              <tr>
+                                <td class="num">123人已购买</td>
+                              </tr>
+                            </table>
+						</li>
+						<li class="sncb_item last">
+							<table width="0" border="0" class="tab_cons">
+                            <col width="57%" /><col />
+                              <tr>
+                                <td colspan="2"><span class="ico_num">3</span><a href="#" class="title">商品描述商品描述</a></td>
+                              </tr>
+                              <tr>
+                                <td rowspan="2"><a href="#"><img src="images/pic_2.gif" /></a></td>
+                                <td class="money">&yen; 123</td>
+                              </tr>
+                              <tr>
+                                <td class="num">123人已购买</td>
+                              </tr>
+                            </table>
+						</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="mod_con">
+				<div class="bdxq_tit"><div class="tit_ico3">热门频道</div></div>
+				<div class="con_top con_bot">
+					<ul class="sncb">
+						<li class="sncb_item">
+							<a href="#"><img src="images/ds1.png"></a>
+						</li>
+						<li class="sncb_item">
+							<a href="#"><img src="images/ds2.png"></a>
+						</li>
+						<li class="sncb_item last">
+							<a href="#"><img src="images/ds3.jpg"></a>
+						</li>
+					</ul>
+				</div>
+			</div>
+            
+            <div class="mod_con">
+				<div class="bdxq_tit">移动商城真诚面向商家</div>
+				<div class="con_top con_bot">
+                    <p class="apply">如果您想组织团购，可与我们联系，通过审核并成为移动商城商户会员后，帮您轻松组织。
+点击  <a href="#">立即申请<code>>>></code></a></p>
+				</div>
+			</div>
+            
+			<div class="mod_con">
+				<div class="bdxq_tit"><div class="tit_ico4">客服热线</div></div>
+				<div class="con_top con_bot">
+					<div class="online_call">
+                    <p>13616202888</p>
+                    <p>每日09:00-17:00</p>
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<link type="text/css" rel="stylesheet" href="http://ebuy.139life.com/page/helper/cc_1_files/screen_help.css">
+
+</body>
+</html>

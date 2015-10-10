@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".indx_12580_cont_code ON "LIFE".t_cont_code(code_type);

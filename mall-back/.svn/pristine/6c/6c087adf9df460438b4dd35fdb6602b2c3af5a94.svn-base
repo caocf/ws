@@ -1,0 +1,130 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.dao.SysFeeDao;
+import com.cplatform.mall.back.sys.entity.SysFee;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+@Service
+public class SysFeeService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private SysFeeDao feeDao;
+
+	/**
+	 * 查询费率
+	 * 
+	 * @param fee
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysFee> listfee(SysFee fee, int pageNo, int pageSize)
+			throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("select t.*,store.name storename from t_Sys_Fee  t ");
+		sql.append("inner join t_Store store on  t.store_id  = store.id where 1=1 ");
+		  List params = new ArrayList();
+		if (StringUtils.isNotEmpty(fee.getName())) {
+			sql.append(" and t.NAME like ?");
+			params.add("%" + fee.getName() + "%");
+		}
+		
+		if (null!=fee.getValid()) {
+			sql.append(" and t.valid = ?");
+			params.add(fee.getValid());
+		}
+		if(null!=fee.getStoreName())
+		{
+			
+			 sql.append(" and store.name like ? ");
+			 params.add("%"+fee.getStoreName()+"%");
+			
+		}
+		if(null!=fee.getSyncGyFlag())
+		{
+			 sql.append(" and t.SYNC_GY_FLAG = ? ");
+			 params.add(fee.getSyncGyFlag());
+			
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sql.append("order by t.id desc");
+
+		return dbHelper.getPage(sql.toString(), SysFee.class, pageNo, pageSize,
+				params.toArray());
+	}
+
+	/**
+	 * 保存费率
+	 * 
+	 * @param store
+	 *            商户实体类
+	 * @param opType
+	 *            操作类型 true 修改 false 增加
+	 * @throws Exception
+	 */
+
+	@Transactional
+	public SysFee saveUpdateBrand(SysFee fee) throws Exception {
+		return feeDao.save(fee);
+	}
+	
+	
+	/**
+	 * 删除费率
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteSettle(Long id) {
+		SysFee sysFee = findById(id);
+		if(null != sysFee){
+			feeDao.delete(id);
+		}
+		
+	}
+	/**
+	 * 根据Id查询
+	 * @param id
+	 * @return
+	 */
+	 public SysFee findById (Long id){
+		 
+		return  feeDao.findOne(id);
+	 }
+	  
+	 /**
+	  * 根据多个ID查询
+	  * @param ids
+	  * @return
+	  * @throws SQLException
+	  */
+	 public List<SysFee> findByIds(Long[] ids) throws SQLException{
+		 if(0 == ids.length){
+			 return null;
+		 }
+		 StringBuilder feeId = new StringBuilder();
+		 for(Long id : ids){
+			 feeId.append(id).append(",");
+		 }
+		 //去掉最后一个逗号
+		 String in = feeId.substring(0, feeId.length()-1).toString();
+		 String sql = "SELECT * FROM t_sys_fee WHERE id in (" + in	+ ") "; 
+		 return dbHelper.getBeanList(sql, SysFee.class, null);
+	 }
+
+}

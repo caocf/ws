@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_t_market_area_link_1 ON "LIFE".t_market_area_link(good_id);

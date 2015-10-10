@@ -1,0 +1,100 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.dao.SysTypeDao;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysType;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.dao.ChannelTypeDao;
+import com.cplatform.mall.back.websys.entity.ChannelCatalogRcmdConfig;
+import com.cplatform.mall.back.websys.entity.ChannelType;
+import com.cplatform.mall.back.websys.service.ChannelTypeService;
+
+@Controller
+@RequestMapping("/websys/channel/type")
+public class ChannelTypeController {
+
+	@Autowired
+	ChannelTypeService channelTypeService;
+
+	@Autowired
+	ChannelTypeDao channelTypeDao;
+
+	@Autowired
+	SysRegionService regionService;
+	
+	@Autowired
+	LogUtils logUtils;
+
+	@Autowired
+	SysTypeDao sysTypeDao;
+
+	@RequestMapping(value = { "/list", "/", "" })
+	public String listChannelType(ChannelType channelType, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+		Page<ChannelType> pag = channelTypeService.findChannelType(channelType, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", channelTypeService.findChannelType(channelType, page, Page.DEFAULT_PAGESIZE));
+		model.addAttribute("channelMap", ChannelCatalogRcmdConfig.channelMap);
+		return "/websys/channel/type/type-list";
+	}
+
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	public String preAdd(Model model) {
+		ChannelType channelType = new ChannelType();
+		model.addAttribute("channelType", channelType);
+		model.addAttribute("channelMap", ChannelCatalogRcmdConfig.channelMap);
+		return "/websys/channel/type/type-add";
+	}
+
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object addChanneltype(ChannelType channelType, Model model) {
+		channelTypeService.saveType(channelType);
+		logUtils.logAdd("添加楼层","添加成功");
+		return JsonRespWrapper.success("操作成功", "/websys/channel/type/list");
+	}
+
+	@RequestMapping(value = "/edit", method = RequestMethod.GET)
+	public String preEdit(Long id, Model model) {
+		ChannelType channelType = channelTypeDao.findOne(id);
+		SysType type = sysTypeDao.findOne(channelType.getTypeId());
+		channelType.setTypeName(type.getName());
+		SysRegion region = regionService.findByRegionCode(channelType.getRegionCode());
+		if (region != null) {
+			channelType.setRegionName(region.getRegionName());
+		}
+		model.addAttribute("channelMap", ChannelCatalogRcmdConfig.channelMap);
+		model.addAttribute("channelType", channelType);
+		return "/websys/channel/type/type-add";
+	}
+
+	@RequestMapping(value = "/edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updateChannelType(ChannelType channelType, Model model) {
+	
+		channelTypeService.updateType(channelType);
+		logUtils.logAdd("修改楼层","操作成功！" +channelType.getId());
+		return JsonRespWrapper.success("操作成功", "/websys/channel/type/list");
+	}
+
+	@RequestMapping(value = "/del")
+	@ResponseBody
+	public Object deleteChannelType(Long id, Model model) {
+	
+		channelTypeDao.delete(id);
+		logUtils.logAdd("删除楼层","操作成功！" +id);
+		return JsonRespWrapper.success("操作成功", "/websys/channel/type/list");
+	}
+}

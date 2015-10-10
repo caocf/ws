@@ -1,0 +1,83 @@
+/* jquery pagination plugin css */
+.wp-pagination .wp-inner {
+    /* padding-top: 10px;*/
+    padding-bottom: 0px;
+    width: 100%;
+    font-size: 11px;
+    margin:0;
+}
+.wp-pagination a {
+    text-decoration: none;
+}
+
+.wp-pagination span {
+    cursor: default;
+}
+
+.wp-pagination a, .wp-pagination span {
+    line-height: 12px;
+    display: block;
+    float: left;
+    padding: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    font-family: Arial;
+    color: #777;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+.wp-pagination .current.prev, .wp-pagination .current.next, .wp-pagination span {
+    color: #ddd;
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+.wp-pagination a:hover, .wp-pagination .current {
+    border-color: #777;
+    background-color: #777;
+    color:#fff;
+}
+
+
+
+
+/* upload */
+.u-box-cont {border:1px dashed #2a62bc;position:relative;}
+.u-box-cont-icon {float:left;margin-right:100px;}
+.u-box-cont-pic {margin-bottom:20px;}
+.u-box-del {z-index:11;cursor:pointer;position: absolute; top:0; right:0;width:16px; height:16px; background-image: url('../images/delete.png'); display: none;}
+.u-box-btn {width:100%;height:100%;z-index:10}
+.u-box-cont img {position: absolute; top:0; }
+.u-box-tip { float:left; }
+
+/* other */
+.colorRed { color: red; }
+.SpeWid1 {width: 278px;}
+
+
+/* doc table */
+.table_int {
+    border: 1px solid #C6CCD2;
+}
+.table_int td, .table_int th  {
+    border: 1px solid #C6CCD2;
+    vertical-align: middle;
+    padding: 0 10px;
+    font-size:12px;
+    height: 29px;
+}
+.table_int th {
+    background: #F3F4F5;
+    height: 29px;
+    font-size: 16px;
+    font-weight: 700;
+    color:black;
+}
+.table_int .cred {
+    color: red;
+}
+
+.inden2 {
+    text-indent: 20px;
+}

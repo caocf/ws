@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_item_tag_1 ON "LIFE".t_item_tag(item_id);

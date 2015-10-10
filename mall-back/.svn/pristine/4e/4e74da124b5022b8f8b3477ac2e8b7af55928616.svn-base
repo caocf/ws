@@ -1,0 +1,903 @@
+package com.cplatform.mall.back.store.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.entity.AuditStep;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.entity.StoreAgent;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.store.web.validator.StoreAgentValidator;
+import com.cplatform.mall.back.store.web.validator.StoreValidator;
+import com.cplatform.mall.back.sys.dao.SysRegionDao;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.PageStaticInterface;
+import com.cplatform.mall.back.websys.entity.PageStaticInfo;
+import com.cplatform.mall.back.websys.service.PageStaticManageService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 
+ * @Title	结算商户控制层
+ * @Description
+ * @Copyright: Copyright (c) 2013-9-18
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/store/store")
+public class StoreController {
+
+	private static final Logger log = Logger.getLogger(StoreController.class);
+
+	@Autowired
+	private StoreService storeService;
+
+	@Autowired
+	private SysRegionDao sysRegionDao;
+
+	@Autowired
+	private SysRegionService sysRegonService;
+
+	@Autowired
+	private StoreValidator storeValidator;
+
+	@Autowired
+	private StoreAgentValidator storeAgentValidator;
+
+	@Autowired
+	private PageStaticInterface pageStaticInterface;
+
+	@Autowired
+	private PageStaticManageService pageStaticManageService;
+	
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	AppConfig appConfig;
+
+	/**
+	 * 列表显示商户信息（在用）
+	 * 
+	 * @param contentCode
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String storeList(Store store, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+		// store.setShopClass(shopClass);
+		store.setSort(1L);
+		store.setIsValid(1L);
+		Page<Store> storeList = storeService.listStore(store, page, Page.DEFAULT_PAGESIZE, "", "");
+		model.addAttribute("pageData", storeList);
+		model.addAttribute("storeClassMap", Store.shopClassMap);
+		model.addAttribute("isValidMap", Store.isValidMap);
+		model.addAttribute("statusMap", Store.statusMap);
+		model.addAttribute("syncGyFlagMap", Store.syncGyFlagMap);
+		model.addAttribute("syncGyFlagMsg", Store.syncGyFlagMsg);
+		model.addAttribute("homePageUrl", appConfig.getStoreHomePage());
+		return "/store/store/store-list";
+	}
+
+	/**
+	 * 进入商户增加页面（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/storeAdd/{shopClass}", method = RequestMethod.GET)
+	public String toStoreAddPage(@PathVariable Long shopClass, Model model) throws IOException, Exception {
+		Store store = new Store();
+		store.setSort(1L);
+		store.setShopClass(shopClass);
+
+		// 跳转到列表页面
+		// List<SysLogistics> logisticsList =
+		// storeService.findSysLogisticsList();
+		// model.addAttribute("logisticsList", logisticsList);
+		model.addAttribute("pid", SessionUser.getSessionUser().getSysUnit().getAreaCode());
+		if (SessionUser.getSessionUser().getSysUnit().getUnitType() == 3L) {// 如果是地址单位，设置归属地址和行政编码的默认值
+			store.setAreaCode(SessionUser.getSessionUser().getSysUnit().getAreaCode());
+			store.setAreaName(SessionUser.getSessionUser().getSysUnit().getName());
+			store.setAreaId(SessionUser.getSessionUser().getSysUnit().getAreaCode());
+		}
+		model.addAttribute("store", store);
+		model.addAttribute("accountTypeMap", Store.accountTypeMap);
+		return "/store/store/store-add";
+	}
+
+	/**
+	 * 完成商户增加（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/storeAdd/{shopClass}", method = RequestMethod.POST)
+	@ResponseBody
+	public Object storeSave(@ModelAttribute("store") Store store, Model model, HttpServletRequest request, BindingResult result) throws IOException,
+	        Exception {
+		storeValidator.validate(store, result);
+		if (result.hasErrors()) {
+			return JsonRespWrapper.error(result.getFieldErrors());
+		}
+		store.setCreateTime(TimeStamp.getTime(14));
+		store.setUpdateUserId(SessionUser.getSessionUser().getId());
+		store.setStatus(Store.STATUS_AUDITING);
+		store.setIsValid(1l);
+		store.setSyncGyFlag(0l);
+		store.setSort(1L);
+		// SessionUser sessionUser = (SessionUser)
+		// request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+
+		// List<StoreAgent> list = null;
+
+		// if (store.getSort().equals(1L)) {
+		// if (uploadfile == null || uploadfile.isEmpty()) {
+		// // return JsonRespWrapper.success("选择上传签署协议文件", "");
+		// } else {
+		// is = uploadfile.getInputStream();
+		// }
+		// store.setStartTime(store.getBeginTime());
+		// store.setStopTime(store.getEndTime());
+		// }
+		// 选择渠道商
+		// list = new ArrayList<StoreAgent>();
+		// if (StringUtils.isNotEmpty(store.getStoreIds())) {// 如果选择了渠道商
+		// String[] storeIds = store.getStoreIds().split(",");
+		// for (String storeId : storeIds) {
+		// StoreAgent storeAgent = new StoreAgent();
+		// storeAgent.setQdStoreId(Long.valueOf(storeId));
+		// storeAgent.setStartTime(store.getStartTime());
+		// storeAgent.setStopTime(store.getStopTime());
+		// storeAgent.setStatus(0l);
+		// storeAgent.setSysUserId(sessionUser.getId());
+		// list.add(storeAgent);
+		// }
+		// }
+		// 组织商户数据
+
+		// store.setAreaId(store.getAreaCode());
+
+		// try {
+		storeService.saveUpdateStore(store);
+		logUtils.logAdd("结算商户管理", "结算商户管理添加, 商户费率编号：" +store.getId());
+		// String[] qdIds = request.getParameterValues("qdIds");
+		// String[] logisticsFee = request.getParameterValues("logisticsFee");
+		// if (qdIds != null) {
+		// for (int i = 0; i < qdIds.length; i++) {
+		// String qdId = qdIds[i];
+		// String fee = logisticsFee[i];
+		// StoreLogisticsFee bean = new StoreLogisticsFee();
+		// bean.setQdId(Long.valueOf(qdId));
+		// bean.setStoreId(store.getId());
+		// bean.setFeeNum(Float.valueOf("".equals(fee) ? "0" : fee));
+		// this.storeService.addOrUpdateStoreLogisticsFee(bean);
+		// }
+		//
+		// }
+		// 跳转到列表页面
+		// return JsonRespWrapper.success("操作成功", "/store/store/query");
+		// if (store.getSort() == 1L) {
+		// return JsonRespWrapper.success("请完善商户结算信息",
+		// "/store/store/storeAdd2?storeId=" + store.getId());
+		// } else {
+		// return JsonRespWrapper.success("操作成功", "/store/store/list?shopClass="
+		// + store.getShopClass());
+		//
+		// }
+		// }
+		// catch (Exception ex) {
+		// 未知的错误消息，一般是exception catch后通知用户
+		// return JsonRespWrapper.error(ex.getMessage());
+		// }
+
+		return JsonRespWrapper.success("操作成功", "/store/store/list");
+	}
+
+	@RequestMapping(value = "/storeView/{id}")
+	public String storeView(@PathVariable Long id, @RequestParam(value = "auditStep", required = false) String auditStep, Model model)
+	        throws SQLException {
+		Store store = this.storeService.findStoreById(id);
+		List<AuditStep> auditStepList = this.storeService.findShopAuditSteplist(store.getId());
+		SysRegion re = sysRegionDao.findByRegionCode(store.getAreaCode());
+		store.setAreaName(re.getRegionName());
+		if (store.getShopClass() == Store.STORE) {
+
+			if (store.getSort() == 0) {
+				// 得到关联的渠道商
+				List<StoreAgent> sotreAgentList = this.storeService.findStoreAgentByJsStoreId(store.getId());
+				List<Store> storeList = new ArrayList<Store>();
+				for (StoreAgent sotreAgent : sotreAgentList) {
+					Store vo = this.storeService.findStoreById(sotreAgent.getJsStoreId());
+					storeList.add(vo);
+				}
+				model.addAttribute("storeList", storeList);
+			}
+
+		} else {
+			List<StoreAgent> sotreAgentList = this.storeService.findStoreAgentByQdStoreId(store.getId());
+			List<Store> storeList = new ArrayList<Store>();
+			for (StoreAgent sotreAgent : sotreAgentList) {
+				Store vo = this.storeService.findStoreById(sotreAgent.getJsStoreId());
+				storeList.add(vo);
+			}
+			model.addAttribute("storeList", storeList);
+			SysRegion sysRegon = sysRegonService.findByRegionCode(store.getAreaCode());
+			model.addAttribute("sysRegon", sysRegon);
+		}
+		model.addAttribute("store", store);
+		model.addAttribute("auditStep", auditStep);
+		model.addAttribute("auditStepList", auditStepList);
+		model.addAttribute("accountTypeMap", Store.accountTypeMap);
+		return "/store/store/store-view";
+	}
+
+	/**
+	 * 进入商户修改页面（在用）
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/storeEdit", method = RequestMethod.GET)
+	public String storeEdit(@RequestParam Long id, Model model) throws SQLException {
+		// String jumpUrl = "";
+		// 得到商户
+		Store store = storeService.findStoreById(id);
+
+		SysRegion region = this.sysRegonService.findByRegionCode(store.getAreaCode());
+		// 行政区域 名称
+		model.addAttribute("areaIdRegion", sysRegionDao.findByRegionCode(store.getAreaId()));
+
+		if (region != null) {
+			store.setAreaName(region.getRegionName());
+		}
+		// String storeName = "";
+		// String storeIds = "";
+		// List<StoreAgent> storeAgentList = null;
+		// if (store.getShopClass() == Store.STORE) {
+		// jumpUrl = "store/store/store-edit";
+		// // 得到关联的渠道商
+		// storeAgentList =
+		// this.storeService.findStoreAgentByJsStoreId(store.getId());
+		// if (storeAgentList != null && storeAgentList.size() > 0) {
+		// // store.setBeginTime(storeAgentList.get(0).getStartTime());
+		// // store.setEndTime(storeAgentList.get(0).getStopTime());
+		// for (StoreAgent vo : storeAgentList) {
+		// storeIds += vo.getQdStoreId() + ",";
+		// Store s = this.storeService.findStoreById(vo.getQdStoreId());
+		// storeName += s.getName() + "\n";
+		// }
+		// if (storeName.length() > 0) {
+		// storeName = storeName.substring(0, storeName.length() - 1);
+		// }
+		// if (storeIds.length() > 0) {
+		// storeIds = storeIds.substring(0, storeIds.length() - 1);
+		// }
+		// }
+		//
+		// // List<Store> storeList = new ArrayList<Store>();
+		// // for (StoreAgent sotreAgent : sotreAgentList) {
+		// // Store vo =
+		// // this.storeService.findStoreById(sotreAgent.getJsStoreId());
+		// // storeList.add(vo);
+		// // }
+		// // model.addAttribute("storeList", storeList);
+		// // List<StoreAgent> agent =
+		// // this.storeService.findStoreAgentByJsStoreId(store.getId());
+		// // if (storeAgentList != null && storeAgentList.size() > 0) {
+		// // store.setStartTime(storeAgentList.get(0).getStartTime());
+		// // store.setStopTime(storeAgentList.get(0).getStopTime());
+		// // }
+		// store.setStoreIds(storeIds);
+		// model.addAttribute("storeName", storeName);
+		//
+		// } else {
+		// jumpUrl = "/store/store/channel-edit";
+		//
+		// storeAgentList =
+		// this.storeService.findStoreAgentByQdStoreId(store.getId());
+		// if (storeAgentList != null && storeAgentList.size() > 0) {
+		// // store.setStartTime(storeAgentList.get(0).getStartTime());
+		// // store.setStopTime(storeAgentList.get(0).getStopTime());
+		// for (StoreAgent vo : storeAgentList) {
+		// storeIds += vo.getJsStoreId() + ",";
+		// Store s = this.storeService.findStoreById(vo.getJsStoreId());
+		// storeName += s.getName() + "\n";
+		// }
+		// if (storeName.length() > 0) {
+		// storeName = storeName.substring(0, storeName.length() - 1);
+		// }
+		// if (storeIds.length() > 0) {
+		// storeIds = storeIds.substring(0, storeIds.length() - 1);
+		// }
+		// }
+		//
+		// store.setStoreIds(storeIds);
+		// model.addAttribute("storeName", storeName);
+		// }
+
+		// List<SysLogistics> logisticsList =
+		// storeService.findSysLogisticsList();
+		// model.addAttribute("logisticsList", logisticsList);
+		// List<StoreLogisticsFee> mylogisticsList =
+		// this.storeService.findStoreLogisticsListByStoreId(store.getId());
+
+		// model.addAttribute("mylogisticsList", mylogisticsList);
+		model.addAttribute("pid", SessionUser.getSessionUser().getSysUnit().getAreaCode());
+		model.addAttribute("store", store);
+		model.addAttribute("accountTypeMap", Store.accountTypeMap);
+		return "store/store/store-edit";
+	}
+
+	/**
+	 * 商户修改（在用）
+	 * 
+	 * @param store
+	 * @param model
+	 * @param request
+	 * @param result
+	 * @return
+	 * @throws SQLException
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "/storeEdit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object storeUpdate(@ModelAttribute("store") Store store, Model model, HttpServletRequest request, BindingResult result)
+	        throws SQLException, IOException {
+		// if (store.getShopClass() == Store.STORE) {
+		// storeValidator.validate(store, result);
+		// if (result.hasErrors()) {
+		// return JsonRespWrapper.error(result.getFieldErrors());
+		// }
+		// } else {
+		// channelValidator.validate(store, result);
+		// if (result.hasErrors()) {
+		// return JsonRespWrapper.error(result.getFieldErrors());
+		// }
+		// if (result.hasErrors()) {
+		// return JsonRespWrapper.error(result.getFieldErrors());
+		// }
+		// }
+
+		Store oldstore = this.storeService.findStoreById(store.getId());
+
+		store.setUpdateUserId(SessionUser.getSessionUser().getId());
+		store.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		store.setCreateTime(oldstore.getCreateTime());
+		store.setShopClass(oldstore.getShopClass());
+		store.setIsValid(oldstore.getIsValid());
+		store.setSyncGyFlag(oldstore.getSyncGyFlag());
+		store.setMerchid(oldstore.getMerchid());
+		store.setStatus(Store.STATUS_AUDITING);
+		String jumpUrl = "/store/store/nonList"; // 用户控制跳转路径，非结算商户转结算商户默认跳转到非结算商户列表页面，
+		if (oldstore.getSort() == 1L) {// 如果是修改结算商户信息，则跳转到结算商户列表
+			jumpUrl = "/store/store/list";
+		}
+		if (store.getShopClass() == Store.CHANNEL) {
+			store.setShopEditAuditFlag(oldstore.getShopEditAuditFlag());
+		}
+		store.setSysUserId(oldstore.getSysUserId());
+		store.setSort(1L);
+		// store.setSort(oldstore.getSort());
+
+		// if (store.getShopClass() == Store.STORE) {
+
+		// List<StoreAgent> list = null;
+		// if (store.getSort().equals(1L)) {// 选择的是移动签约
+		// if (store.getIsreUpload().equals("1")) {// 从新上传文件
+		//
+		// if (uploadfile == null || uploadfile.isEmpty()) {
+		// // return JsonRespWrapper.success("选择上传签署协议文件", "");
+		// } else {
+		// is = uploadfile.getInputStream();
+		// }
+		// }
+		//
+		// }
+		// 选择非移动签约用户
+		// list = new ArrayList<StoreAgent>();
+		// String[] storeIds = store.getStoreIds().split(",");
+		// if (storeIds != null && storeIds.length > 0) {
+		// for (String storeId : storeIds) {
+		// if (StringUtils.isEmpty(storeId)) {
+		// continue;
+		// }
+		// StoreAgent storeAgent = new StoreAgent();
+		// storeAgent.setQdStoreId(Long.valueOf(storeId));
+		// storeAgent.setStartTime(store.getBeginTime().replaceAll("-",
+		// "").replaceAll(":", "").replaceAll(" ", ""));
+		// storeAgent.setStopTime(store.getEndTime().replaceAll("-",
+		// "").replaceAll(":", "").replaceAll(" ", ""));
+		// storeAgent.setStatus(0l);
+		// storeAgent.setSysUserId(sessionUser.getId());
+		// list.add(storeAgent);
+		// }
+		// }
+
+		// 组织商户数据
+		// store.setCreateTime(TimeStamp.getTime(14));
+
+		// store.setShopClass(STORE);
+
+		// store.setAreaId(store.getAreaCode());
+
+		// try {
+
+		storeService.saveUpdateStore(store);
+		logUtils.logModify("结算商户管理", "结算商户管理修改， 商户费率编号：" +store.getId());
+		// String[] qdIds = request.getParameterValues("qdIds");
+		// String[] logisticsFee = request.getParameterValues("logisticsFee");
+		// if (qdIds != null) {
+		// List<StoreLogisticsFee> list1 =
+		// this.storeService.findStoreLogisticsListByStoreId(store.getId());
+		// if (list != null && list.size() > 0) {
+		// for (StoreLogisticsFee po : list1) {
+		// this.storeService.delStoreLogisticsFeeById(po.getId());
+		// }
+		// }
+		// for (int i = 0; i < qdIds.length; i++) {
+		// String qdId = qdIds[i];
+		// String fee = logisticsFee[i];
+		// StoreLogisticsFee bean = new StoreLogisticsFee();
+		// bean.setQdId(Long.valueOf(qdId));
+		// bean.setStoreId(store.getId());
+		// bean.setFeeNum(Float.valueOf("".equals(fee) ? "0" : fee));
+		// this.storeService.addOrUpdateStoreLogisticsFee(bean);
+		// }
+		//
+		// }
+
+		// 返回到来源页面
+		String backUrl = request.getParameter("backUrl");
+	
+	
+		return JsonRespWrapper.success("操作成功", backUrl);
+
+		// }
+		// catch (Exception ex) {
+		// // 未知的错误消息，一般是exception catch后通知用户
+		// return JsonRespWrapper.error(ex.getMessage());
+		// }
+
+		// } else {
+		//
+		// try {
+		//
+		// storeService.updateChannel(store, sessionUser.getId(), null);
+		//
+		// String[] qdIds = request.getParameterValues("qdIds");
+		// String[] logisticsFee = request.getParameterValues("logisticsFee");
+		// if (qdIds != null) {
+		// List<StoreLogisticsFee> list =
+		// this.storeService.findStoreLogisticsListByStoreId(store.getId());
+		// if (list != null && list.size() > 0) {
+		// for (StoreLogisticsFee po : list) {
+		// this.storeService.delStoreLogisticsFeeById(po.getId());
+		// }
+		// }
+		// for (int i = 0; i < qdIds.length; i++) {
+		// String qdId = qdIds[i];
+		// String fee = logisticsFee[i];
+		// StoreLogisticsFee bean = new StoreLogisticsFee();
+		// bean.setQdId(Long.valueOf(qdId));
+		// bean.setStoreId(store.getId());
+		// bean.setFeeNum(Float.valueOf("".equals(fee) ? "0" : fee));
+		// this.storeService.addOrUpdateStoreLogisticsFee(bean);
+		// }
+		//
+		// }
+		//
+		// }
+		// catch (Exception ex) {
+		// // 未知的错误消息，一般是exception catch后通知用户
+		// return JsonRespWrapper.error(ex.getMessage());
+		// }
+		// return JsonRespWrapper.success("操作成功", "/store/store/storeEdit?id=" +
+		// store.getId());
+		// // return JsonRespWrapper.successAlert("ok");
+		// }
+
+	}
+
+	/**
+	 * 删除渠道商（逻辑删除）（在用）
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/storeDel/{id}")
+	@ResponseBody
+	public Object storeDel(@PathVariable(value = "id") Long id, Model model) {
+		Store store = this.storeService.findStoreById(id);
+		store.setIsValid(0L);
+		this.storeService.saveStore(store);
+		logUtils.logDelete("结算商户管理", "删除商户管理, 商户费率编号：" +store.getId());
+		return JsonRespWrapper.success("删除成功", "javascript:window.location.reload()");
+		// return JsonRespWrapper.success("删除成功", "/store/store/list?shopClass="
+		// + store.getShopClass().intValue());
+	}
+
+	/**
+	 * 送审（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/audit/{id}")
+	@ResponseBody
+	public Object audit(@PathVariable Long id, HttpSession session, Model model) {
+		Store store = this.storeService.findStoreById(id);
+		store.setStatus(Store.STATUS_NO_AUDIT);
+		String msg="送审失败";
+		try {
+			msg = storeService.auditStore(store, null);
+			logUtils.logAudit("结算商户管理", "商户管理审核, 商户费率编号：" +store.getId());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			log.error("送审失败："+e.getMessage());
+			logUtils.logAudit("结算商户管理", "商户管理审核失败, 商户费率编号：" +store.getId());
+		}
+		// return JsonRespWrapper.success(msg, "/store/store/list");
+		return JsonRespWrapper.successReload(msg);
+
+	}
+
+	/**
+	 * 获取待审核商户页面信息（在用）
+	 * 
+	 * @param store
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/auditList/{auditStep}")
+	public String auditList(@ModelAttribute("store") Store store, @PathVariable String auditStep,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		Long status = Store.STATUS_SAVE;
+		if ("firstAudit".equals(auditStep)) {
+			status = Store.STATUS_NO_AUDIT;
+		} else if ("secondAudit".equals(auditStep)) {
+			status = Store.STATUS_AUDITING;
+		}
+		// store.setShopClass(shopClass);
+		store.setStatus(status);
+		store.setSort(1L);
+		Page<Store> storeList = storeService.listStore(store, page, Page.DEFAULT_PAGESIZE, "", "");
+		model.addAttribute("pageData", storeList);
+		model.addAttribute("status", status);
+		model.addAttribute("auditStep", auditStep);
+		model.addAttribute("storeClassMap", Store.shopClassMap);
+		// model.addAttribute("shopClass", shopClass);
+		return "/store/store/store-audit-list";
+
+	}
+
+	/**
+	 * 跳转到审核页面（在用）
+	 * 
+	 * @param id
+	 * @param auditStep
+	 * @param status
+	 * @param model
+	 * @return
+	 */
+
+	@RequestMapping(value = "/auditPage")
+	public String toAuditPage(@RequestParam(value = "id") Long id, @RequestParam(value = "auditStep") String auditStep,
+	        @RequestParam(value = "status") Long status, Model model) {
+		model.addAttribute("id", id);
+		model.addAttribute("status", status);
+		model.addAttribute("auditStep", auditStep);
+		return "/store/store/store_auditing";
+	}
+
+	/**
+	 * 审核商户（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/storeAudit")
+	@ResponseBody
+	public Object storeAudit(@RequestParam(value = "id") Long id, @ModelAttribute("step") AuditStep step,
+	        @RequestParam(value = "status") Long status, @RequestParam(value = "auditStep") String auditStep, Model model) {
+		Store store = this.storeService.findStoreById(id);
+		store.setStatus(status);
+		step.setAuditUserId(SessionUser.getSessionUser().getId());
+		step.setBsType(store.getShopClass());
+		step.setUpdateTime(TimeStamp.getTime(14));
+		step.setBsId(id);
+		step.setBsTabel("T_STORE");
+		step.setStatus(store.getStatus());
+		String msg="审核失败";
+		try {
+			msg = storeService.auditStore(store, step);
+			logUtils.logAudit("结算商户管理", "商户管理审核, 商户费率编号：" +store.getId());
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			log.error("审核商户失败:"+e1.getMessage());
+			logUtils.logAudit("结算商户管理", "商户管理审核失败, 商户费率编号：" +store.getId());
+		}
+		if (Store.STATUS_AUDIT_PASS.equals(status)) {
+			// 调用生成商户店铺静态接口
+			try {
+				this.pageStaticInterface.makeStoreShop(store.getId());
+			}
+			catch (Exception e) {
+				log.error(msg + e.getMessage());
+				PageStaticInfo pageStaticInfo = new PageStaticInfo();
+				pageStaticInfo.setStatus(PageStaticInfo.STATUS_FAIL);
+				pageStaticInfo.setType(PageStaticInfo.TYPE_SHOP);
+				pageStaticInfo.setResourceId(store.getId());
+				pageStaticInfo.setCreateTime((TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss)));
+				pageStaticManageService.saveOrUpdate(pageStaticInfo);
+			}
+			SysRegion region = this.sysRegonService.findByRegionCode(store.getAreaCode());
+			String oldAreaCode = store.getAreaCode();
+			if (region != null) {
+				store.setAreaCode(region.getRegionName().replaceAll("市", ""));
+			}
+			// 审核通过后同步结算系统
+			this.storeService.syncStoreAllInfo(store, oldAreaCode);
+			// SyncGYResponseBean bean = null;
+			// if (store.getSyncGyFlag().equals(0L)) {
+			// bean = syncInterface.syncAddStore(store);
+			// } else {
+			// bean = syncInterface.syncUpdateStore(store);
+			// }
+			// if (bean != null) {
+			// store.setSyncGyFlag(Long.valueOf(bean.getCode()));
+			// store.setMerchid(bean.getMerchid());
+			// this.storeService.saveStore(store);
+			// msg += bean.getMsg();
+			// }
+		}
+
+		return JsonRespWrapper.success(msg, "/store/store/auditList/" + auditStep);
+	}
+
+	/**
+	 * 代理商对应结算商户列表（在用）
+	 * 
+	 * @param vo
+	 * @param storeId
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/agentStoreList")
+	public String agentStoreList(StoreAgent vo, @RequestParam(value = "storeId") Long storeId,
+	        @RequestParam(required = false, value = "page", defaultValue = "1") int page, Model model) throws SQLException {
+		vo.setQdStoreId(storeId);
+		Page<StoreAgent> pageData = this.storeService.findAgentList(vo, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("storeId", storeId);
+		model.addAttribute("statusMap", StoreAgent.statusMap);
+		return "/store/store/store-agent-list";
+	}
+
+	/**
+	 * 跳转到代理关系添加页面（在用）
+	 * 
+	 * @param storeId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/agentAdd", method = RequestMethod.GET)
+	public String agentAdd(@RequestParam(value = "storeId") Long storeId, Model model) {
+		StoreAgent vo = new StoreAgent();
+		vo.setQdStoreId(storeId);
+		model.addAttribute("agent", vo);
+		return "/store/store/store-agent-add";
+	}
+
+	/**
+	 * 保存代理关系（在用）
+	 * 
+	 * @param po
+	 * @param storeId
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/agentAdd", method = RequestMethod.POST)
+	@ResponseBody
+	public Object agentSave(StoreAgent vo, @RequestParam(value = "storeId") Long storeId, Model model, BindingResult result) throws SQLException {
+		/**
+		 * modify by xueqiang 写了时间冲突验证，时间直接在样式里加了必填选项，不需要写到验证里
+		 * */
+		String res = storeAgentValidator.validate(vo);
+		if(!"".equals(res)){
+			return JsonRespWrapper.successAlert(res);
+		}
+		if (vo.getJsStoreIds() == null || "".equals(vo.getJsStoreIds())) {
+			result.rejectValue("jsStoreIds", null, "请选择代理结算商户");
+		}
+//		if (result.hasErrors()) {
+//			return JsonRespWrapper.error(result.getFieldErrors());
+//		}
+		String[] ids = vo.getJsStoreIds().split(",");
+		for (String id : ids) {
+			if ("".equals(id)) {
+				continue;
+			}
+			StoreAgent po = new StoreAgent();
+			po.setJsStoreId(Long.valueOf(id));
+			po.setQdStoreId(storeId);
+			if (this.storeService.getStoreAgentBy2Id(po).size() > 0) {
+				continue;
+			}
+			po.setStartTime(vo.getStartTime());
+			po.setStopTime(vo.getStopTime());
+			po.setStatus(0L);
+			po.setShopAgentFlag(vo.getShopAgentFlag());
+			po.setGoodsAgentFlag(vo.getGoodsAgentFlag());
+			/** add by xueqiang 添加直接审核通过，不需要再审核了*/
+			po.setStatus(3L);
+			this.storeService.addOrUpdateStoreAgent(po);
+		}
+		logUtils.logAdd("结算商户模块保存代理关系", "商户管理审核失败, 商户费率编号：" +storeId);
+		return JsonRespWrapper.success("操作成功", "/store/store/agentStoreList?storeId=" + storeId);
+	}
+
+	@RequestMapping(value = "/agentAudit/{id}/{auditstatus}")
+	@ResponseBody
+	public Object agentAudit(@PathVariable(value = "id") Long id, @PathVariable(value = "auditstatus") String auditstatus, Model model) {
+		StoreAgent po = this.storeService.findStoreAgentById(id);
+		Long status = 0L;
+		if ("pass".equals(auditstatus)) {
+			status = 3L;
+		} else if ("back".equals(auditstatus)) {
+			status = 4L;
+		}
+		po.setStatus(status);
+		this.storeService.addOrUpdateStoreAgent(po);
+		return JsonRespWrapper.success("操作成功", "/store/store/agentStoreList?storeId=" + po.getQdStoreId());
+	}
+
+	/**
+	 * 删除代理关系（在用）
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/agentDel/{id}")
+	@ResponseBody
+	public Object agentDel(@PathVariable(value = "id") Long id, Model model) {
+
+		this.storeService.deleteStoreAgentById(id);
+		logUtils.logDelete("结算商户模块删除代理关系", "商户管理删除, 商户费率编号：" +id);
+		return JsonRespWrapper.success("删除成功", "javascript:window.location.reload()");
+		// return JsonRespWrapper.success("删除成功", "/store/store/list?shopClass="
+		// + store.getShopClass().intValue());
+	}
+
+	/**
+	 * 进入选择商户页面（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/findStore", method = RequestMethod.GET)
+	public String selectStores(Store store, @RequestParam(required = false) String ids,
+	        @RequestParam(required = false, value = "page", defaultValue = "1") int page, Model model) throws IOException, Exception {
+		store.setIsValid(1L);
+		store.setStatus(Store.STATUS_AUDIT_PASS);
+		if (store.getSort() == null) {
+			store.setSort(0L);
+		}
+
+		if (ids != null && !"".equals(ids)) {
+			if (ids.endsWith(",")) {
+				ids = ids.substring(0, ids.lastIndexOf(","));
+			}
+			List<Store> rightStoreList = storeService.getStoreListByFilter(ids);
+			model.addAttribute("rightStoreList", rightStoreList);
+		}
+		Page<Store> storePage = storeService.listStore(store, page, 15, null, ids);
+		model.addAttribute("pageData", storePage);
+		// 跳转到列表页面
+		return "/store/store/select-storelist";
+	}
+
+	/**
+	 * Ajax商户查询（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/selectAjaxStore")
+	@ResponseBody
+	public Object findStoreAjax(Store store, @RequestParam(required = false) String ids,
+	        @RequestParam(required = false, value = "page", defaultValue = "1") int page, Model model) throws IOException, Exception {
+		store.setIsValid(1L);
+		store.setStatus(Store.STATUS_AUDIT_PASS);
+		Page<Store> storePage = storeService.listStore(store, page, 15, null, "");
+
+		return storePage;
+	}
+
+	/**
+	 * 选择商户（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "selectStore")
+	public String selectStoreId(Store store, @RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model)
+	        throws SQLException {
+		store.setStatus(Store.STATUS_AUDIT_PASS);// 状态为审核通过
+		store.setIsValid(1L);
+		Page<Store> storeList = storeService.listStore(store, page, 10, "", "");
+
+		model.addAttribute("pageData", storeList);
+
+		return "/store/store/select-store";
+	}
+
+	/**
+	 * 选择商户（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "selectAllStore")
+	public String selectAllStoreId(Store store, @RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model)
+	        throws SQLException {
+
+		String status = "0,1,2,3,4";
+		Page<Store> storeList = storeService.listStore(store, page, 10, status, "");
+
+		model.addAttribute("pageData", storeList);
+
+		return "/store/store/select-store";
+	}
+
+}

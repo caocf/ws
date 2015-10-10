@@ -1,0 +1,582 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.sys.dao.SysRegionDao;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.dao.SysAdDao;
+import com.cplatform.mall.back.websys.dao.SysAdPositionDao;
+import com.cplatform.mall.back.websys.dao.SysAdRegionDao;
+import com.cplatform.mall.back.websys.entity.SysAd;
+import com.cplatform.mall.back.websys.entity.SysAdPosition;
+import com.cplatform.mall.back.websys.entity.SysAdRegion;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.mall.back.websys.service.SysAdService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 广告管理控制器. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-28 上午11:20:06
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/websys/ad")
+public class SysAdController {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+	@Autowired
+	private SysAdDao sysAdDao;
+
+	@Autowired
+	private SysAdRegionDao sysAdRegionDao;
+
+	@Autowired
+	private SysRegionDao sysRegionDao;
+
+	@Autowired
+	private SysAdPositionDao sysAdPositionDao;
+
+	@Autowired
+	private SysAdService sysAdService;
+
+	@Autowired
+	private SysRegionService sysRegionService;
+
+	@Autowired
+	private AppConfig appConfig;
+
+	@Autowired
+	private BsFileService bsFileService;
+
+	/**
+	 * 广告查询列表
+	 * 
+	 * @param ad
+	 *            广告实体类
+	 * @param page
+	 *            当前页
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/ad_list")
+	public String list(SysAd ad, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		Page<SysAd> adPage = sysAdService.findSysAd(ad, page);
+		// 判断是否添加投放区域，修改为与广告添加时同时录入投放区域则可删除
+		for (int i = 0; i < adPage.getData().size(); i++) {
+			if (null != adPage.getData().get(i).getId()) {
+				if (sysAdRegionDao.findAdRegion(adPage.getData().get(i).getId()).size() > 0) {
+					adPage.getData().get(i).setIsRegion("1");// 已添加投放区域标识
+				} else {
+					adPage.getData().get(i).setIsRegion("0");// 未添加投放区域标识
+				}
+			}
+		}
+		List<SysAd> sysads = adPage.getData();
+		String position = "";
+		for (int i = 0; i < sysads.size(); i++) {
+			SysAd sysAd = sysads.get(i);
+			List<SysAdRegion> adRegionList = this.sysAdRegionDao.findAdRegion(sysAd.getId());
+			// 获取投放区域名，可优化为ManyToOne形式
+			for (int j = 0; j < adRegionList.size(); j++) {
+				adRegionList.get(j).setRegionName(sysRegionDao.findByRegionCode(adRegionList.get(j).getRegionCode()).getRegionName());
+			}
+			for (int k = 0; k < adRegionList.size(); k++) {
+				SysAdRegion sysAdRegion = adRegionList.get(k);
+				if (k == adRegionList.size() - 1) {
+					position = position + sysAdRegion.getRegionName();
+				} else {
+					position = position + sysAdRegion.getRegionName() + ",";
+				}
+			}
+			sysAd.setPosition(position);
+			position = "";
+		}
+		model.addAttribute("adPage", adPage);
+		model.addAttribute("adFlagMap", SysAd.getAdFlagMap());
+		model.addAttribute("adTypeMap", SysAd.getAdTypeMap());
+		model.addAttribute("statusMap", SysAd.getStatusMap());
+
+		return "websys/ad/ad_list";
+	}
+
+	/**
+	 * 跳转广告添加
+	 * 
+	 * @param id
+	 *            广告位置ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_add", method = RequestMethod.GET)
+	public String add(@RequestParam(required = false) Long id, Model model) {
+		SysAd sysAd = new SysAd();
+		if (null != id) {
+			SysAdPosition sysAdPosition = sysAdPositionDao.findOne(id);
+			if (null != sysAdPosition.getType()) {
+				sysAd.setAdType(sysAdPosition.getType());
+			}
+			sysAd.setPositionId(id);
+		} else {
+			List<SysAdPosition> sysAdPositionList = sysAdPositionDao.findSysAdPosition();
+			model.addAttribute("sysAdPositionList", sysAdPositionList);
+		}
+		model.addAttribute("method", "add");
+		model.addAttribute("sysAd", sysAd);
+		model.addAttribute("adTypeMap", SysAd.getAdTypeMap());
+		return "websys/ad/ad_add";
+	}
+
+	/**
+	 * 广告添加
+	 * 
+	 * @param uploadFile
+	 *            上传的图片文件
+	 * @param sysAd
+	 *            广告实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPost(MultipartFile uploadFile, @ModelAttribute("sysAd") SysAd sysAd, HttpServletRequest request, BindingResult result) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		sysAd.setStartTime(sysAd.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "000000");
+		sysAd.setValidTime(sysAd.getValidTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "235959");
+		sysAd.setStatus(sysAd.STATUS_0);
+		sysAd.setClickCnt(0L);
+		sysAd.setViewCnt(0L);
+		sysAd.setCreateUser(sessionUser.getId());
+		sysAd.setCreateTime(TimeStamp.getTime(14));
+		try {
+			if (sysAd.getAdType() == 1L && null == uploadFile) {
+				// 提示用户必须要上传文件
+				return JsonRespWrapper.successAlert("请选择模板文件。");// 弹出提示
+			}
+			
+			// 执行业务逻辑
+			sysAdService.saveAd(sysAd, uploadFile);
+			logUtils.logAdd("广告添加", "操作成功！,广告编号:"+sysAd.getId());
+			String backUrl = request.getParameter("backUrl");
+			return JsonRespWrapper.success("操作成功", backUrl);
+
+		}
+		catch (Exception ex) {
+			
+			logUtils.logAdd("广告添加", "操作失败！,广告编号:"+sysAd.getId());
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 跳转广告编辑
+	 * 
+	 * @param id
+	 *            待编辑广告
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_edit", method = RequestMethod.GET)
+	public String edit(@RequestParam(required = false) Long id, Model model) {
+		SysAd sysAd = sysAdDao.findOne(id);
+		SysAdPosition sysAdPosition = sysAdPositionDao.findOne(sysAd.getPositionId());
+		if (null != sysAdPosition) {
+			sysAd.setPositionName(sysAdPosition.getName());
+		}
+		model.addAttribute("method", "edit");
+		model.addAttribute("sysAd", sysAd);
+		model.addAttribute("adTypeMap", SysAd.getAdTypeMap());
+		return "websys/ad/ad_add";
+	}
+
+	/**
+	 * 广告编辑
+	 * 
+	 * @param uploadFile
+	 *            上传的图片文件
+	 * @param oldContent
+	 *            原广告内容
+	 * @param sysAd
+	 *            广告实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePost(MultipartFile uploadFile, @RequestParam(required = false) String oldContent, @ModelAttribute("sysAd") SysAd sysAd,
+	        HttpServletRequest request, BindingResult result) {
+		sysAd.setStartTime(sysAd.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "000000");
+		sysAd.setValidTime(sysAd.getValidTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "235959");
+		try {
+			// 判断原广告类型为图片时，编辑后是否应该删除原图片
+			if (null != uploadFile) {
+				File fileOld = new File(oldContent);
+				if (fileOld.exists() && fileOld.isFile()) {
+					fileOld.delete();
+				}
+			}
+			// 执行业务逻辑
+		
+			sysAdService.saveAd(sysAd, uploadFile);
+			logUtils.logModify("广告图片上传", "操作失败！,广告编号:"+sysAd.getId());
+
+			// 提示并跳转
+			String backUrl = request.getParameter("backUrl");
+			return JsonRespWrapper.success("操作成功", backUrl);
+
+		}
+		catch (Exception ex) {
+			logUtils.logModify("广告图片上传", "操作失败！,广告编号:"+sysAd.getId());
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 查看单个广告详细信息
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_view", method = RequestMethod.GET)
+	public String view(@RequestParam(required = false) Long id, Model model) {
+		SysAd sysAd = sysAdDao.findOne(id);
+		SysAdPosition sysAdPosition = sysAdPositionDao.findOne(sysAd.getPositionId());
+		if (null != sysAdPosition) {
+			sysAd.setPositionName(sysAdPosition.getName());
+		}
+		model.addAttribute("sysAd", sysAd);
+		return "websys/ad/ad_view";
+	}
+
+	/**
+	 * 广告删除
+	 * 
+	 * @param id
+	 *            待删除广告ID
+	 * @return
+	 */
+	@RequestMapping(value = "ad_delete/{id}")
+	@ResponseBody
+	public Object deleteAd(@PathVariable Long id) {
+		SysAd sysAd = sysAdDao.findOne(id);
+		// 删除广告图片
+		if (null != sysAd.getContent()) {
+			File file = new File(sysAd.getContent());
+			if (file.exists() && file.isFile()) {
+				file.delete();
+			}
+		}
+		try {
+			sysAdDao.delete(id);
+			logUtils.logOther("广告删除图片", "操作成功,图片编号:"+sysAd.getId());
+		} catch (Exception e) {
+			logUtils.logOther("广告删除图片", "操作失败,图片编号:"+sysAd.getId());
+		}
+	
+		return JsonRespWrapper.successReload("删除成功！");
+	}
+
+	/**
+	 * 广告投放区域删除
+	 * 
+	 * @param id
+	 *            投放区域ID
+	 * @param adId
+	 *            广告ID
+	 * @param adName
+	 *            广告名
+	 * @return
+	 */
+	@RequestMapping(value = "adr_delete/{id}/{adId}/{adName}")
+	@ResponseBody
+	public Object deleteAdRegion(@PathVariable Long id, @PathVariable Long adId, @PathVariable String adName) {
+		sysAdRegionDao.delete(id);
+		logUtils.logOther("广告投放区域删除", "操作成功,图片编号:"+id);
+		return JsonRespWrapper.successReload("删除成功！");
+	}
+
+	/**
+	 * 跳转添加广告投放区域
+	 * 
+	 * @param adId
+	 *            广告ID
+	 * @param adName
+	 *            广告名
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_add_region", method = RequestMethod.GET)
+	public String addRegion(@RequestParam(required = false) Long adId, @RequestParam(required = false) String adName, HttpServletRequest request,
+	        Model model) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		SysAdRegion sysAdRegion = new SysAdRegion();
+		model.addAttribute("method", "add");
+		model.addAttribute("adName", adName);
+		model.addAttribute("adId", adId);
+		model.addAttribute("sysAdRegion", sysAdRegion);
+		model.addAttribute("regionCode", sessionUser.getSysUnit().getAreaCode());
+		return "websys/ad/ad_region";
+	}
+
+	/**
+	 * 添加广告投放区域
+	 * 
+	 * @param sysAdRegion
+	 *            投放区域实体类
+	 * @param adId
+	 *            广告ID
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_add_region", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPostRegion(@ModelAttribute("sysAdRegion") SysAdRegion sysAdRegion, @RequestParam(required = false) Long adId,
+	        HttpServletRequest request, BindingResult result) {
+		String regionCodeParameter = request.getParameter("regionCode");
+		String[] regionCodes = regionCodeParameter.split(",");
+		// 点击提交时校验是否选择广告投放区域
+		if (regionCodes[0].isEmpty()) {
+			return JsonRespWrapper.successAlert("请选择广告投放区域！");
+		}
+		try {
+			for (String regionCode : regionCodes) {
+				sysAdRegion = new SysAdRegion();
+				sysAdRegion.setRegionCode(regionCode);
+				sysAdRegion.setAdId(adId);
+				// 执行业务逻辑		
+				sysAdRegion = sysAdRegionDao.save(sysAdRegion);
+				logUtils.logOther("添加广告投放区域", "操作成功，区域编号::"+sysAdRegion.getId());
+			}
+
+			// 提示并跳转
+			return JsonRespWrapper.success("成功添加投放区域", "/websys/ad/ad_list");
+
+		}
+		catch (Exception ex) {
+			logUtils.logOther("添加广告投放区域", "操作失败，区域编号:"+sysAdRegion.getId());
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 跳转编辑广告投放区域
+	 * 
+	 * @param adId
+	 *            广告ID
+	 * @param adName
+	 *            广告名
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_edit_region", method = RequestMethod.GET)
+	public String editRegion(@RequestParam(required = false) Long adId, @RequestParam(required = false) String adName, HttpServletRequest request,
+	        Model model) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		SysAdRegion sysAdRegion = new SysAdRegion();
+		model.addAttribute("method", "edit");
+		model.addAttribute("adName", adName);
+		model.addAttribute("adId", adId);
+		model.addAttribute("sysAdRegion", sysAdRegion);
+		List<SysAdRegion> adRegionList = this.sysAdRegionDao.findAdRegion(adId);
+		// 获取投放区域名，可优化为ManyToOne形式
+		for (int i = 0; i < adRegionList.size(); i++) {
+			adRegionList.get(i).setRegionName(sysRegionDao.findByRegionCode(adRegionList.get(i).getRegionCode()).getRegionName());
+		}
+		model.addAttribute("adRegionList", adRegionList);
+		model.addAttribute("regionCode", sessionUser.getSysUnit().getAreaCode());
+
+		return "websys/ad/ad_region";
+	}
+
+	/**
+	 * 编辑广告投放区域
+	 * 
+	 * @param sysAdRegion
+	 *            投放区域实体类
+	 * @param adId
+	 *            广告ID
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_edit_region", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePostRegion(@ModelAttribute("sysAdRegion") SysAdRegion sysAdRegion, @RequestParam(required = false) Long adId,
+	        HttpServletRequest request, BindingResult result) {
+		String regionCodeParameter = request.getParameter("regionCode");
+		String[] regionCodes = regionCodeParameter.split(",");
+		try {
+			if (!regionCodes[0].isEmpty()) {
+				for (String regionCode : regionCodes) {
+					// 校验重复添加
+					List<SysAdRegion> sysAdRegionList = sysAdRegionDao.findAdRegionList(adId, regionCode);
+					if (sysAdRegionList.size() > 0) {
+						logUtils.logOther("该区域已存在", "区域：" + regionCode + "已经被添加，已忽略");
+						continue;
+					}
+					sysAdRegion = new SysAdRegion();
+					sysAdRegion.setRegionCode(regionCode);
+					sysAdRegion.setAdId(adId);
+					// 执行业务逻辑
+					sysAdRegion = sysAdRegionDao.save(sysAdRegion);
+					logUtils.logOther("添加广告投放区域", "操作成功，区域编号::"+sysAdRegion.getId());
+
+				}
+			}
+			String backUrl = request.getParameter("backUrl");
+			return JsonRespWrapper.success("操作成功", "/websys/ad/ad_list");
+
+		}
+		catch (Exception ex) {
+			logUtils.logOther("添加广告投放区域", "操作失败，区域编号::"+sysAdRegion.getId());
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 跳转广告审核
+	 * 
+	 * @param id
+	 *            待审核广告ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_auditing", method = RequestMethod.GET)
+	public String auditing(@RequestParam(required = false) Long id, Model model) {
+		SysAd sysAd = sysAdDao.findOne(id);
+		model.addAttribute("method", "auditing");
+		model.addAttribute("sysAd", sysAd);
+		return "websys/ad/ad_auditing";
+	}
+
+	/**
+	 * 广告审核
+	 * 
+	 * @param id
+	 *            待审核广告ID
+	 * @param status
+	 *            审核状态
+	 * @return
+	 */
+	@RequestMapping(value = "/ad_auditing", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPostAuditing(@RequestParam(required = false) Long id, @RequestParam(required = false) Long status) {
+		SysAd sysAd = sysAdDao.findOne(id);
+		sysAd.setStatus(status);
+		try {
+			// 执行业务逻辑
+			
+			sysAd = sysAdDao.save(sysAd);
+			logUtils.logAudit("添加广告投放区域审核", "操作成功，区域编号:"+id);
+
+			// 提示并跳转
+			return JsonRespWrapper.success("审核成功", "/websys/ad/ad_list");
+
+		}
+		catch (Exception ex) {
+			logUtils.logOther("添加广告投放区域", "操作失败，区域编号::"+id);
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 下载图片文件
+	 * 
+	 * @param id
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/ad_downfile/{id}")
+	public ModelAndView downFile(@PathVariable Long id, HttpServletRequest request, HttpServletResponse response) throws IOException, Exception {
+		SysAd sysAd = sysAdDao.findOne(id);
+		if (null != sysAd.getContent()) {
+			File file = new File(sysAd.getContent());
+			String fileName = file.getName();
+			bsFileService.download(request, response, appConfig.getUploadAdDir() + sysAd.getContent().toString(), "ad_img_" + fileName);
+		}
+		return null;
+	}
+
+	/**
+	 * 选择广告位置触发ajax请求获取type
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/getPositionType")
+	@ResponseBody
+	public Object getPositionType(@ModelAttribute("sysAdPosition") SysAdPosition sysAdPosition) {
+		if (null != sysAdPosition.getId()) {
+
+			try {
+				// 执行业务逻辑
+				logUtils.logOther("", "id:"+sysAdPosition.getId());
+				sysAdPosition = sysAdPositionDao.findOne(sysAdPosition.getId());
+				logUtils.logOther("选择广告位置触发ajax请求获取type", "操作成功，区域编号::"+sysAdPosition.getId());
+				return sysAdPosition;
+
+			}
+			catch (Exception ex) {
+				log.error(ex.getMessage());
+				// 未知的错误消息，一般是exception catch后通知用户
+				logUtils.logOther("选择广告位置触发ajax请求获取type", "操作失败，区域编号::"+sysAdPosition.getId());
+				return JsonRespWrapper.error(ex.getMessage());
+			}
+		}
+		return null;
+	}
+}

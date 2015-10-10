@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=8" />
+	<meta name="keywords" content="苏州移动商城,超市卡,购物券,电影兑换券,KFC兑换券,手机,数码,家电,积分,M值,商城币"/>
+	<meta name="description" content="苏州移动商城是江苏移动旗下官方网上商城,在线特价销售苏州地区超市卡,商场购物券,电影兑换券,KFC兑换券,手机,数码,家电,家居用品等数万种商品,移动客户还可使用积分/M值/商城币在商城任意购物.全场商品正品保证,给您带来不一样的购物体验!"/>
+	<meta property="qc:admins" content="12017675551613141656375" />
+	<meta property="wb:webmaster" content="38a74494aa36661e" />
+	<link href="http://ebuy.139life.com/style/screen.css" rel="stylesheet" />
+	<link href="http://ebuy.139life.com/style/bdsstyle.css" rel="stylesheet" />	
+	<title>首页-商城购物车-苏州移动商城</title>
+	<meta name="baidu-site-verification" content="iQzkROkforYxp00C" />
+	<script type="text/javascript">
+function doConfirm() {
+	alert("敬请期待！");
+}
+</script>
+
+<style type="text/css">
+.jiagequjian h4{ margin:5px 0 !important; padding-left:15px; font-size:12px;}
+.jiagequjian ul{ overflow:hidden;}
+.jiagequjian ul li{ float:left; width:80px; padding-left:15px; margin:1px 0;}
+</style>
+	
+	<script>
+	 var CONT = '';  
+	 var CART = '/fg/order/cart.do';
+	</script>
+	 <script>
+	function addCart(productId,numbers) {
+		document.cart.productId.value=productId;
+		var num = numbers;
+		if(numbers ==null){
+				num = 1;
+				}else{
+				num = numbers;
+			}
+		var cart = "/fg/order/cart.do?actionType=addproduct&productId="+productId+"&number=" +num;
+		 window.location.href = cart;		
+			document.cart.submit();
+		}
+	</script>
+
+<script type="text/javascript">
+ <!--
+	function TrBgOn(TrBgid){ 
+	 TrBgid.style.backgroundColor="#fafafa";
+		//TrBgid.style.cursor="hand";
+	}
+	function TrBgOff(TrBgid){ 
+	 TrBgid.style.backgroundColor="#ffffff";
+	}
+	-->
+	
+</script>
+
+<SCRIPT language=JavaScript src="/js/json.min.js"></SCRIPT>
+<script type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+<script type="text/javascript" src="/js/jquery.form.min.js"></script>
+<script type="text/javascript" src="/js/ajax.min.js"></script>
+<script type="text/javascript" src="/js/szsc.min.js"></script>
+
+<form  name="cart" action="/fg/order/cart.do" method="post">
+	<input type="hidden" name="channelId" value="index"/>
+	<input type="hidden" name="actionType" value="addproduct"/>
+	<input type="hidden" name="productId"/>	
+</form>	
+	
+	<script>
+	
+	
+	</script>
+	<script>
+		function logout1() {
+			document.userloginForm.requestPageUrl.value=window.top.location;
+			document.userloginForm.actionType.value = "logout";
+			document.userloginForm.submit();
+		}
+		function userLoginSubmitForm() {
+			if(document.getElementsByName('bean.id')[0].value == "") {
+				alert("请输入用户名");
+				document.getElementsByName('bean.id')[0].focus();
+				return;
+			}	
+			if(document.getElementsByName('bean.password')[0].value == "") {
+				alert("请输入密码");
+				document.getElementsByName('bean.password')[0].focus();
+				return;
+			}
+			document.fguserForm.submit();
+		}
+		function clearForm() {
+			document.getElementsByName('bean.id')[0].value ="";
+			document.getElementsByName('bean.password')[0].value="";
+		}
+	</script>
+	<script>
+		function gologin() {
+			document.userloginForm.requestPageUrl.value = encodeURIComponent(window.top.location);			
+			document.userloginForm.target="_blank";
+			document.userloginForm.actionType.value = "gologin";
+			document.userloginForm.submit();
+		}
+		function login() {
+			if(document.getElementById("topuserid").value == ''){
+		  	alert("请输入登录账号。");
+		  	document.getElementById("topuserid").focus();
+			  return false;
+		  }
+		  
+		  if(!isEmail(trim(document.getElementById("topuserid").value),true)
+		  	&&  !isMobile(trim(document.getElementById("topuserid").value),true)){
+		  	alert("请输入正确账号！");
+		  	document.getElementById("topuserid").value ='';
+		  	document.getElementById("topuserpwd").value = '';
+		  	document.getElementById("topuserid").focus();
+			  return false;
+		  }
+			
+			if(document.getElementById("topuserpwd").value == ''){
+			  alert("请输入您的密码！");
+			  document.getElementById("topuserpwd").focus();
+		    return false;
+		  }
+			//document.userloginForm.requestPageUrl.value=encodeURIComponent(window.top.location);	
+		  document.userloginForm.actionType.value = "login";	
+			//document.userloginForm.submit();
+			return true;
+		}
+		function logout() {
+			document.userloginForm.requestPageUrl.value=encodeURIComponent(window.top.location);
+			document.userloginForm.actionType.value = "logout";
+			document.userloginForm.submit();
+		}
+		
+		function logout2() {
+			document.userloginForm.requestPageUrl.value=encodeURIComponent(window.top.location);
+			document.userloginForm.actionType.value = "outlogin";
+			document.userloginForm.submit();
+		}
+		
+		function regedit() {
+			document.userloginForm.requestPageUrl.value=encodeURIComponent(window.top.location);
+			document.userloginForm.actionType.value = "regedit";
+			document.userloginForm.submit();
+		}          		
+	</script>
+	<script>
+	function changeTopCss(position){
+	  
+		document.getElementById("topLeft"+position).className="topTitleLeft"+position;
+		document.getElementById("topCenter"+position).className="topTitleCenter"+position;
+		document.getElementById("topRight"+position).className="topTitleRight"+position;
+		document.getElementById("topTextId").className="Row"+position;
+	}
+
+	function removeConfig(removeurl){
+		if(confirm("您确定清空该配置吗？")) {
+			window.open(removeurl, "", 'left=2000,top=0,scrollbars=no,width=1,height=1');
+		}
+	}
+
+	function openConfig(configUrl) { 
+		var leftn=screen.width/2-390; var topn=50;
+		window.open(configUrl, "",'left=' + leftn+',top='+topn+',scrollbars=yes,width=780,height=590');
+	}
+
+	function refresh(){
+		this.location = this.location;
+	}
+
+	function unkey(){
+	  var ahrefs = document.getElementsByTagName('a');
+		if(ahrefs.length > 0){
+		  for(var i=0; i < ahrefs.length; i++){
+			  if(ahrefs[i].className != "putKey"){
+				  ahrefs[i].href="javascript:void(0)";
+					ahrefs[i].target="_top";
+					ahrefs[i].style.cursor="point";
+				}
+			}
+		}
+	}
+
+	function fHideFocus(tName){
+	  var aTag=document.getElementsByTagName(tName);
+	  if(aTag.length > 0){
+			for(var i=0;i<aTag.length;i++){
+			  aTag[i].hideFocus=true;
+			}
+	  }
+	}
+
+  //初始化购物车的方法
+  function initCart(){
+    var thisUrl="/fg/order/cart.do?actionType=ajaxgetcart";
+		send_request(cartInfo,"POST",thisUrl,false,null);
+	}
+	
+	function cartInfo() {
+	  if (http_request.readyState == 4) {
+	    if (http_request.status == 200) { 
+	      var returnXML = http_request.responseXML;
+	      var count=0;
+	      var tototal=0;
+	      if(returnXML && returnXML.getElementsByTagName("count") && returnXML.getElementsByTagName("count").item(0) != null) {
+		      count = returnXML.getElementsByTagName("count").item(0).firstChild.nodeValue;
+		    }
+	      if(returnXML && returnXML.getElementsByTagName("tototal") && returnXML.getElementsByTagName("tototal").item(0) != null) {	    
+	        tototal = returnXML.getElementsByTagName("tototal").item(0).firstChild.nodeValue;
+	      } 
+			 // document.getElementById("productCountsAndTotoalId").innerHTML="" + count;
+		  }else { 
+		    //alert("您所请求的页面有异常。");
+		  }
+		}
+	}
+</script>
+<link href="http://ebuy.139life.com/css/comstyle.css" rel="stylesheet" type="text/css"/>
+<link href="images/all.css" rel="stylesheet" type="text/css"/>
+</head>
+
+
+<body>
+
+<!--Top-->
+
+
+	
+
+
+<!--中部-->
+<div class="jsyd_main">
+<!--购买流程图开始-->
+  <div class="flow-steps">
+    <ol class="num4">
+      <li class="first firston"><span>1. 选择购买数量</span></li>
+      <li><span>2. 确认订单信息</span></li>
+      <li><span>3. 付款</span></li>
+      <li class="last"><span>4. 确认收货</span></li>
+    </ol>
+  </div> 
+
+<!--购买流程图结束-->
+<form name="fgCartForm" method="post" action="/fg/order/cart.do">
+	<input type="hidden" name="channelId" value="index">
+	<input type="hidden" name="actionType"/>
+	<input type="hidden" name="providerId"/>
+	<input type="hidden" name="productId"/>
+	<input type="hidden" name="selectstate" value="on"/>
+	<input type="hidden" name="cartManagerProductsId"/>
+	
+ 
+	<table class="jsyd_wgc_lbbt" border="0" cellpadding="0" cellspacing="0">
+    <tbody>
+      <tr> 
+        <td style="width: 380px;">店铺宝贝</td>
+        <td style="width: 126px;">单价（元）</td>
+        <td style="width: 116px;">数量</td>
+        <td >合计（元）</td>
+       
+      </tr>
+    </tbody>
+  </table>
+
+	<div class="jsyd_wgc_dj">
+	 店铺：<a href="/store/web/index.jsp?storeId=NJQE">南京岂迩计算机科技有限公司</a>&nbsp;<img src="images/jsyd_tb37.gif" border="0" align="absmiddle"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;卖家：<a href="/store/web/index.jsp?storeId=NJQE">南京岂迩计算机科技有限公司</a> 
+	 
+	</div>
+
+   <table class="jsyd_wgc_lb" border="0" cellpadding="0" cellspacing="0">
+  	<tbody>
+   
+		
+    <tr>
+      <!--<td style="width:62px;"><input type="checkbox" name="selected" value="1361167125263"  /></td>-->
+      <td  style="width: 380px;">
+        <div class="jsyd_gwc_dpbb" style="width:auto">
+          <ul>
+            <li class="jsyd_gwc_dpbb_li01"><a href="/p_tp5n21933.htm"><img src="http://221.178.141.35/userfiles/product/img/20120509/small/small_1336540916912.jpg" border="0" target="_blank" width="50"  align="absmiddle"/></a></li>
+            <li class="jsyd_gwc_dpbb_li02"><a href="/p_tp5n21933.htm" target="_blank">包邮 奔腾QH-T81家用厨房净水自来水龙头 过滤器</a></li>
+           
+            
+          </ul> 
+        </div>
+      </td>
+      <!--
+      <td style="width:110px;">28</td>
+      -->
+      <td style="width: 126px;">
+       280.00
+       
+	    </td>
+      <td style="width: 116px;">
+		<div class="tgsl">最多还能购买<span class="w_gm">999</span>件</div>
+      <div><a href="#"><img src="images/jsyd_tb35.gif"  border="0" align="absmiddle"/></a>&nbsp;
+      <input name="cart_productNumbertp5n219331361167125263" type="text"  value="1" onkeypress="intOnly();" onkeyup="value=value.replace(/[\W]/g,'') " onkeydown="if(event.keyCode==13)event.keyCode=9"  onblur="javascript:cartSubmitForm('updateproduct')"  style="width:30px;text-align:center;" class="jsyd_gwbl_input" size="5"/>&nbsp;
+      <a href="#"><img src="images/jsyd_tb36.gif"  border="0" align="absmiddle"/></a></div>
+      </td>
+      <!--
+      <td style="width:93px;">
+       无优惠
+			</td>
+			-->
+      <td ><span>280.00</span></td>
+     
+    </tr>
+     
+  
+ </table> 
+ 	 
+  <div class="jsyd_Summary">
+    <ul class="fix">
+    	
+      <!--
+      <li class="jsyd_Summary_li01">您目前可用的积分共有：<b>0</b>点&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/usercenter/userIntegral.jsp">查看积分收入与积分销售情况</a></li>
+      -->
+      <li class="jsyd_Summary_li02">总价（不包含运费）：<span>280.00</span>元
+      	<!--
+      	<br />
+        可获积分<b>28</b>点
+        -->
+      </li>
+      <li class="jsyd_Summary_li03">
+        <ol class="jsyd_Summary_0l01"><!--<a href="#" onclick="javascript:submitForm('removeproduct','');"><img src="/images/jsyd_spsx_button.gif"  border="0" align="absmiddle"/></a>--></ol>
+        <ol class="jsyd_Summary_0l02"><a href="#" onclick="#"><img src="images/jsyd_ljgm_button.gif"  border="0" align="absmiddle"/></a></ol>
+      </li>
+    </ul> 
+  </div>
+  
+
+</form>
+
+</div>
+<!--尾部-->
+<link href="http://ebuy.139life.com/page/helper/cc_1_files/screen_help.css" rel="stylesheet" type="text/css">
+<!--这是尾部-->
+	
+
+</body>
+</html>
+<!--尾部结束-->
+

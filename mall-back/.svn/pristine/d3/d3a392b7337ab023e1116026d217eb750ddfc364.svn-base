@@ -1,0 +1,479 @@
+package com.cplatform.mall.back.order.web;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.service.ItemManageService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.order.entity.Order;
+import com.cplatform.mall.back.order.entity.OrderRefund;
+import com.cplatform.mall.back.order.entity.OrderRefundGoods;
+import com.cplatform.mall.back.order.entity.RefundRequest;
+import com.cplatform.mall.back.order.service.OrderRefundService;
+import com.cplatform.mall.back.order.service.OrderService;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.entity.SysUser;
+import com.cplatform.mall.back.sys.service.UserService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.order.ActOrderInfo;
+import com.cplatform.order.ActOrderPaymentInfo;
+import com.cplatform.order.ActOrderService;
+import com.cplatform.pay.unify_pay.info.UnifyPayResponse;
+import com.cplatform.util2.TimeStamp;
+import com.cplatform.verifycode.RevokeRespInfo;
+
+/**
+ * 订单退款管理控制器. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:59:26
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/order/refund")
+public class OrderRefundController {
+	private static Logger log = Logger.getLogger(OrderRefundController.class);
+	@Autowired
+	private LogUtils logUtils;
+	
+	@Autowired
+	private OrderRefundService orderRefundService;
+	
+	@Autowired
+	private  OrderService orderService;
+	
+	@Autowired
+	private ItemManageService itemManageService;
+	
+	@Autowired
+	private StoreService storeService;
+	
+	@Autowired
+	private UserService sysUserService;
+	
+	@Autowired
+	ActOrderService actOrderService;
+
+	/**
+	 * 订单退款管理查询
+	 * @param order    订单实体类
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String list(@RequestParam(required = false) String terminalId,
+					   @RequestParam(required = false) Long id, 
+					   @RequestParam(required = false) String actType,
+					   @RequestParam(required = false) String payStatus,
+					   @RequestParam(required = false) String closeStatus,
+					   @RequestParam(value = "page", required = false, defaultValue = "1") int page, 
+					   Model model) throws SQLException {
+		Page<Order> orderPage = orderRefundService.orderRefundQuery(terminalId, id, actType, payStatus,closeStatus, page);	
+		//获取订单退款单
+		orderPage = orderRefundService.getOrderRefund(orderPage);	
+		model.addAttribute("orderPage", orderPage);
+		model.addAttribute("actTypeMap", Order.getActTypeMap());
+		model.addAttribute("payStatusMap", Order.getPayStatusMap());
+		model.addAttribute("closeStatusMap", Order.getCloseStatusMap());
+		return "order/order_refund_list";
+	}
+	
+	/**
+	 * 订单退款管理查询
+	 * @param order    订单实体类
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/audit")
+	public String auditRefund(OrderRefund orderRefund,
+						   @RequestParam(value = "page", required = false, defaultValue = "1") int page, 
+						   Model model) throws SQLException {
+		Page<OrderRefund> orderRefundPage = orderRefundService.getOrderRefundList(orderRefund, page);
+		//判断是否需要退码
+		orderRefundPage = orderRefundService.isRefundCode(orderRefundPage);	
+		model.addAttribute("orderRefundPage", orderRefundPage);
+		model.addAttribute("statusMap", OrderRefund.getStatusMap());
+		return "order/order_refund_audit_list";
+	}
+
+	/**
+	 * 跳转添加订单退款
+	 * @param model
+	 * @param orderId    订单ID
+	 * @return
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	public String add(Model model,
+			          @RequestParam(required = false) Long orderId) {
+		//设置退款单
+		OrderRefund orderRefund = orderRefundService.setOrderRefundBaseInfo(orderId);
+		model.addAttribute("orderRefund", orderRefund);
+		//订单支付信息
+		List<Map<String, String>> paymengList = this.orderService.findOrderPaymentListByOrderId(orderId);
+		//设置待退款商品
+		List<Map<String, String>> actOrderGoodsList = orderRefundService.setActOrderGoodsList(model,paymengList, orderId);
+		model.addAttribute("actOrderGoodsList", actOrderGoodsList);
+		//设置订单原价		
+		Double orderSum = 0d;
+		orderSum = orderRefundService.setOrderAmount(orderSum, paymengList);
+		model.addAttribute("orderSum", orderSum);	
+		//获取物流		
+		Double expressCost = 0d;
+		expressCost = orderRefundService.setExpressCost(expressCost, orderId);
+		model.addAttribute("expressCost", expressCost);
+		//获取已退金额
+		Double oldRefundAmount = 0d;
+		oldRefundAmount = orderRefundService.setOldRefundAmount(oldRefundAmount, orderRefund.getOrderId());
+		model.addAttribute("oldRefundAmount", oldRefundAmount);
+		return "order/order_refund_add";
+	}
+	/**
+	 * 添加订单退款
+	 * @param sysPos    终端实体类
+	 * @param request
+	 * @param result
+	 * @return
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPost(@ModelAttribute("orderRefund") OrderRefund orderRefund, 
+			                 HttpServletRequest request, 
+			                 BindingResult result) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		orderRefund.setCreateTime(TimeStamp.getTime(14));
+		orderRefund.setUserId(sessionUser.getId());
+		String[] actOrderGoodsIds = request.getParameterValues("actOrderGoodsId");
+		String[] goodsIds = request.getParameterValues("goodsId");
+		String[] backNumbers = request.getParameterValues("backNumber");
+		String[] cashs = request.getParameterValues("cash");
+		String[] coins = request.getParameterValues("coin");
+		if(null == backNumbers){
+			return JsonRespWrapper.successAlert("请填写退款单！");
+		}
+		for(int i = 0; i < backNumbers.length; i++){
+			if(StringUtils.isNotEmpty(backNumbers[i]) && (StringUtils.isEmpty(cashs[i]) && StringUtils.isEmpty(coins[i]))){
+				return JsonRespWrapper.successAlert("请填写完整的退款单！");
+			}
+		}
+		/**
+		 * 判断商品为实物类还是虚拟类
+		 * 实物类：需要商户确认
+		 * 虚拟类：不需要商户进行确认
+		 */
+		orderRefund = orderRefundService.setStatus(orderRefund);
+		if(null == orderRefund.getRefundFee() ){
+			return JsonRespWrapper.successAlert("请选择退款商品，确认退款金额！");
+		}
+		
+		orderRefund.setRefundFee(orderRefund.getRefundFee() * 100);//金额设置为“分”单位
+		try {
+			//执行业务逻辑			
+			orderRefund = orderRefundService.saveOrderRefund(orderRefund, actOrderGoodsIds, goodsIds, backNumbers, cashs, coins, "add");
+			// 提示并跳转
+			return JsonRespWrapper.success("添加成功", "/order/refund/list");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 查看退款单
+	 * 
+	 * @param id    被查看退款单ID
+	 * @param model
+	 * @return
+	 * @throws SQLException 
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/view")
+	public String viewOrderRefund(@RequestParam(required = false) Long id, Model model) throws SQLException {
+		OrderRefund orderRefund = orderRefundService.findOne(id);
+		Map<String,String> storeMap=orderRefundService.getStoreById(id);
+		//退款商品列表
+		List<OrderRefundGoods> orderRefundGoodsList = null;
+		try {
+			orderRefundGoodsList = orderRefundService.findOrderRefundGoodsList(id);
+		} catch (SQLException e) {
+			log.error("获取退款商品失败:"+e.getMessage());
+			throw e;
+		}
+		model.addAttribute("refund", orderRefund);
+		model.addAttribute("storeMap", storeMap);
+		model.addAttribute("refundFee", orderRefund.getRefundFee()/100);
+		model.addAttribute("orderRefundGoodsList", orderRefundGoodsList);
+		//获取订单原价
+		List<Map<String, String>> paymengList = this.orderService.findOrderPaymentListByOrderId(orderRefund.getOrderId());
+		Double orderSum = 0d;
+		orderSum = orderRefundService.setOrderAmount(orderSum, paymengList);
+		model.addAttribute("orderSum", orderSum);
+		//获取退款金额（现金、商城币）
+		Double orderRefundGoodsCash = 0d;
+		Double orderRefundGoodsCoin = 0d;
+		for(OrderRefundGoods orderRefundGoods : orderRefundGoodsList){
+			if(null != orderRefundGoods.getCash()){
+				orderRefundGoodsCash += orderRefundGoods.getCash();
+			}
+			if(null != orderRefundGoods.getCash()){
+				orderRefundGoodsCoin += orderRefundGoods.getCoin();
+			}
+		}
+		model.addAttribute("cash", orderRefundGoodsCash/100);
+		model.addAttribute("coin", orderRefundGoodsCoin/100);
+		//获取物流
+		Double expressCost = 0d;
+		expressCost = orderRefundService.setExpressCost(expressCost, orderRefund.getOrderId());
+		model.addAttribute("expressCost", expressCost);
+		//获取已退金额
+		Double oldRefundAmount = 0d;
+		oldRefundAmount = orderRefundService.setOldRefundAmount(oldRefundAmount, orderRefund.getOrderId());
+		model.addAttribute("oldRefundAmount", oldRefundAmount);
+		//获取操作人、商户操作人、审核人名称
+		SysUser user = sysUserService.findSysUserById(orderRefund.getUserId());
+		if(null != user){
+			model.addAttribute("userCode", user.getUserCode());
+		}
+		SysUser auditUser = sysUserService.findSysUserById(orderRefund.getAuditUserId());
+		if(null != auditUser){
+			model.addAttribute("auditUserCode", auditUser.getUserCode());
+		}
+		ItemSale itemSale = itemManageService.findOneItemSale(orderRefundService.findOrderRefundGoodsList(orderRefund.getId()).get(0).getGoodsId());
+		//是否可以退款
+		int isRefundCash = 1;
+		//商品类型0--实物 1--虚拟物
+		if(1L == itemSale.getItemMode()){
+    		//系统退码			
+			model.addAttribute("refundVerifyCode", "1");
+			
+			//获取该退款单下所有的商品码
+			//@add_by macl@c-platform.com start>>>
+			List<Map<String, String>> verifyCodeList = orderService.findVerifyCodeListByOrderId(orderRefund.getOrderId());
+			
+			if(null!=verifyCodeList 
+				 && verifyCodeList.size()>0){
+				for(Map<String, String> entry : verifyCodeList){
+					if(null == entry.get("code_status")
+							|| !"1".equals(entry.get("code_status"))){
+						isRefundCash=0;
+					}
+				}
+			}
+			//@add_by macl@c-platform.com <<<end			
+    	}
+		model.addAttribute("isRefundCash", isRefundCash);
+		return "order/order_refund_view";
+	}
+	
+	/**
+	 * 跳转退款单审核
+	 * 
+	 * @param id    待审核退款单ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/refund_auditing", method = RequestMethod.GET)
+	public String auditing(@RequestParam(required = false) Long id, Model model, @RequestParam(required = false) String whereAbout) {
+		OrderRefund orderRefund = orderRefundService.findOne(id);
+		model.addAttribute("method", "auditing");
+		model.addAttribute("refund", orderRefund);
+		model.addAttribute("whereAbout", whereAbout);
+		return "order/order_refund_auditing";
+	}
+
+	/**
+	 * 退款单审核
+	 * 
+	 * @param id    待审核退款单ID
+	 * @param status
+	 * @return
+	 */
+	@RequestMapping(value = "/refund_auditing", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPostAuditing(@RequestParam(required = false) Long id, @RequestParam(required = false) Long status, @RequestParam(required = false) String auditRemark, HttpServletRequest request, @RequestParam(required = false) String whereAbout) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		OrderRefund orderRefund = orderRefundService.findOne(id);
+		orderRefund.setStatus(status);
+		orderRefund.setAuditRemark(auditRemark);
+		orderRefund.setAuditTime(TimeStamp.getTime(14));
+		orderRefund.setAuditUserId(sessionUser.getId());
+		try {
+			// 执行业务逻辑
+			orderRefund = orderRefundService.saveOrderRefund(orderRefund, null, null, null, null, null, null);
+			logUtils.logAudit("成功审核退款单", "ID:" + orderRefund.getId().toString() + ",审核状态 STATUS：" + orderRefund.getStatusName());		
+			return JsonRespWrapper.success("成功审核退款单", "/order/refund/view?id=" + id);
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+	/**
+	 * 跳转退款单退码
+	 * 
+	 * @param id    待退码退款单ID
+	 * @param model
+	 * @return
+	 * @throws SQLException 
+	 */
+	@RequestMapping(value = "/refund_verifycode", method = RequestMethod.GET)
+	public String refundVerifyCode(@RequestParam(required = false) Long id, Model model, @RequestParam(required = false) String whereAbout) throws SQLException {
+		OrderRefund orderRefund = orderRefundService.findOne(id);
+		model.addAttribute("method", "verifycode");
+		model.addAttribute("refund", orderRefund);
+		model.addAttribute("whereAbout", whereAbout);
+
+		//获取虚拟商品码
+		ItemSale itemSale = itemManageService.findOneItemSale(orderRefundService.findOrderRefundGoodsList(orderRefund.getId()).get(0).getGoodsId());
+		//商品类型0--实物 1--虚拟物
+		if(1L == itemSale.getItemMode()){
+			List<Map<String, String>> verifycodeList = this.orderService.findVerifyCodeListByOrderId(orderRefund.getOrderId());
+			model.addAttribute("nowTime", TimeStamp.getTime(14));
+			model.addAttribute("verifycodeList", verifycodeList);	
+    	}
+		return "order/order_refund_verifycode";
+	}
+
+	/**
+	 * 退款单退码
+	 * 
+	 * @param id    待退码退款单ID
+	 * @param status
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value = "/refund_verifycode", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPostRefundVerifyCode(@RequestParam(required = false) Long id, @RequestParam(required = false) String code, HttpServletRequest request, @RequestParam(required = false) String whereAbout) throws Exception {
+		String[] orderIds = request.getParameterValues("orderId");
+		String msg = "";
+		if(null == orderIds){
+			return JsonRespWrapper.successAlert("请选择退款商品！");
+		}
+		//循环退码
+		for(String orderId : orderIds){			
+			Map<String, String> verifycode = orderRefundService.findVerifyCodeByOrderId(orderId);
+			RevokeRespInfo response = orderRefundService.refundVerifyCode(verifycode);
+			//msg = msg + orderId + ":" + response.getStatusText() + ";<br />";
+			if("OK".equals( response.getStatusText())){
+				msg = "操作成功！";
+			}else{
+				msg = "操作失败！";
+			}
+			
+			//TODO:修改商品验证码状态
+		}
+		return JsonRespWrapper.successReload(msg);
+	}
+	
+	/**
+	 * 退款操作(现金退款、商城币退款)
+	 * 
+	 * @param id
+	 * @param status
+	 * @param model
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value = "/refund/{id}")
+	@ResponseBody
+	public Object refund(@PathVariable Long id, Model model) throws Exception {
+		
+		OrderRefund orderRefund = orderRefundService.findOne(id);
+		Store store = storeService.findStoreById(orderRefund.getStoreId());	
+		ActOrderInfo actOrderInfo = actOrderService.getActOrderInfo(orderRefund.getOrderId());
+		List<OrderRefundGoods> orderRefundGoodsList = orderRefundService.findOrderRefundGoodsList(id);
+		String msg = "";
+		try {
+			for(OrderRefundGoods orderRefundGoods : orderRefundGoodsList){
+				//现金退款
+				if(null != orderRefundGoods.getCash() || 0d != orderRefundGoods.getCash()){
+					ActOrderPaymentInfo paymentInfoCash = new ActOrderPaymentInfo();
+					RefundRequest refundRequest = new RefundRequest();
+					ItemSale itemSale = itemManageService.findOneItemSale(orderRefundGoods.getGoodsId());
+					int settlePrice = (int)(itemSale.getSettlePrice() * 100);
+					refundRequest.setMerchId(store.getMerchid());
+					refundRequest.setProductionType(itemSale.getTypeId().toString());
+					refundRequest.setPayChannel("cashRefund");
+					refundRequest.setSettlementPrice(String.valueOf(settlePrice));
+					refundRequest.setTitle(itemSale.getName());
+					refundRequest.setReason(orderRefund.getReason());
+					refundRequest.setAmount(orderRefundGoods.getCash());
+					for(ActOrderPaymentInfo paymentInfo : actOrderInfo.getPaymentInfos()){
+						if("cash".equals(paymentInfo.getCurrency())){
+							paymentInfoCash = paymentInfo;
+							break;
+						}
+					}
+					//退款接口
+					UnifyPayResponse unifyPayResponse = orderRefundService.refundSubmitUnify(refundRequest, actOrderInfo, paymentInfoCash);
+					//TODO:修改退款状态
+					unifyPayResponse.getStatusCode();
+					msg = msg + "退现金：" +  unifyPayResponse.getStatusText() + ";<br />";
+				}
+				//商城币退款
+				if(null != orderRefundGoods.getCoin() || 0d != orderRefundGoods.getCoin()){
+					ActOrderPaymentInfo paymentInfoCoin = new ActOrderPaymentInfo();
+					RefundRequest refundRequest = new RefundRequest();
+					ItemSale itemSale = itemManageService.findOneItemSale(orderRefundGoods.getGoodsId());
+					int settlePrice = (int)(itemSale.getSettlePrice() * 100);
+					refundRequest.setMerchId(store.getMerchid());
+					refundRequest.setProductionType(itemSale.getTypeId().toString());
+					refundRequest.setPayChannel("coinRefund");
+					refundRequest.setSettlementPrice(String.valueOf(settlePrice));
+					refundRequest.setTitle(itemSale.getName());
+					refundRequest.setReason(orderRefund.getReason());
+					refundRequest.setAmount(orderRefundGoods.getCoin());
+					for(ActOrderPaymentInfo paymentInfo : actOrderInfo.getPaymentInfos()){
+						if("coin".equals(paymentInfo.getCurrency())){
+							paymentInfoCoin = paymentInfo;
+							break;
+						}
+					}
+					//退款接口
+					UnifyPayResponse unifyPayResponse = orderRefundService.refundSubmitUnify(refundRequest, actOrderInfo, paymentInfoCoin);
+					unifyPayResponse.getStatusCode();
+					msg = msg + "退商城币：" + unifyPayResponse.getStatusText();
+				}
+				
+			}
+			return JsonRespWrapper.successReload(msg);
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+	
+}

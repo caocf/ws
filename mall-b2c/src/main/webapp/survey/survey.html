@@ -1,0 +1,267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<title>调查表</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link href="../css/base.css" rel="stylesheet" type="text/css" />
+		<link href="../css/layout.css" rel="stylesheet" type="text/css" />
+		<link href="../css/survey.css" rel="stylesheet" type="text/css" />
+		<script type="text/javascript" src="../js/jquery.min.js"></script>
+		<script type="text/javascript" src="../js/global.js"></script>
+		<script type="text/javascript" src="../js/survey.js"></script>
+
+		<script type="text/javascript">
+
+	function checkForm(){
+		var question1 = $("#questionId1").val();
+		
+		var answer1 = $("input[name='radio_option']:checked").val();
+		
+		if(answer1 == null){
+			alert("请选择您的满意度！");
+			return false;
+		}
+		
+		var question2 = $("#questionId2").val();
+		var answer2 =[]; 
+		$('input[name="checkbox_option2"]:checked').each(function(){    
+	  		answer2.push($(this).val());
+	 	});  
+	 	var areatext2 = $("#survey_textarea2").val();
+	 	if($('input[name="checkbox_option2"]:checked').val() == " "){
+	 		if(areatext2.replace(/[ ]/g,"") == ""){
+	 			alert("填写内容不能为空！");
+	 			return false;
+	 		}else if(areatext2.length > 100){
+	 			alert('内容过长！');
+				return false;
+	 		}
+	 	}
+	 	answer2 +=  areatext2;
+	 	if(answer2.length == 0){
+	 		alert("请选择首页能为您做些什么！");
+	 		return false;
+	 	}
+	 	
+	 	var question3 = $("#questionId3").val();
+		var answer3 =[]; 
+		$('input[name="checkbox_option3"]:checked').each(function(){    
+	  		answer3.push($(this).val());
+	 	}); 
+		if(answer3.length == 0){
+	 		alert("请选择您在首页关注的内容！");
+	 		return false;
+	 	}
+	 	
+	 	
+	 	var question4 = $("#questionId4").val();
+		var answer4 =[]; 
+		$('input[name="checkbox_option4"]:checked').each(function(){    
+	  		answer4.push($(this).val());
+	 	});  
+	 	var areatext4 = $("#survey_textarea4").val();
+	 	if($('input[name="checkbox_option4"]:checked').val() == " "){
+	 		if(areatext4.replace(/[ ]/g,"") == ""){
+	 			alert("填写内容不能为空！");
+	 			return false;
+	 		}else if(areatext4.length > 100){
+	 			alert('内容过长！');
+				return false;
+	 		}
+	 	}
+	 	answer4 +=  areatext4;
+	 	if(answer4.length == 0){
+	 		alert("请选择首页存在的主要问题！");
+	 		return false;
+	 	}
+	 	
+	 	var question1 = $('<input type="hidden" name="question1"/>').appendTo(form1).val(question1);
+	 	var answer1 = $('<input type="hidden" name="answer1"/>').appendTo(form1).val(answer1);
+	 	var question2 = $('<input type="hidden" name="question2"/>').appendTo(form1).val(question2);
+	 	var answer2 = $('<input type="hidden" name="answer2"/>').appendTo(form1).val(answer2);
+	 	var question3 = $('<input type="hidden" name="question3"/>').appendTo(form1).val(question3);
+	 	var answer3 = $('<input type="hidden" name="answer3"/>').appendTo(form1).val(answer3);
+	 	var question4 = $('<input type="hidden" name="question4"/>').appendTo(form1).val(question4);
+	 	var answer4 = $('<input type="hidden" name="answer4"/>').appendTo(form1).val(answer4);
+	 	var surveyId = $('<input type="hidden" name="surveyId"/>').appendTo(form1).val("1");
+		
+		$("#form1").submit();
+	}
+
+	function subContent(){
+		var obj = arguments[0];
+		if(obj.value.length>100){
+			obj.value=obj.value.substring(0,100);
+		}
+	}
+	
+</script>
+	</head>
+
+	<body id="survey">
+		<div id="survey_wrapper">
+			<div id="survey_title">
+				<img src="../img/survey.jpg" />
+			</div>
+			<form id="form1" action="../saveSurvey.chtml" method="post"
+				name="form1">
+				<div id="survey_content">
+					<dl>
+						<dt>
+							您对目前首页的整体满意度如
+						</dt>
+						<input type="hidden" id="questionId1" name="questionId1" value="1" />
+						<dd>
+							<span class="nomargin"> <input type="radio"
+									name="radio_option" value="1" id="radio_option1">
+								<label for=" ">
+									非常满意
+								</label> </span>
+							<span> <input type="radio" name="radio_option" value="2"
+									id="radio_option2">
+								<label for=" ">
+									满意
+								</label> </span>
+							<span> <input type="radio" name="radio_option" value="3"
+									id="radio_option3">
+								<label for=" ">
+									一般
+								</label> </span>
+							<span> <input type="radio" name="radio_option" value="4"
+									id="radio_option4">
+								<label for=" ">
+									不满意
+								</label> </span>
+							<span> <input type="radio" name="radio_option" value="5"
+									id="radio_option5">
+								<label for=" ">
+									非常不满意
+								</label> </span>
+						</dd>
+					</dl>
+
+					<dl>
+						<dt>
+							您来到首页主要会做些什么？（可多选）
+						</dt>
+						<input type="hidden" id="questionId2" name="questionId2" value="2" />
+						<dd>
+							<span class="nomargin"> <input type="checkbox"
+									name="checkbox_option2" value="1" id="checkbox_option1">
+								<label for=" ">
+									查看促销信息
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option2"
+									value="2" id="checkbox_option2">
+								<label for=" ">
+									查看订单
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option2"
+									value="3" id="checkbox_option3">
+								<label for="radio_option7262">
+									购物
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option2"
+									value="4" id="checkbox_option4">
+								<label for=" ">
+									随便逛逛
+								</label> </span>
+							
+							<div class="none">
+								<textarea type="text" id="survey_textarea2"
+									class="survey_textarea" onkeyup="subContent(this)"
+									onkeydown="subContent(this);" title="100字以内"></textarea>
+							</div>
+						</dd>
+					</dl>
+
+					<dl>
+						<dt>
+							您在首页会关注哪些内容？（可多选）
+						</dt>
+						<input type="hidden" id="questionId3" name="questionId3" value="3" />
+						<dd>
+							<span class="nomargin"> <input type="checkbox"
+									name="checkbox_option3" value="1" id="checkbox_option1">
+								<label for=" ">
+									购物
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option3"
+									value="2" id="checkbox_option2">
+								<label for=" ">
+									充值/旅行/彩票/游戏区
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option3"
+									value="3" id="checkbox_option3">
+								<label for="radio_option7262">
+									按照类别展示的商品（如电脑数码区、丽人区、图书音像区）
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option3"
+									value="4" id="checkbox_option4">
+								<label for=" ">
+									团购频道
+								</label> </span>
+							<span> <input type="checkbox" name="checkbox_option3"
+									value="5" id="checkbox_option5">
+								<label for=" ">
+									查看促销信息
+								</label> </span>
+						</dd>
+					</dl>
+
+					<dl>
+						<dt>
+							您认为目前首页存在的主要问题是？（可多选）
+						</dt>
+						<input type="hidden" id="questionId4" name="questionId4" value="4" />
+						<dd>
+							<span class="nomargin"> <input type="checkbox"
+									name="checkbox_option4" value="1" id="checkbox_option1">
+								<label for=" ">
+									已经很满意，没什么问题
+								</label> </span>
+							<span> <input type="checkbox" name="checkbox_option4"
+									value="2" id="checkbox_option2">
+								<label for=" ">
+									内容过多、杂乱
+								</label>
+							</span>
+							<span> <input type="checkbox" name="checkbox_option4"
+									value="3" id="checkbox_option3">
+								<label for=" ">
+									页面过长
+								</label> </span>
+							<span> <input type="checkbox" name="checkbox_option4"
+									value="4" id="checkbox_option4">
+								<label for=" ">
+									找不到想要的分类或商品
+								</label> </span>
+							<span> <input type="checkbox" name="checkbox_option4"
+									value="5" id="checkbox_option5">
+								<label for=" ">
+									打开速度慢
+								</label> </span>
+							
+							<div class="none">
+								<textarea type="text" id="survey_textarea4"
+									class="survey_textarea" onkeyup="subContent(this)"
+									onkeydown="subContent(this);" title="100字以内"></textarea>
+							</div>
+						</dd>
+					</dl>
+					<div id="survey_submit">
+						<a id="survey_btn" href="javascript:void(0);"
+							onclick="checkForm()"><span>提交调查问卷</span>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+</html>

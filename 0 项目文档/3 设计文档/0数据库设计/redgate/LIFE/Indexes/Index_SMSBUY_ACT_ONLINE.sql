@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE"."Index_SMSBUY_ACT_ONLINE" ON "LIFE".t_smsbuy_act_online(start_time,end_time);

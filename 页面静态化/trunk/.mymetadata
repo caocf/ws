@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="mall-auth Maven Webapp"
+  id="myeclipse.1369034456465"
+  j2ee-spec="1.4"
+  archive="mall-auth Maven Webapp.war">
+  <attributes>
+    <attribute name="webrootdir" value="WebRoot" />
+  </attributes>
+</project-module>
+

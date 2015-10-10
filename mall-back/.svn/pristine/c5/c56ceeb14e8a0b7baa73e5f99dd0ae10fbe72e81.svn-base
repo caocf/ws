@@ -1,0 +1,146 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+
+  <head>
+ <ht:head/>
+
+<script type="text/javascript">
+
+</script>
+    </head>
+<body>
+
+<br/>
+<div id="search-menu">
+      <ul>
+         <ht:menu-btn type="search"/>
+         <ct:display model="feelist" btn="add_btn">
+          <ht:menu-btn text="添加商户费率分类" url="/sys/sysfee/sysfeeAdd?id= " type="add"/>
+        </ct:display>
+    </ul>
+    <br style="clear: left" />
+</div>
+
+
+
+<div class="queryContainer" >
+    <form name="queryForm" id="queryForm" action="?" method="get">
+        <table>
+            <tr>
+                <td width="70">费率名称</td>
+                <td width="300"><input type="text" name="name" value="${param.name}" class="txt" style="width:206px"/></td>
+                <td width="70">商户名称</td>
+                <td width="300"><input type="text" name="storeName" value="${param.storeName}" class="txt" style="width:206px"/></td>
+                <td width="70">商户编号</td>
+                <td width="300"><input type="text" name="storeId" value="${param.storeId}"  class="txt validate-number"   style="width:206px"/></td>
+            </tr>
+            <tr>
+                <td>是否有效：</td>
+                <td>
+                    <select name="valid">
+                        <option value="">--请选择--</option>
+                        <c:forEach items="${validMap}" var="item">
+                        	    <option value="${item.key}" <c:if test="${param.valid == item.key}">selected="selected"</c:if>>${item.value}</option>
+                        </c:forEach>
+                    </select>
+                </td>
+               </tr>
+               
+               
+                     <tr>
+                <td>同步状态：</td>
+                <td>
+                    <select name="syncGyFlag">
+                        <option value="">--请选择--</option>
+                        <c:forEach items="${syncGyFiagMap}" var="item">
+                        	    <option value="${item.key}" <c:if test="${param.syncGyFlag == item.key}">selected="selected"</c:if>>${item.value}</option>
+                        </c:forEach>
+                    </select>
+                </td>
+               </tr>
+                 <tr>
+                <td colspan="4">
+                    <ct:btn type="search" />
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div class="container">
+    <br/>
+    <h3>商户费率分类列表</h3>
+    <div class="mainbox">
+        <c:if test="${not empty pageData.data}">
+        <table class="datalist fixwidth">
+         <ct:display model="feelist" btn="sync_btn">
+           <tr>
+		       <td colspan="7" align="left">
+		    		<ht:table-action-btn text="批量同步" url="/sys/sysfee/sync"/>
+		       </td>
+		    </tr>
+     	</ct:display>
+            <tr>
+            <th nowrap="nowrap" width="50"><input type="checkbox" class="checkall">商户费率编号</th>
+                <th nowrap="nowrap">商户名称</th>
+                <th nowrap="nowrap">费率分类名称</th>
+                <!-- <th nowrap="nowrap">费率</th>
+                <th nowrap="nowrap">是否有效</th>  -->
+                <th nowrap="nowrap">描述</th>
+                <th nowrap="nowrap">是否同步</th>
+                <th nowrap="nowrap">同步时间</th>
+                <th nowrap="nowrap">操作</th>
+            </tr>
+
+            <c:forEach items="${pageData.data}" var="item">
+            <tr>
+            	<td ><input type="checkbox" id="${item.id}" name="ids" value="${item.id}">${item.id}</td>
+                <td  >${item.storeName}</td>
+                <td  >${item.name}</td>
+              <!-- 
+                <td >${item.fee}元</td>
+                    <td >${item.validName}</td>
+                     -->
+                    <td >${item.decrfee}</td>
+                <td >${item.syncGyFlagName}</td>
+                <td >
+         <ct:time source="${item.syncGyTime}" />
+                </td>
+                <td>
+	                <ct:display model="feelist" btn="view_btn">
+	                        <a href="sysfeeView/${item.id}">查看</a>&nbsp;&nbsp;
+	                </ct:display>
+	               
+	                <ct:display model="feelist" btn="mod_btn">
+                        <a href="sysfeeAdd?id=${item.id}">修改</a>&nbsp;&nbsp;
+	                </ct:display>
+	                
+	                <ct:display model="feelist" btn="del_btn">
+                  		 <a href="#this" onclick="dealInfo('确认删除？','feeDel/${item.id}');">删除</a>&nbsp;&nbsp;
+	                </ct:display>
+<!--	               <c:if test="${store.syncGyFlag==1 }">-->
+<!--						<ct:display model="store_list" btn="sync_btn"> -->
+<!--						 <a href="#this" onclick="dealInfo('${syncGyFlagMsg[store.syncGyFlag] }','../sync?id=${item.id}&flag=3&isList=true');">同步高阳</a>&nbsp;&nbsp;-->
+<!--						</ct:display>-->
+<!--						</c:if>-->
+	             
+	                
+                </td>
+            </tr>
+            </c:forEach>
+        </table>
+          <ht:page pageData="${pageData}" />
+       </c:if>
+        <c:if test="${empty pageData.data}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+
+</div>
+
+</body>
+</html>

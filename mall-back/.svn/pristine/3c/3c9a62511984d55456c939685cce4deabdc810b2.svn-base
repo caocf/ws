@@ -1,0 +1,365 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ include file="../includes/importer.jsp"%>
+
+<!doctype html>
+<html>
+
+<head>
+	<link href="${ctx}/static/css/order_style.css" rel="stylesheet" type="text/css" />
+    <ht:head/>
+    <script type="text/javascript">
+    $(function(){
+    	$("#showExpress").click(function(){
+    		selectActiveCallBack(function(){
+    		});
+			
+		});
+		function selectActiveCallBack(callback,opts){
+			var param = $.extend({	
+				ShowMessageRow:false,
+				Height: 400,
+				Width : 600},opts||{});
+			var url = G_CTX_ROOT + "/order/showExpress?orderId=${order.id}";
+			showDialog("物流详情",url, function(doc,win){
+				callback();
+			},param);
+		}
+    });
+    </script>
+</head>
+<body>
+<div id="content">
+	<div class="r-page">
+	
+		<!-- 订单信息 -->
+    	<div class="model-block">
+        	<div class="block-head">
+            	<h4>订单信息</h4>
+            </div>
+            <div class="block-body">
+            	<div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">订单编号：</div>
+                        <div class="info-list-desc">${order.id }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                    <c:if test="${not empty userMap['nickName'] }">
+                     	<div class="info-list-title">下单昵称：</div>
+                        <div class="info-list-desc">${userMap['nickName'] }</div>
+                    </c:if>
+                    <c:if test="${empty userMap['nickName'] }">
+                    	<c:if test="${not empty userMap['terminalId'] }">
+                     	<div class="info-list-title">下单手机号：</div>
+                        <div class="info-list-desc">${userMap['terminalId'] }</div>
+                        </c:if>
+                        <c:if test="${empty userMap['terminalId'] }">
+                     	<div class="info-list-title">下单邮箱：</div>
+                        <div class="info-list-desc">${userMap['email'] }</div>
+                        </c:if>
+                    </c:if>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">配送方式：</div>
+                        <div class="info-list-desc">
+                        	<c:if test="${itemMap['post_flag'] eq 0 }">用户自取</c:if>
+                        	<c:if test="${itemMap['post_flag'] eq 1 }">物流配送</c:if>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">订单类型：</div>
+                        <div class="info-list-desc">
+                        <c:if test="${order.actType==20}">短信购</c:if>
+                        <c:if test="${order.actType==40}">普通购买</c:if>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">订单状态：</div>
+                        <div class="info-list-desc">
+                        ${orderStatus }
+                        </div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">订单总金额：</div>
+                        <div class="info-list-desc">
+                        	商品金额<fmt:formatNumber value="${totalPrice }" pattern="0.00"/>元
+                        	+运费<fmt:formatNumber value="${freight }" pattern="0.00"/>元
+                        	<c:if test="${(discount-ifCardPay)>0}">-优惠金额<fmt:formatNumber value="${discount-ifCardPay }" pattern="0.00"/>元</c:if>
+                        	<c:if test="${ifCardPay > 0 }">-礼金券抵扣金额<fmt:formatNumber value="${ifCardPay }" pattern="0.00"/>元</c:if>
+                        	=
+                        	<span class="big-highlight"><fmt:formatNumber value="${payPrice}" pattern="0.00"/>元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">下单时间：</div>
+                        <div class="info-list-desc">
+	                        <c:if test="${empty order.createTime}"></c:if>
+							<c:if test="${!empty order.createTime}">
+								<fmt:parseDate value="${order.createTime}" pattern="yyyyMMddHHmmss" var="test"/>
+								<fmt:formatDate value="${test}" pattern="yyyy-MM-dd HH:mm:ss"/>
+							</c:if>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 物流信息 -->
+        <c:if test="${(itemMap['itemMode'] eq 0) and (itemMap['post_flag'] eq 1) and orderStatus!='已取消'}">
+        <div class="model-block">
+        	<div class="block-head">
+            	<h4>物流信息</h4>
+            </div>
+            <div class="block-body">
+            	<div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">收货人：</div>
+                        <div class="info-list-desc">${order.expressInfo.receiverName  }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">邮编：</div>
+                        <div class="info-list-desc">${order.expressInfo.zipCode }</div>
+                    </div>
+                </div>
+            	
+                
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">收货地址：</div>
+                        <div class="info-list-desc">${order.expressInfo.address  }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">手机号码：</div>
+                        <div class="info-list-desc">${order.expressInfo.cellphoneNumber }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">固定号码：</div>
+                        <div class="info-list-desc">${order.expressInfo.telephoneNumber }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">物流公司：</div>
+                        <div class="info-list-desc">${order.expressInfo.expressCompanyName  }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">物流单号：</div>
+                        <div class="info-list-desc">
+                        ${order.expressInfo.expressNo  }&nbsp;&nbsp;
+                        <c:if test="${not empty order.expressInfo.expressNo  }">
+                        <a id="showExpress" style="cursor:pointer;">物流追踪</a>
+                        </c:if>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </c:if>
+        <!-- 发票信息 -->
+<!--         <div class="model-block"> -->
+<!--         	<div class="block-head"> -->
+<!--             	<h4>发票信息</h4> -->
+<!--             </div> -->
+<!--             <div class="block-body"> -->
+<!--             	<div class="info-list"> -->
+<!--                 	<div class="info-list-widght"> -->
+<!--                         <div class="info-list-title">发票类型：</div> -->
+<!--                         <div class="info-list-desc"> -->
+<%--                         <c:if test="${order.invoiceType eq 0 }">不要发票</c:if> --%>
+<%--                         <c:if test="${order.invoiceType eq 1 }">普通发票</c:if> --%>
+<%--                         <c:if test="${order.invoiceType eq 2 }">增值税发票</c:if> --%>
+<!--                         </div> -->
+<!--                     </div> -->
+<!--                 </div> -->
+<!--                 <div class="info-list"> -->
+<!--                 	<div class="info-list-widght"> -->
+<!--                         <div class="info-list-title">单位名称：</div> -->
+<!--                         <div class="info-list-desc"> -->
+<%--                         	${order.invoiceSubject } --%>
+<!--                         </div> -->
+<!--                     </div> -->
+<!--                 </div> -->
+<!--              </div> -->
+<!--          </div> -->
+         
+        <!-- 商品信息 -->
+        <div class="model-block">
+        	<div class="block-head">
+            	<h4>商品信息</h4>
+            </div>
+            <div class="block-body">
+            	<div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">商户ID：</div>
+                        <div class="info-list-desc">${order.shopId  }</div>
+                    </div>
+                </div>
+                <div class="info-list">
+                    <div class="info-list-widght">
+                        <div class="info-list-title">商户名称：</div>
+                        <div class="info-list-desc">${userMap['storeName']  }</div>
+                    </div>
+                </div>
+            	<table cellpadding="0" cellspacing="0">
+            		<c:if test="${empty order.goodsInfos}">无商品</c:if>
+            		<!-- 实物商品 -->
+            		<c:if test="${not empty order.goodsInfos && (itemMap['itemMode'] == 0)}">
+                	<tr>
+                    	<th>商品名称</th>
+                        <th>单价(元)</th>
+                        <th>数量</th>
+                    </tr>
+                    <c:forEach items="${order.goodsInfos }" var="goodsInfos">
+                    <tr>
+                    	<td>${goodsInfos.goodsSubject }</td>
+                        <td class="center">${goodsInfos.payPrice/100}</td>
+                        <td class="center">${goodsInfos.count}</td>
+                    </tr>
+                    </c:forEach>
+                    </c:if>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 支付信息 -->
+        <div class="model-block">
+        	<div class="block-head">
+            	<h4>支付信息</h4>
+            </div>
+            <div class="block-body">
+            	<c:if test="${not empty cashAmount }">
+            	<div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">现金支付：</div>
+                        <div class="info-list-desc">
+                        	${ cashAmount/100}元&nbsp;&nbsp;
+                        	<c:if test="${cashPayStatus ==2}">
+                        	<span style="color:red">[已支付]</span>
+                        	</c:if>
+                        	<c:if test="${cashPayStatus !=2}">
+                        	<span >[未支付]</span>
+                        	</c:if>
+                        </div>
+                    </div>
+                </div>
+                </c:if>
+                <c:if test="${not empty coinAmount }">
+            	<div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">商城币支付：</div>
+                        <div class="info-list-desc">
+                        	${ coinAmount/100}元&nbsp;&nbsp;
+                        	<c:if test="${coinPayStatus ==2}">
+                        	<span style="color:red">[已支付]</span>
+                        	</c:if>
+                        	<c:if test="${coinPayStatus !=2}">
+                        	<span >[未支付]</span>
+                        	</c:if>
+                        </div>
+                    </div>
+                </div>
+                </c:if>
+                <c:if test="${not empty scoreAmount }">
+            	<div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">积分支付：</div>
+                        <div class="info-list-desc">
+                        	${ scoreAmount/100}元&nbsp;&nbsp;
+                        	<c:if test="${scorePayStatus ==2}">
+                        	<span style="color:red">[已支付]</span>
+                        	</c:if>
+                        	<c:if test="${scorePayStatus !=2}">
+                        	<span >[未支付]</span>
+                        	</c:if>
+                        </div>
+                    </div>
+                </div>
+                </c:if>
+                <c:if test="${not empty balanceAmount }">
+            	<div class="info-list">
+                	<div class="info-list-widght">
+                        <div class="info-list-title">话费支付：</div>
+                        <div class="info-list-desc">
+                        	${ balanceAmount/100}元&nbsp;&nbsp;
+                        	<c:if test="${balancePayStatus ==2}">
+                        	<span style="color:red">[已支付]</span>
+                        	</c:if>
+                        	<c:if test="${balancePayStatus !=2}">
+                        	<span >[未支付]</span>
+                        	</c:if>
+                        </div>
+                    </div>
+                </div>
+                </c:if>
+                
+                <c:if test="${empty cashAmount && empty scoreAmount && empty coinAmount && empty balanceAmount}">暂无支付信息</c:if>
+             </div>
+         </div>
+         
+        <!-- 日志信息 -->
+        <div class="model-block">
+        	<div class="block-head">
+            	<h4>操作日志</h4>
+            </div>
+            <div class="block-body">
+            
+            	<table cellpadding="0" cellspacing="0">
+            		<c:if test="${empty actOrderHistorys}">无日志</c:if>
+            		<c:if test="${not empty actOrderHistorys}">
+                	<tr>
+                    	<th>时间</th>
+                        <th>操作内容</th>
+                    </tr>
+                    </c:if>
+                    <c:forEach items="${actOrderHistorys }" var="history">
+                    <tr>
+                    	<td class="center">
+                    		<c:if test="${empty history.updateTime}"></c:if>
+							<c:if test="${!empty history.updateTime}">
+								<fmt:parseDate value="${history.updateTime}" pattern="yyyyMMddHHmmss" var="test"/>
+								<fmt:formatDate value="${test}" pattern="yyyy-MM-dd HH:mm:ss"/>
+							</c:if>
+                    	</td>
+                        <td class="center">${history.updateDescription}
+                        <c:if test="${ empty history.updateDescription}">
+                        --------
+                        </c:if>
+                        </td>
+                    </tr>
+                    </c:forEach>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+        <div class="form">
+            <div class="fields">
+                <div class="buttons" align="center">
+                    <a href="javascript:history.back();" class="btnAnchor">返回</a>
+                </div>
+            </div>
+        </div>
+
+
+</body>
+</html>

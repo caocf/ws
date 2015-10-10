@@ -1,0 +1,321 @@
+package com.cplatform.mall.back.giftcard.service;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import jxl.common.Logger;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPFileFilter;
+import org.apache.commons.net.ftp.FTPReply;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.giftcard.dao.GiftCardDao;
+import com.cplatform.mall.back.giftcard.dao.GiftRequiredDao;
+import com.cplatform.mall.back.giftcard.entity.GiftCard;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.utils.Constants;
+import com.cplatform.mall.back.utils.ExcelExportUtil;
+import com.cplatform.mall.back.utils.GiftCardSyncInterface;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.mall.back.websys.dao.SysFileImgDao;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+/**
+ * 
+ * 礼品卡需求业务方法
+ * 
+ * */
+
+@Service
+public class GiftRequiredService {
+	private static Logger log = Logger.getLogger(GiftCardSyncInterface.class);
+	@Autowired
+	private DbHelper dbHelper;
+	
+	@Autowired
+	private GiftRequiredDao giftRequiredDao;
+	
+	@Autowired
+	private GiftCardDao giftCardDao;
+	
+	@Autowired
+	private BsFileService bsFileService;
+	
+	@Autowired
+	private SysFileImgDao sysFileImgDao;
+	
+	@Autowired
+	private GiftCardSyncInterface giftCardSyncInterface;
+	
+	
+	public Page<GiftRequired> giftRequiredList(GiftRequired giftRequired, int pageNo, int pageSize) throws SQLException{
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.setLength(0);
+		sql.append(" select giftRequired.*,store.name storeName from t_gift_required giftRequired join t_store store on giftRequired.store_id = store.id ");
+		sql.append(" where 1 = 1 ");
+		if (null != giftRequired.getStatus()) {
+			sql.append(" and giftRequired.status = ? ");
+			params.add(giftRequired.getStatus());
+		}else{
+			sql.append(" and giftRequired.status <> -1 ");
+		}
+		if(null != giftRequired.getBatchNo()){
+			sql.append(" and giftRequired.batch_no = ? ");
+			params.add(giftRequired.getBatchNo());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getModelNo())) {
+			sql.append(" and giftRequired.model_no like ? ");
+			params.add("%" + giftRequired.getModelNo().trim() + "%");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getRequiredUser())) {
+			sql.append(" and giftRequired.required_user like ? ");
+			params.add("%" + giftRequired.getRequiredUser().trim() + "%");
+		}
+		if(null != giftRequired.getCardNum()){
+			sql.append(" and giftRequired.card_num = ? ");
+			params.add(giftRequired.getCardNum());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getBeginTime())) {
+			sql.append(" and giftRequired.issuing_time > ?  ");
+			params.add(giftRequired.getBeginTime()+"000000");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getEndTime())) {
+			sql.append(" and giftRequired.issuing_time < ?  ");
+			params.add(giftRequired.getEndTime()+"000000");
+		}
+		if (null != giftRequired.getMakeCardStatus()) {
+			sql.append(" and giftRequired.make_card_status = ? ");
+			params.add(giftRequired.getMakeCardStatus());
+		}
+		if (null != giftRequired.getPrintFaceStatus()) {
+			sql.append(" and giftRequired.print_face_status = ? ");
+			params.add(giftRequired.getPrintFaceStatus());
+		}
+		if (null != giftRequired.getBindItemStatus()) {
+			sql.append(" and giftRequired.bind_item_status = ? ");
+			params.add(giftRequired.getBindItemStatus());
+		}
+		if(null != giftRequired.getStoreId()){
+			sql.append(" and giftRequired.store_id = ? ");
+			params.add(giftRequired.getStoreId());
+		}
+		if(null != giftRequired.getStoreName()){
+			sql.append(" and store.name like ? ");
+			params.add("%"+ giftRequired.getStoreName().trim()+"%");
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));// 控制数据访问
+		sql.append(" order by giftRequired.batch_no desc");
+		Page<GiftRequired> pageData = dbHelper.getPage(sql.toString(), GiftRequired.class, pageNo, pageSize, params.toArray());
+		return pageData;
+	}
+	
+	public void save(GiftRequired giftRequired){
+		giftRequiredDao.save(giftRequired);
+	}
+	public GiftRequired findById(Long id){
+		return giftRequiredDao.findOne(id);
+	}
+	public String makeCard(Long id){
+		GiftRequired giftRequired = findById(id);
+		String msg = giftCardSyncInterface.makeCard(id+"",Integer.parseInt(giftRequired.getCardNum()+""));
+		if("制卡成功！".equals(msg)){
+			giftRequired.setMakeCardStatus(1L);
+			giftRequired.setCutoffDay(TimeStamp.getTime(TimeStamp.YYYYMMDD));
+			save(giftRequired);
+		}
+		return msg;
+	}
+
+	public void download(Long id,HttpServletRequest request,HttpServletResponse response) throws Exception{
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.batch_no,t.serial_no from t_gift_card t where t.batch_no = "+id);
+		String[] head = {"批次号","序列号"};
+		ExcelExportUtil.exportExcel(dbHelper.getConn(),head,"serialNo_", sqlBuff.toString(),request,response);
+	}
+	
+	
+	public Page<GiftRequired> exchangeList(GiftRequired giftRequired, int pageNo, int pageSize) throws SQLException{
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.setLength(0);
+		sql.append(" select t.exchangeNum,giftRequired.* from t_gift_required giftRequired ");
+		sql.append(" left join ");
+		sql.append(" (select count(handle.id) exchangeNum,re.batch_no from t_gift_required re  ");
+		sql.append(" left join t_gift_card card on re.batch_no=card.batch_no ");
+		sql.append(" left join t_gift_card_cb_handle handle on card.serial_no=handle.serial_no ");
+		sql.append(" group by re.batch_no) t ");
+		sql.append(" on giftRequired.batch_no=t.batch_no ");
+		sql.append(" where giftRequired.status=2 ");
+		if(null != giftRequired.getBatchNo()){
+			sql.append(" and giftRequired.batch_no = ? ");
+			params.add(giftRequired.getBatchNo());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getModelNo())) {
+			sql.append(" and giftRequired.model_no like ? ");
+			params.add("%" + giftRequired.getModelNo().trim() + "%");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getRequiredUser())) {
+			sql.append(" and giftRequired.required_user like ? ");
+			params.add("%" + giftRequired.getRequiredUser().trim() + "%");
+		}
+		if(null != giftRequired.getCardNum()){
+			sql.append(" and giftRequired.card_num = ? ");
+			params.add(giftRequired.getCardNum());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getBeginTime())) {
+			sql.append(" and giftRequired.issuing_time > ?  ");
+			params.add(giftRequired.getBeginTime()+"000000");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getEndTime())) {
+			sql.append(" and giftRequired.issuing_time < ?  ");
+			params.add(giftRequired.getEndTime()+"000000");
+		}
+		if (null != giftRequired.getMakeCardStatus()) {
+			sql.append(" and giftRequired.make_card_status = ? ");
+			params.add(giftRequired.getMakeCardStatus());
+		}
+		if (null != giftRequired.getPrintFaceStatus()) {
+			sql.append(" and giftRequired.print_face_status = ? ");
+			params.add(giftRequired.getPrintFaceStatus());
+		}
+		if (null != giftRequired.getBindItemStatus()) {
+			sql.append(" and giftRequired.bind_item_status = ? ");
+			params.add(giftRequired.getBindItemStatus());
+		}
+		sql.append(" order by giftRequired.batch_no desc");
+		Page<GiftRequired> pageData = dbHelper.getPage(sql.toString(), GiftRequired.class, pageNo, pageSize, params.toArray());
+		return pageData;
+	}
+	public void savePic(Long id ,MultipartFile uploadFile) throws Exception{
+		SysFileImg img = findImg(id, BsFileService.GIFT_REQUIRED_KEY);
+		if(null != img){
+			sysFileImgDao.delete(img);
+		}
+		PathInfo pathInfo = bsFileService.dealMultipartFile(uploadFile, BsFileService.GIFT_REQUIRED_KEY, id);
+		GiftRequired giftRequired = findById(id);
+		giftRequired.setFaceImg(pathInfo.getRealWebPath(""));
+		save(giftRequired);
+	}
+	public SysFileImg findImg(Long id ,String key){
+		return  sysFileImgDao.findByBsIdAndBsKey(id, key);
+	} 
+	
+	public  boolean downFile(  String url,int port,String username,String password,String remotePath,String localPath,Long batchNo) {    
+		GiftRequired giftRequired = findById(batchNo);   
+		boolean success = false;    
+	        FTPClient ftp = new FTPClient();    
+	        try {    
+	            int reply;    
+	            ftp.connect(url, port); 
+	            System.out.println("------url:"+url+",port:"+port);
+	            //如果采用默认端口，可以使用ftp.connect(url)的方式直接连接FTP服务器     
+	            ftp.login(username, password);//登录  
+	            reply = ftp.getReplyCode();    
+	            if (!FTPReply.isPositiveCompletion(reply)) {    
+	                ftp.disconnect();    
+	                return success;    
+	            }    
+	            ftp.changeWorkingDirectory(remotePath);//转移到FTP服务器目录
+	            ftp.enterLocalPassiveMode();
+	            //超时时间设为3分钟。
+	            ftp.setConnectTimeout(1000*60*3);
+	            FTPFile[] fs = ftp.listFiles(remotePath,new FTPFileFilter(){
+					@Override
+					public boolean accept(FTPFile file) {
+						if(file.isFile() && !file.getName().substring(file.getName().lastIndexOf(".")).equals(".hasdown")){
+							return true;
+						}
+						return false;
+					}});
+	            
+	            for(FTPFile ff:fs){
+            		if(ff.getName().equals("gift_card_"+giftRequired.getCutoffDay()+"_"+batchNo+".txt")){
+	                    File localFile = new File(localPath + ff.getName());
+	                    OutputStream is = new FileOutputStream(localFile);     
+	                    ftp.retrieveFile(ff.getName(), is);  
+	                    is.close();
+	                    parseSerial(localPath + ff.getName(),batchNo);
+	                    doFileFlag(ftp,ff);
+	                    break;
+	            		}
+	            }    
+	            ftp.logout();    
+	            success = true;    
+	        } catch (IOException e) {    
+	            e.printStackTrace();
+	            return false;
+	        } finally {    
+	            if (ftp.isConnected()) {    
+	                try {    
+	                    ftp.disconnect();    
+	                } catch (IOException e) {  
+	                	e.printStackTrace();
+	                }    
+	            }    
+	        }    
+	        return success;    
+	    }  
+	    public  void parseSerial(String fileName,Long batchNo) {
+	    	File file = new File(fileName);
+	    	BufferedReader br = null;
+			try {
+				br = new BufferedReader(new FileReader(file));
+				String str ;
+		    	GiftCard giftCard = null;
+		    	//br.readLine();//去掉第一行
+		    	while(( str = br.readLine() ) != null){
+		    		String[] serials = str.split("[|]");
+		    		giftCard = new GiftCard();
+		    		giftCard.setPaymentDay(serials[0]);
+		    		giftCard.setSerialNo(serials[1]);
+		    		giftCard.setBatchNo(batchNo);
+		    		giftCard.setCreatedTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		    		giftCard.setExchangeStatus(0L);
+		    		giftCard.setStatus(0L);
+		    		giftCard.setStorageStatus(0L);
+		    		giftCardDao.save(giftCard);
+		    	}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}finally{
+				if(null != br){
+					try {
+						br.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if(file.exists()){
+		    		file.delete();
+		    	}
+			}
+	    }
+	    public void doFileFlag(FTPClient ftp,FTPFile ftpFile){
+	    	try {
+				ftp.rename(ftpFile.getName(), ftpFile.getName()+".hasdown");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	    }
+}

@@ -1,0 +1,126 @@
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-size: 100%;
+	vertical-align: baseline;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+
+/* remember to define focus styles! */
+:focus {
+	outline: 0;
+}
+
+/* remember to highlight inserts somehow! */
+ins {
+	text-decoration: none;
+}
+del {
+	text-decoration: line-through;
+}
+
+/* tables still need 'cellspacing="0"' in the markup */
+table,td,tr,th {
+	border-collapse: collapse;
+	border-spacing: 0;
+	vertical-align:middle;
+}
+li{display:list-item;}
+/**/
+
+.clear{ clear:both;}
+
+img{  display: block;}
+/**** ****/
+
+.header { text-align:left;}
+#footer {
+    background: none repeat scroll 0 0 #F7F7F7;
+    border-top: 4px solid #E0E0E0;
+    height: auto;
+    margin-top: 10px;
+    overflow: hidden;
+    padding: 15px 0 25px;
+    width: 100%;
+}
+#footer dl {
+    display: inline;
+    float: left;
+    margin-left: 35px;
+    width: 130px;
+}
+#footer dl dt {
+    border-bottom: 1px solid #DADADA;
+    color: #333333;
+    overflow: hidden;
+    padding-left: 10px;
+}
+#footer dl dt span {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    padding-bottom: 10px;
+    width: 95px;
+}
+#footer dl dd {
+    color: #616161;
+    padding-left: 10px;
+    padding-top: 10px;
+}
+#footer dl dd a, #footer dl dd a:visited {
+    color: #616161;
+}
+.footer-menu {
+    color: #144899;
+    margin-top: 25px;
+    text-align: center;
+}
+.footer-menu a, .footer-menu a:visited {
+    color: #144899;
+    padding: 0 5px;
+}
+#copyright {
+    height: 33px;
+    line-height: 33px;
+    margin-top: 10px;
+    width: 100%;
+}
+.copyright-text {
+    float: left;
+    padding-left: 80px;
+}
+.copyright-text span {
+    color: #D2E3FC;
+    font: 11px Arial,Helvetica,sans-serif;
+    padding-right: 10px;
+}
+.icp {
+    text-align: center;
+}
+.icp a, .icp a:visited {
+    margin-left: 10px;
+}

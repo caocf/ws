@@ -1,0 +1,107 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <ht:head/>
+    <script type="text/javascript">
+   
+    </script>
+</head>
+<body>
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>群发任务排期</h5>
+    </div>
+    <!-- end box / title -->
+    <form:form method="post" id="fm" action="add" commandName="batchTaskSchedule"  htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate">
+        <div class="form">
+            <div class="fields">          	
+                 <div class="field">
+                     <div class="label">
+                        <label for="uploadfile"  class="req">群发号码文件:</label>
+                    </div>
+                    <div class="input input-file">
+                        <input type="file" id="uploadfile" name="uploadfile" size="40"  class="required  validate-file-txt"/>
+                        
+                        <span class="tip">txt格式(必选)</span>
+                        <span class="error" id="advice-validate-file-uploadfile" style="display:none"></span>
+                        <span class="error" id="advice-required-uploadfile" style="display:none"></span>
+                       
+                    </div>
+                    <div>
+                    <br/>
+                    <div class="label">
+                       
+                    </div>
+                    <div class="input">
+                  		<a href="${ctx}/sms/schedule/downfile/0">模版文件下载</a>&nbsp;&nbsp;
+                    </div>
+                </div>
+                     
+                </div>                           
+                               
+                <div class="field">
+                    <div class="label">
+                        <label for="startTime" class="req">日期：</label>
+                    </div>
+                    <div class="input">
+                   <input type="text" id="dateTime" name="dateTime" value="${batchTaskSchedule.dateTime}" class="date required" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd'})" readonly/>
+                    </div>
+                </div>
+                            										
+		         <div class="field">
+                    <div class="label label-radio">
+                        <label for="endTime" class="req">过滤范围选择:</label>
+                    </div>
+                    <div class="radios">
+			            <div class="radio">
+			            	<input type="checkbox" name="filterTypes" class='required' value="1" checked ><label for="checkbox-1">普通短信</label>
+				            <input type="checkbox" name="filterTypes" class='required' value="2" checked ><label for="checkbox-2">短信购</label>	     				            	        
+				            <span class="error" >每日不能超过5条，超过5条的号码将被过滤   </span>    	
+	                    	<span class="error" id="advice-required-filterType" style="display:none"></span>
+                    	</div>
+                    </div>
+                </div> 
+                
+                 <div class="field">
+                    <div class="label label-radio">
+                        <label for="endTime" class="req">任务类型:</label>
+                    </div>
+                    <div class="radios">
+			            <div class="radio">
+			            	<input type="radio" name="taskType" class='required' value="1" checked ><label for="checkbox-1">普通群发</label>
+				            <input type="radio" name="taskType" class='required' value="2"  ><label for="checkbox-2">短信购</label>	                    		                    	
+                    	</div>
+                    </div>
+                </div> 
+                
+                <div class="field">
+                    <div class="label label-textarea">
+                        <label for="remark" class="req">备注：</label>
+                    </div>
+                    <div class="input">
+                        <form:textarea path="remark" cols="50" rows="8" cssClass="required max-length-50" />
+                    	<span class="error" id="advice-required-remark" style="display:none"></span>
+                        <span class="error" id="advice-max-length-remark" style="display:none"></span>
+                        <span class="error" id="advice-server-remark" style="display:none"></span>
+                    </div>
+                </div>                                                     
+                <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight" value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                    <a href="${ctx}/sms/schedule/list" class="btnAnchor">返回</a>
+                </div>
+            </div>
+        </div>
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+</body>
+</html>

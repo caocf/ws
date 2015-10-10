@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.cplatform.com/tp/info"
+	elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:tp="http://www.cplatform.com/tp/info">
+    <complexType name="MtMessage">
+		<sequence>
+			<element name="Mobile" type="string" maxOccurs="unbounded"
+				minOccurs="1">
+			</element>
+			<element name="FeeMobile" type="string"></element>
+			<element name="Spcode" type="string"></element>
+			<element name="ServiceId" type="string"></element>
+			<element name="FeeType" type="int"></element>
+			<element name="Fee" type="int"></element>
+			<element name="LinkId" type="string"></element>
+
+			<element name="Level" type="int"></element>
+		</sequence>
+    </complexType>
+	<complexType name="SmsMtMessage">
+		<complexContent>
+			<extension base="tp:MtMessage">
+				<sequence>
+					<element name="Content" type="string"></element>
+					<element name="NeedReport" type="boolean"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="MmsMtMessage">
+		<complexContent>
+			<extension base="tp:MtMessage">
+				<sequence>
+					<element name="Title" type="string"></element>
+					<element name="Content" type="tp:MmsInfo"></element>
+					<element name="NeedReport" type="boolean"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="WapMtMessage">
+		<complexContent>
+			<extension base="tp:MtMessage">
+				<sequence>
+					<element name="Title" type="string"></element>
+					<element name="Url" type="string"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="UserInfo">
+		<sequence>
+			<element name="Username" type="string"></element>
+			<element name="Password" type="string"></element>
+		</sequence>
+	</complexType>
+	<complexType name="MmsContent">
+		<sequence>
+			<element name="Filename" type="string"></element>
+			<element name="Content" type="base64Binary"></element>
+			<element name="Zipped" type="boolean"></element>
+		</sequence>
+	</complexType>
+	<complexType name="MmsInfo">
+		<sequence>
+			<element name="MmsContents" type="tp:MmsContent" maxOccurs="unbounded"
+				minOccurs="1"></element>
+		</sequence>
+	</complexType>
+	<complexType name="Response">
+		<sequence>
+			<element name="Result" type="tp:Result"></element>
+		</sequence>
+	</complexType>
+	<simpleType name="Result">
+		<restriction base="string">
+			<enumeration value="OK"></enumeration>
+			<enumeration value="SERVER_BUSY"></enumeration>
+			<enumeration value="INVALID_USER_ERROR"></enumeration>
+			<enumeration value="WRONG_PASSWORD_ERROR"></enumeration>
+			<enumeration value="SEND_MT_ERROR"></enumeration>
+			<enumeration value="SYSTEM_ERROR"></enumeration>
+			<enumeration value="REQUEST_REFUSED"></enumeration>
+			<enumeration value="SYSTEM_IS_SHUTTING_DOWN"></enumeration>
+		</restriction>
+	</simpleType>
+	<complexType name="MoMessage">
+		<sequence>
+			<element name="Mobile" type="string"></element>
+			<element name="Spcode" type="string"></element>
+			<element name="LinkId" type="string"></element>
+			<element name="RecvTime" type="string"></element>
+		</sequence>
+	</complexType>
+	<complexType name="SmsMoMessage">
+		<complexContent>
+			<extension base="tp:MoMessage">
+				<sequence>
+					<element name="Content" type="string"
+						nillable="true">
+					</element>
+					<element name="Type" type="tp:SmsMoType"></element>
+					<element name="MsgId" type="string"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="MmsMoMessage">
+		<complexContent>
+			<extension base="tp:MoMessage">
+				<sequence>
+					<element name="Content" type="tp:MmsInfo"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+
+    <complexType name="Request">
+    	<sequence>
+    		<element name="UserInfo" type="tp:UserInfo" maxOccurs="1" minOccurs="1"></element>
+    		
+    	</sequence>
+    </complexType>
+
+    <complexType name="SubmitSmsMtRequest">
+    	<complexContent>
+    		<extension base="tp:Request">
+    			<sequence>
+    				<element name="SmsMtMessage" type="tp:SmsMtMessage" maxOccurs="unbounded" minOccurs="1"></element>
+    			</sequence>
+
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+
+
+    <complexType name="SubmitMmsMtRequest">
+    	<complexContent>
+    		<extension base="tp:Request">
+    			<sequence>
+    				<element name="MmsMtMessage"
+    					type="tp:MmsMtMessage" maxOccurs="unbounded" minOccurs="1">
+    				</element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+
+    <complexType name="SubmitWapMtRequest">
+    	<complexContent>
+    		<extension base="tp:Request">
+    			<sequence>
+    				<element name="WapMtMessage"
+    					type="tp:WapMtMessage" maxOccurs="unbounded" minOccurs="1">
+    				</element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SubmitSmsMtResponse">
+    	<complexContent>
+    		<extension base="tp:Response">
+    			<sequence>
+    				<element name="MsgId" type="string" minOccurs="0"
+    					maxOccurs="unbounded">
+    				</element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SubmitMmsMtResponse">
+    	<complexContent>
+    		<extension base="tp:Response">
+    			<sequence>
+    				<element name="MsgId" type="string" minOccurs="0" maxOccurs="unbounded"></element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SubmitWapMtResponse">
+    	<complexContent>
+    		<extension base="tp:Response"></extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="GetMmsMoRequest">
+    	<complexContent>
+    		<extension base="tp:Request"></extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="GetSmsMoRequest">
+    	<complexContent>
+    		<extension base="tp:Request"></extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="GetSmsMoResponse">
+    	<complexContent>
+    		<extension base="tp:Response">
+    			<sequence>
+    				<element name="SmsMoMessage" type="tp:SmsMoMessage"
+    					maxOccurs="unbounded" minOccurs="0">
+    				</element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="GetMmsMoResponse">
+    	<complexContent>
+    		<extension base="tp:Response">
+    			<sequence>
+    				<element name="MmsMoMessage"
+    					type="tp:MmsMoMessage" maxOccurs="unbounded" minOccurs="0">
+    				</element>
+    				
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+
+    <simpleType name="SmsMoType">
+    	<restriction base="string">
+    		<enumeration value="NORMAL"></enumeration>
+    		<enumeration value="ORDER"></enumeration>
+    		<enumeration value="REPORT"></enumeration>
+    	</restriction>
+    </simpleType>
+
+    <complexType name="SendSmsMoRequest">
+    	<complexContent>
+    		<extension base="tp:Request">
+    			<sequence>
+    				<element name="SmsMoMessage" type="tp:SmsMoMessage"></element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SendSmsMoResponse">
+    	<complexContent>
+    		<extension base="tp:Response"></extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SendMmsMoRequest">
+    	<complexContent>
+    		<extension base="tp:Request">
+    			<sequence>
+    				<element name="MmsMoMessage" type="tp:MmsMoMessage"></element>
+    			</sequence>
+    		</extension>
+    	</complexContent>
+    </complexType>
+
+    <complexType name="SendMmsMoResponse">
+    	<complexContent>
+    		<extension base="tp:Response"></extension>
+    	</complexContent>
+    </complexType>
+</schema>

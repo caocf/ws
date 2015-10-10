@@ -1,0 +1,168 @@
+package com.cplatform.mall.back.store.web;
+
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.store.entity.ShopSettings;
+import com.cplatform.mall.back.store.service.ShopSettingsService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.PageStaticInterface;
+
+/**
+ * 
+ * @Title	商户自审控制层
+ * @Description
+ * @Copyright: Copyright (c) 2013-9-18
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author luyidi
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/store/audit")
+public class ShopSettingsController {
+
+	@Autowired
+	private ShopSettingsService settingsService;
+
+
+	@Autowired
+	private PageStaticInterface pageStaticInterface;
+
+	@Autowired
+	private LogUtils logUtils;
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+	@Autowired
+	private AppConfig appConfig;
+//	@Autowired
+//	private PageStaticInterface staticInterface;
+	
+	@RequestMapping(value = "/list")
+	public String list(
+			ShopSettings shopSettings,
+			@RequestParam(value = "page", required = false, defaultValue = "1") int page,
+			Model model) throws SQLException {
+		Page<ShopSettings> pageData = settingsService.findShopSettings(
+				shopSettings, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("pubTagMap", ShopSettings.pubTagMap);
+		model.addAttribute("shopClassMap", ShopSettings.shopClassMap);
+		model.addAttribute("viewUrl",appConfig.getSettingsBrowse());
+		return "/store/store/setting_list";
+	}
+
+	@RequestMapping(value = "settingsAdd")
+	@ResponseBody
+	public Object settingsAdd(@RequestParam Long id, Long shopId, Model model) {
+
+
+		try {
+
+			ShopSettings shopSettings = settingsService.findByShopSettingId(id);
+			shopSettings.setPubTag(Long.valueOf(1));
+			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+			 System.out.println(shopSettings.getPubTag()+"ABC");
+		    String sdf =df.format(new Date());
+			shopSettings.setOperateEndTime(sdf);
+			settingsService.updatePubTag(shopSettings);
+			this.pageStaticInterface.makeStoreShop(shopId);
+			logUtils.logAdd("商户自审管理", "商户自审添加, 商户账号编号：" +id);
+			/**
+			 * 调用生成店铺接口重复 start>>
+			 * @modify_by macl@c-platform.com
+			 * @date 2013-8-28
+			 * **/
+//			staticInterface.refreshFrontPage(shopId);
+			/**调用生成店铺接口重复 <<< end**/
+
+		} catch (Exception e) {
+			log.error(e.getMessage());
+			logUtils.logAdd("商户自审管理", "商户自审添加失败, 商户账号编号：" +id);
+		}
+	//	String jumpUrl = "http://211.138.195.186:1480/shop/gen.chtml?shopId=202&action=preview";
+		//model.addAttribute("jumpUrl", jumpUrl);
+		return JsonRespWrapper.successReload("审核成功！");
+
+	}
+
+	/**
+	 * 查看
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param model
+	 * @return
+	 * @throws SQLException 
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/settingsView/{id}")
+	public String settingsView(@PathVariable(value = "id") Long id,Long shopId, Model model) throws SQLException {
+		ShopSettings shopSettings = this.settingsService
+				.findByShopSettingId(id);
+		model.addAttribute("shopSettings", shopSettings);
+		return "/store/store/shopSettings-view";
+	}
+	/**
+	 * 审核跳转页面
+	 * @param id
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/preAudit/{id}")
+	public String dataAuditGet(@PathVariable(value = "id") Long id, HttpSession session, Model model){
+		ShopSettings shopSettings = new ShopSettings();
+		try {
+			 shopSettings = settingsService.findByShopSettingId(id);
+		} catch (Exception e) {
+		}
+		model.addAttribute("info", shopSettings);
+		return "/store/store/shopSettings-audit";
+	}
+	
+	/**
+	 * 审核
+	 * @param shopSettings
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/audit")
+	@ResponseBody
+	public Object dataAuditPost(@ModelAttribute("shopSettings") ShopSettings shopSettings, HttpServletRequest request)
+	{
+		try {
+			ShopSettings shopSettingsTemp = settingsService.findByShopSettingId(shopSettings.getId());
+			shopSettingsTemp.setPubTag(shopSettings.getPubTag());
+			shopSettingsTemp.setOperateEndTime(TimeUtil.now());
+			shopSettingsTemp.setAuditAdvice(shopSettings.getAuditAdvice());
+			settingsService.updatePubTag(shopSettingsTemp);
+			logUtils.logModify("审核操作成功", "id:"+shopSettings.getId());
+		} catch (Exception e) {
+			logUtils.logModify("审核操作失败",e.getMessage());
+		}
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("审核成功", backUrl);
+	}
+}

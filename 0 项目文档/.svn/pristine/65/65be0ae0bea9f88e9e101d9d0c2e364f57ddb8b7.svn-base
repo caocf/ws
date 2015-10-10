@@ -1,0 +1,29 @@
+CREATE PROCEDURE "LIFE".PRO_MONITOR_ITEM_CNT AS
+  --业务监控：上下架商品异常监控
+BEGIN
+
+  DECLARE
+    TODAY VARCHAR2(8); --今天
+  BEGIN
+    TODAY := TO_CHAR(SYSDATE, 'yyyyMMdd');
+  
+    DELETE FROM T_MONITOR_ITEM_CNT WHERE LOG_TIME = TODAY;
+    COMMIT;
+  
+    INSERT INTO T_MONITOR_ITEM_CNT
+      (ID, STORE_ID, ITEM_CNT, LOG_TIME)
+      SELECT SEQ_MONITOR_IC_ID.NEXTVAL, ID, CNT, TODAY
+        FROM (SELECT S.ID, COUNT(I.ID) CNT
+                FROM T_STORE S
+                LEFT JOIN T_ITEM_SALE I ON I.STORE_ID = S.ID
+               WHERE I.IS_VALID = 1
+                 AND S.STATUS = 3
+                 AND S.SYNC_GY_FLAG = 3
+                 AND S.IS_VALID = 1
+               GROUP BY S.ID);
+    COMMIT;
+  
+  END;
+END;
+
+/

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_item_param_1 ON "LIFE".t_item_param(item_id);

@@ -1,0 +1,155 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.sql.SQLException;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.websys.entity.PageStaticInfo;
+import com.cplatform.mall.back.websys.service.PageStaticManageService;
+
+/**
+ * Title. 页面静态化管理控制类。<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-7-17 上午11:24:45
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: macl@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "/websys/pageStatic")
+public class PageStaticManageController {
+
+	@Autowired
+	private PageStaticManageService pageStaticManageService;
+
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+
+	/**
+	 * 批量静态化商品
+	 */
+	@RequestMapping(value = "/staticAll", method = RequestMethod.POST)
+	@ResponseBody
+	public Object staticAll(Long[] id) {
+		boolean result = false;
+		try {
+			result = pageStaticManageService.doStatic(id);
+		}
+		catch (Exception e) {
+			log.error("静态化失败： " + e.getMessage());
+			return JsonRespWrapper.successAlert(e.getMessage());
+		}
+		if (result) {
+			return JsonRespWrapper.success("操作成功！", "/websys/pageStatic/Itemlist");
+		}
+		return JsonRespWrapper.success("部分数据有异常，请查看日志！", "/websys/pageStatic/Itemlist");
+	}
+
+	@RequestMapping(value = "/staticOne", method = RequestMethod.GET)
+	@ResponseBody
+	public Object staticOne(@RequestParam(value = "id") Long id) {
+		Long[] ids = { id };
+		boolean result = false;
+		try {
+			result = pageStaticManageService.doStatic(ids);
+		}
+		catch (Exception e) {
+			log.error(e.getMessage());
+			return JsonRespWrapper.successAlert(e.getMessage());
+		}
+		if (result) {
+			return JsonRespWrapper.success("操作成功！", "/websys/pageStatic/Itemlist");
+		}
+		return JsonRespWrapper.success("部分数据有异常，请查看日志！", "/websys/pageStatic/Itemlist");
+	}
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * 批量静态化商户
+	 */
+	@RequestMapping(value = "/staticAllTow", method = RequestMethod.POST)
+	@ResponseBody
+	public Object staticAllTow(Long[] id) {
+		boolean result = false;
+		try {
+			result = pageStaticManageService.doStatic(id);
+		}
+		catch (Exception e) {
+			log.error("静态化失败： " + e.getMessage());
+			return JsonRespWrapper.successAlert(e.getMessage());
+		}
+		if (result) {
+			return JsonRespWrapper.success("操作成功！", "/websys/pageStatic/list");
+		}
+		return JsonRespWrapper.success("部分数据有异常，请查看日志！", "/websys/pageStatic/list");
+	}
+
+	@RequestMapping(value = "/staticTow", method = RequestMethod.GET)
+	@ResponseBody
+	public Object staticTow(@RequestParam(value = "id") Long id) {
+		Long[] ids = { id };
+		boolean result = false;
+		try {
+			result = pageStaticManageService.doStatic(ids);
+		}
+		catch (Exception e) {
+			log.error(e.getMessage());
+			return JsonRespWrapper.successAlert(e.getMessage());
+		}
+		if (result) {
+			return JsonRespWrapper.success("操作成功！", "/websys/pageStatic/list");
+		}
+		return JsonRespWrapper.success("部分数据有异常，请查看日志！", "/websys/pageStatic/list");
+	}
+	
+	
+	
+	
+
+	@RequestMapping("/list")
+	public String list(PageStaticInfo staticInfo, String type, @RequestParam(value = "page", defaultValue = "1", required = false) int page,
+	        Model model) throws SQLException {
+		Page<PageStaticInfo> pageList = pageStaticManageService.list(staticInfo, page, 200);
+		model.addAttribute("pageData", pageList);
+		model.addAttribute("type", type);
+		return "/websys/pagestatic/pageStatic-list";
+	}
+
+	@RequestMapping("/Itemlist")
+	public String Itemlist(PageStaticInfo staticInfo, @RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model)
+	        throws SQLException {
+		// System.out.println("staticInfo.getStartTime()=" +
+		// staticInfo.getStartTime());
+		Page<PageStaticInfo> pageList = pageStaticManageService.listItme(staticInfo, page, 200);
+		model.addAttribute("pageData", pageList);
+		return "/websys/pagestatic/pageStatic-listone";
+	}
+
+	@RequestMapping(value = "/batchSataticAll")
+	@ResponseBody
+	public Object batchSataticAll(Model model) throws Exception {
+
+		pageStaticManageService.batchStaticAll();
+		return JsonRespWrapper.success("操作成功！", "/websys/pageStatic/list");
+	}
+
+}

@@ -1,0 +1,123 @@
+package com.cplatform.mall.back.member.web;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.net.URLConnection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.cplatform.mall.back.utils.AppConfig;
+/**
+ * 
+ * 余额查询. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-14 上午10:18:08
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/member")
+public class InterfaceQueryController {
+	
+	@Autowired
+	private AppConfig config;
+	
+	/**
+	 * 余额查询
+	 * @param request
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/query")
+    public String scoreQuery(HttpServletRequest request,  
+    		           		Model model) throws SQLException {
+		String mobile = request.getParameter("mobile");
+		Map<String, String> resultMap = new HashMap<String, String>();
+		if(null != mobile){
+			//积分
+			String resultScore = sendPost(config.getMemberScore(), mobile, "mobile=" + mobile);
+			if(!resultScore.isEmpty()){
+	            JSONObject jsonScore =  JSONObject.fromObject(resultScore);
+	            if("0".equals(jsonScore.get("statusCode").toString())){  	
+	            	resultMap.put("brand", jsonScore.get("brand").toString());
+	            	resultMap.put("score", jsonScore.get("score").toString());
+	            	resultMap.put("scoreStatusCode", jsonScore.get("statusCode").toString());
+	            }else{
+	            	resultMap.put("scoreStatusText", jsonScore.get("statusText").toString());
+	            	resultMap.put("scoreStatusCode", jsonScore.get("statusCode").toString());
+	            }
+			}
+            //商城币
+            String resultCoin = sendPost(config.getMemberCoin(), mobile, "mobile=" + mobile);
+            if(!resultCoin.isEmpty()){
+	            JSONObject jsonCoin =  JSONObject.fromObject(resultCoin);
+	            if("0".equals(jsonCoin.get("statusCode").toString())){
+	            	resultMap.put("coin", jsonCoin.get("coin").toString());
+	            	resultMap.put("coinStatusCode", jsonCoin.get("statusCode").toString());
+	            }else{
+	            	resultMap.put("coinStatusText", jsonCoin.get("statusText").toString());
+	            	resultMap.put("coinStatusCode", jsonCoin.get("statusCode").toString());
+	            }
+            }
+		}
+		model.addAttribute("resultMap", resultMap);
+		model.addAttribute("mobile", mobile);
+        return "member/query/query";
+    }
+	
+	/**
+	 * 余额查询模拟post请求
+	 * @param urlStr    请求url
+	 * @param mobile    手机号码
+	 * @param param    请求参数
+	 * @return
+	 */
+	public static String sendPost(String urlStr, String mobile, String param){
+		String sTotalString = "";
+		try {
+            	URL url = new URL(urlStr);
+            	URLConnection connection = url.openConnection();   
+
+    	        connection.setDoOutput(true);
+    	        OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream(), "utf-8"); 
+    	        out.write(param); 
+    	        out.flush();   
+    	        out.close();   
+
+    	        String sCurrentLine;   
+    	           
+    	        sCurrentLine = "";
+    	        InputStream l_urlStream;   
+    	        l_urlStream = connection.getInputStream();   
+    	        BufferedReader l_reader = new BufferedReader(new InputStreamReader(   
+    	                l_urlStream));   
+    	        while ((sCurrentLine = l_reader.readLine()) != null) {   
+    	        	sTotalString += sCurrentLine;   
+    	  
+    	        }   
+            }
+            catch (Exception e) {
+	            e.printStackTrace();
+            }               
+			return sTotalString;   
+	    }
+	
+}

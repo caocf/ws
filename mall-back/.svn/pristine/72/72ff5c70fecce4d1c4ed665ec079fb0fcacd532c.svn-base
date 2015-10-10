@@ -1,0 +1,671 @@
+package com.cplatform.mall.back.store.service;
+
+import java.io.InputStream;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.dao.AuditStepDao;
+import com.cplatform.mall.back.entity.AuditStep;
+import com.cplatform.mall.back.model.SyncGYResponseBean;
+import com.cplatform.mall.back.store.dao.StoreAgentDao;
+import com.cplatform.mall.back.store.dao.StoreDao;
+import com.cplatform.mall.back.store.dao.StoreFeeDao;
+import com.cplatform.mall.back.store.dao.StoreLogisticsFeeDao;
+import com.cplatform.mall.back.store.dao.StoreSettleDao;
+import com.cplatform.mall.back.store.entity.ShopUser;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.entity.StoreAgent;
+import com.cplatform.mall.back.store.entity.StoreFee;
+import com.cplatform.mall.back.store.entity.StoreLogisticsFee;
+import com.cplatform.mall.back.store.entity.StoreSettle;
+import com.cplatform.mall.back.sys.dao.SysFeeDao;
+import com.cplatform.mall.back.sys.entity.SysFee;
+import com.cplatform.mall.back.utils.SyncInterface;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.mall.back.websys.entity.ChannelFloor;
+import com.cplatform.mall.back.websys.entity.SysFile;
+import com.cplatform.mall.back.websys.entity.SysLogistics;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * Title.商户管理相关 <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-28 下午4:34:36
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: baibo@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class StoreService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private BsFileService bsFileService;
+
+	@Autowired
+	private StoreAgentDao storeAgentDao;
+
+	@Autowired
+	private StoreDao storeDao;
+
+	@Autowired
+	private StoreSettleDao settleDao;
+
+	@Autowired
+	private AuditStepDao stepDao;
+
+	@Autowired
+	private ShopUserService shopUserService;
+
+	@Autowired
+	private StoreLogisticsFeeDao logisticsFeeDao;
+
+	@Autowired
+	private StoreFeeDao feeDao;
+
+	@Autowired
+	private SysFeeDao sysFeeDao;
+
+	@Autowired
+	private SyncInterface syncInterface;
+
+	private final Long AUDIT_PASS_STATUS = 3L;
+
+	private final Long STORE = 2L;
+
+	private final Long CHANNEL = 3L;
+
+	public SysFee findSysFeeByid(Long id) {
+		return sysFeeDao.findOne(id);
+	}
+
+	public Store findStoreById(Long id) {
+		return this.storeDao.findOne(id);
+	}
+
+	public Store saveStore(Store store) {
+		return this.storeDao.save(store);
+	}
+
+	public StoreLogisticsFee addOrUpdateStoreLogisticsFee(StoreLogisticsFee po) {
+		return this.logisticsFeeDao.save(po);
+	}
+
+	public StoreSettle findStoreSettleById(Long id) {
+		return this.settleDao.findOne(id);
+	}
+
+	// public StoreSettle findStoreSettleByStoreId(Long storeId) {
+	// return this.settleDao.findByStoreId(storeId);
+	// }
+
+	public StoreSettle addOrUpdataStoreSettle(StoreSettle po) {
+		return this.settleDao.save(po);
+	}
+
+	public StoreFee findStoreFeeById(Long id) {
+		return this.feeDao.findOne(id);
+	}
+
+	public List<StoreFee> findByStoreFeeListByStoreId(Long storeId) {
+		return this.feeDao.findByStoreId(storeId);
+	}
+
+	public void delStoreLogisticsFeeById(Long id) {
+		this.logisticsFeeDao.delete(id);
+	}
+
+	public List<Store> findStoreListByName(String name) {
+		return this.storeDao.findByName(name);
+	}
+
+	public List<Store> findStoreListBylinkPhone(String linkPhone) {
+		return this.storeDao.findBylinkPhone(linkPhone);
+	}
+
+	public List<StoreSettle> findStoreSettleList(String settleAc, Long storeId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_store_settle t where t.settle_ac = ? and t.store_id != ?");
+		return dbHelper.getBeanList(sqlBuff.toString(), StoreSettle.class, new Object[] { settleAc, storeId });
+
+	}
+
+	public List<SysLogistics> findSysLogisticsList() throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_sys_logistics t where t.is_valid = 1");
+		return dbHelper.getBeanList(sqlBuff.toString(), SysLogistics.class, null);
+	}
+
+	// public List<Object[]> findByJsStoreId(Long jsStoreId) {
+	// return this.storeAgentDao.findByJsStoreId(jsStoreId);
+	// }
+
+	public List<StoreAgent> findStoreAgentByJsStoreId(Long jsStoreId) {
+		return this.storeAgentDao.findByJsStoreId(jsStoreId);
+	}
+
+	public List<StoreAgent> findStoreAgentByQdStoreId(Long qdStoreId) {
+		return this.storeAgentDao.findByQdStoreId(qdStoreId);
+	}
+
+	public StoreAgent findStoreAgentById(Long id) {
+		return this.storeAgentDao.findOne(id);
+	}
+
+	public StoreAgent addOrUpdateStoreAgent(StoreAgent po) {
+		return this.storeAgentDao.save(po);
+	}
+
+	public void deleteStoreAgentById(Long id) {
+		this.storeAgentDao.delete(id);
+	}
+
+	public StoreFee addOrUpdateStoreFee(StoreFee po) {
+		return this.feeDao.save(po);
+	}
+
+	public void delStoreFeeById(Long id) {
+		this.feeDao.delete(id);
+	}
+
+	public void delStoreSettleById(Long id) {
+		this.settleDao.delete(id);
+	}
+
+	public List<SysFee> getAllSysFeeList() {
+		return this.sysFeeDao.getAllFee();
+	}
+
+	public List<SysFee> getSysFeeList(Long storeId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* ");
+		sqlBuff.append("  from t_sys_fee t ");
+		//暂时不判断状态值
+		//sqlBuff.append(" where t.valid = 1 ");
+		sqlBuff.append(" where ");
+		sqlBuff.append("    t.sync_gy_flag = 1 ");
+		sqlBuff.append("   and t.store_id = ?");
+
+		//return this.sysFeeDao.getFeeList();
+		return this.dbHelper.getBeanList(sqlBuff.toString(), SysFee.class, new Object[]{storeId});
+	}
+
+	public List<StoreLogisticsFee> findStoreLogisticsListByStoreId(Long storeId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t1.*,t2.name from t_store_logistics_fee t1,t_sys_logistics t2 where t1.qd_id = t2.id and t1.store_id =?");
+		return dbHelper.getBeanList(sqlBuff.toString(), StoreLogisticsFee.class, new Object[] { storeId });
+		// return this.logisticsFeeDao.findByStoreId(storeId);
+	}
+
+	/**
+	 * 获取下载文件web路径
+	 * 
+	 * @param storeId
+	 * @return
+	 * @throws SQLException
+	 */
+	public SysFile getSysFileByStoreId(Long storeId) throws SQLException {
+		List<SysFile> fileList = bsFileService.getSysFileList(BsFileService.BS_STORE_TREATY_KEY, storeId);
+		if (fileList != null && !fileList.isEmpty()) {
+			return fileList.get(0);
+		}
+		return null;
+	}
+
+	/**
+	 * 查询商户分页
+	 * 
+	 * @param terminalId
+	 *            要查询的手机号码
+	 * @param pageNo
+	 *            页面
+	 * @param pageSize
+	 *            每页显示
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<Store> listStore(Store store, int pageNo, int pageSize, String status, String ids) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select store.*,region.region_name areaName from t_store store ")
+		        .append(" left join t_sys_region region on store.area_code = region.region_code ").append(" where 1 = 1");
+		List<Object> params = new ArrayList<Object>();
+		if (store.getShopClass() != null) {
+			sql.append(" and store.shop_class = ?");
+			params.add(store.getShopClass());
+		} else {
+			sql.append(" and store.shop_class in ( 2,3)");
+		}
+		if (StringUtils.isNotEmpty(ids)) {
+			sql.append(" and store.id not in ( ").append(ids).append(" )");
+		}
+
+		if (store.getId() != null) {
+			sql.append(" and store.id = ? ");
+			params.add(store.getId());
+		}
+
+		if (StringUtils.isNotEmpty(status)) {
+			sql.append(" and store.status in ( ").append(status).append(")");
+		}
+		if (StringUtils.isNotEmpty(store.getName())) {
+			sql.append(" and store.name like ? ");
+			params.add("%" + store.getName() + "%");
+		}
+		if (StringUtils.isNotEmpty(store.getSort() == null ? "" : store.getSort().toString())) {
+			sql.append(" and store.sort = ? ");
+			params.add(store.getSort());
+		}
+
+		if (StringUtils.isNotEmpty(store.getBaseShopName())) {
+			sql.append(" and store.base_shop_name like ? ");
+			params.add("%" + store.getBaseShopName() + "%");
+		}
+
+		if (StringUtils.isNotEmpty(store.getIsBsAccount() == null ? "" : store.getIsBsAccount().toString())) {
+			sql.append(" and store.is_bs_account = ? ");
+			params.add(store.getIsBsAccount());
+		}
+
+		if (StringUtils.isNotEmpty(store.getAddress())) {
+			sql.append(" and store.address like ? ");
+			params.add("%" + store.getAddress() + "%");
+		}
+		if (StringUtils.isNotEmpty(store.getSyncGyFlag() == null ? "" : store.getSyncGyFlag().toString())) {
+			sql.append(" and store.sync_gy_flag = ? ");
+			params.add(store.getSyncGyFlag());
+		}
+
+		if (StringUtils.isNotEmpty(store.getStatus() == null ? "" : store.getStatus().toString())) {
+			sql.append(" and store.status = ? ");
+			params.add(store.getStatus());
+		}
+
+		if (StringUtils.isNotEmpty(store.getBeginTime())) {
+			sql.append(" and store.create_time >= ? ");
+			params.add(store.getBeginTime() + "000000");
+		}
+		if (StringUtils.isNotEmpty(store.getEndTime())) {
+			sql.append(" and store.create_time <= ? ");
+			params.add(store.getEndTime() + "235959");
+		}
+		if (store.getIsValid() != null) {
+			sql.append(" and store.is_valid = ? ");
+			params.add(store.getIsValid());
+		}
+		if (StringUtils.isNotEmpty(store.getAreaName())) {
+			sql.append(" and region.region_name like ? ");
+			params.add("%" + store.getAreaName() + "%");
+		}
+		// 通用组件selectStore，传任意Merchid，可获取已同步商户start
+		if (StringUtils.isNotEmpty(store.getMerchid())) {
+			sql.append(" and store.merchid is not null ");
+		}
+		// 获取已同步商户end
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sql.append(" order by store.create_time desc ");
+		return dbHelper.getPage(sql.toString(), Store.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 保存商户
+	 * 
+	 * @param store
+	 *            商户实体类
+	 * @param is
+	 *            文件流
+	 * @param list
+	 *            选择的渠道商列表
+	 * @param opType
+	 *            操作类型 true 修改 false 增加
+	 */
+
+	@Transactional
+	public void saveUpdateStore(Store store) {
+		// 保存store表
+		storeDao.save(store);
+		// StoreSettle bean = this.findStoreSettleByStoreId(store.getId());
+		// if (bean != null) {
+		// bean.setStatus(0L);
+		// this.addOrUpdataStoreSettle(bean);
+		// }
+		// 保存渠道商代理结算商户关系表
+		// if (null != list && list.size() > 0) {
+		// if (opType) {
+		// // 删除原来代理关系
+		// storeAgentDao.deleteStoreAgent(store.getId());
+		// bsFileService.deleteBsFile(BsFileService.BS_STORE_TREATY_KEY,
+		// store.getId());
+		// }
+		// for (StoreAgent storeAgent : list) {
+		// storeAgent.setJsStoreId(restore.getId());
+		// storeAgentDao.save(storeAgent);
+		// }
+		// }
+		// 保存文件表
+		// if (null != is) {
+		// bsFileService.dealBsFile(is, "doc",
+		// BsFileService.BS_STORE_TREATY_KEY, restore.getId(), opType);
+		// }
+
+	}
+
+	/**
+	 * 添加渠道商
+	 * 
+	 * @param store
+	 * @param sysUserId
+	 * @param is
+	 */
+	@Transactional
+	public void addChannel(Store store, Long sysUserId, InputStream is) {
+		this.storeDao.save(store);
+		if (store.getStoreIds() != null) {
+			String[] storeIds = store.getStoreIds().split(",");
+
+			for (String id : storeIds) {
+				if (StringUtils.isEmpty(id)) {
+					continue;
+				}
+				StoreAgent po = new StoreAgent();
+				po.setJsStoreId(Long.valueOf(id));
+				po.setQdStoreId(store.getId());
+				po.setStartTime(store.getStartTime());
+				po.setStopTime(store.getStopTime());
+				po.setSysUserId(sysUserId);
+				po.setStatus(0L);
+				storeAgentDao.save(po);
+			}
+
+		}
+		// 保存文件表
+		if (null != is) {
+			bsFileService.dealBsFile(is, "doc", BsFileService.BS_CHANNEL_TREATY_KEY, store.getId(), false);
+		}
+	}
+
+	/**
+	 * 根据条件获取商户列表
+	 * 
+	 * @param filter
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<Store> getStoreListByFilter(String filter) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("select * from t_store t where t.id in ( ").append(filter).append(" )");
+		return dbHelper.getBeanList(sql.toString(), Store.class, null);
+
+	}
+
+	/**
+	 * 保存商户
+	 * 
+	 * @param store
+	 *            商户实体类
+	 * @param is
+	 *            文件流
+	 * @param list
+	 *            选择的渠道商列表
+	 * @param opType
+	 *            操作类型 true 修改 false 增加
+	 */
+
+	@Transactional
+	public void updateStoreSatus(Store store, AuditStep step) {
+
+		try {
+			storeDao.save(store);
+			dbHelper.execute("update t_store_agent set status=? where js_store_id=?", new Object[] { store.getStatus(), store.getId() });
+			stepDao.save(step);
+			if (null != step && store.getStatus() == 3) {
+				// 生成商户
+				shopUserService.saveShopUser(2L, store.getId(), 1L);
+			}
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 审核商户
+	 * 
+	 * @param store
+	 * @throws
+	 */
+	@Transactional
+	public String auditStore(Store store, AuditStep step) {
+		String msg = "操作成功";
+		// try {
+		this.saveStore(store);
+		// if (Store.STORE.equals(store.getShopClass())) {
+		// dbHelper.execute("update t_store_agent set status = ? where js_store_id = ?",
+		// new Object[] { store.getStatus(), store.getId() });
+		//
+		// } else {
+		// dbHelper.execute("update t_store_agent set status = ? where qd_store_id = ?",
+		// new Object[] { store.getStatus(), store.getId() });
+		// }
+		if (step != null) {
+			stepDao.save(step);
+		}
+		if (store.getStatus().equals(Store.STATUS_AUDIT_PASS)) {
+			// 创建账户
+			if (store.getSysUserId() == null) {
+
+				ShopUser user = null;
+				if (store.getSort() == 1L) {
+					user = shopUserService.saveShopUser(store.getShopClass(), store.getId(), 1L);
+				} else {
+					// user = shopUserService.saveShopUser(store.getShopClass(),
+					// store.getId(), 2L);
+					user = shopUserService.saveShopUser(store.getShopClass(), store.getId(), 1L);// 修改为管理员账户
+				}
+				store.setSysUserId(user.getId());
+				this.saveStore(store);
+				msg += " 创建商户自服务账号：" + user.getCode() + "密码:123456";
+			}
+		}
+		// }
+		// catch (SQLException e) {
+		// TODO Auto-generated catch block
+		// e.printStackTrace();
+		// msg = "操作异常";
+		// }
+		return msg;
+	}
+
+	public void saveSroreSettle(StoreSettle settle, InputStream is) {
+		this.addOrUpdataStoreSettle(settle);
+		if (null != is) {
+			bsFileService.dealBsFile(is, "doc", BsFileService.BS_CHANNEL_TREATY_KEY, settle.getStoreId(), false);
+		}
+	}
+
+	public void updateSroreSettle(StoreSettle settle, InputStream is) {
+		this.addOrUpdataStoreSettle(settle);
+		if (null != is) {
+			bsFileService.dealBsFile(is, "doc", BsFileService.BS_CHANNEL_TREATY_KEY, settle.getStoreId(), true);
+		}
+	}
+
+	public Page<StoreAgent> findAgentList(StoreAgent vo, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t1.*, t2.name as channelName, t3.name as storeName ");
+		sqlBuff.append("  from t_store_agent t1 ");
+		sqlBuff.append("  left join t_store t2 ");
+		sqlBuff.append("    on t1.qd_store_id = t2.id ");
+		sqlBuff.append("  left join t_store t3 ");
+		sqlBuff.append("    on t1.js_store_id = t3.id ");
+		sqlBuff.append(" where 1 = 1 ");
+		if (vo.getQdStoreId() != null) {
+			sqlBuff.append("   and t1.qd_store_id = ? ");
+			params.add(vo.getQdStoreId());
+		}
+		if (vo.getStatus() != null) {
+			sqlBuff.append("   and t1.status = ? ");
+			params.add(vo.getStatus());
+		}
+		sqlBuff.append(" order by t1.id desc ");
+		return this.dbHelper.getPage(sqlBuff.toString(), StoreAgent.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 通过渠道商id和商户id联合查询
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<StoreAgent> getStoreAgentBy2Id(StoreAgent storeAgent) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_store_agent t where t.QD_STORE_ID = ? and t.JS_STORE_ID = ? ");
+		params.add(storeAgent.getQdStoreId());
+		params.add(storeAgent.getJsStoreId());
+		return this.dbHelper.getBeanList(sqlBuff.toString(), StoreAgent.class, params.toArray());
+	}
+
+	public List<AuditStep> findShopAuditSteplist(Long id) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select ads.*  from t_audit_step ads where ads.BS_TABEL = 'T_STORE' and ads.BS_ID = ? order by ads.UPDATE_TIME");
+		List<Object> paramsList = new ArrayList<Object>();
+		paramsList.add(id);
+		return dbHelper.getBeanList(sql.toString(), AuditStep.class, paramsList.toArray());
+	}
+
+	/**
+	 * 同步商户所有结算信息
+	 * 
+	 * @param store
+	 */
+	public void syncStoreAllInfo(Store store, String oldAreaCode) {
+		if (store == null) {
+			return;
+		}
+		SyncGYResponseBean bean = null;
+
+		if (store.getSyncGyFlag() == 0L) {
+			bean = this.syncInterface.syncAddStore(store);
+		} else {
+			bean = this.syncInterface.syncUpdateStore(store);
+		}
+		store.setAreaCode(oldAreaCode);
+		if (bean != null) {
+			if (bean.isSyncSuccess()) {
+				store.setSyncGyFlag(1L);
+				store.setMerchid(bean.getMerchid());
+				this.saveStore(store);
+			}
+		}
+		List<StoreSettle> settleList = this.settleDao.findByStoreId(store.getId());
+		if (settleList != null && settleList.size() > 0) {
+			for (StoreSettle settle : settleList) {
+				if (store.getMerchid() == null) {
+					continue;
+				}
+				if (settle.getSyncGyFlag() == 0L) {
+					bean = syncInterface.syncAddSettle(settle);
+				} else {
+					bean = syncInterface.syncUpdateSettle(settle);
+				}
+				if (bean != null) {
+					if (bean.isSyncSuccess()) {
+						settle.setSyncGyFlag(1L);
+						settle.setMerchid(bean.getMerchid());
+						settle.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+						this.addOrUpdataStoreSettle(settle);
+					}
+				}
+			}
+		}
+		List<StoreFee> feeList = this.feeDao.findByStoreId(store.getId());
+		if (feeList != null && feeList.size() > 0) {
+			for (StoreFee vo : feeList) {
+
+				if (store.getMerchid() == null) {
+					continue;
+				}
+
+				if (vo.getCapitalType1() == 1L) {// 现金
+					vo.setCapitalType(1L);
+					if (vo.getSyncGyFlag1() == 0L) {
+						bean = this.syncInterface.syncAddFee(vo);
+					} else {
+						bean = this.syncInterface.syncUpdateFee(vo);
+					}
+					if (bean != null) {
+						if (bean.isSyncSuccess()) {
+							vo.setSyncGyFlag1(1L);
+							vo.setMerchid(bean.getMerchid());
+							vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+							this.addOrUpdateStoreFee(vo);
+						}
+					}
+				}
+				if (vo.getCapitalType2() == 1L) {// 商城币
+					vo.setCapitalType(2L);
+					if (vo.getSyncGyFlag2() == 0L) {
+
+						bean = this.syncInterface.syncAddFee(vo);
+					} else {
+
+						bean = this.syncInterface.syncUpdateFee(vo);
+					}
+					if (bean != null) {
+						if (bean.isSyncSuccess()) {
+							vo.setSyncGyFlag2(1L);
+							vo.setMerchid(bean.getMerchid());
+							vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+							this.addOrUpdateStoreFee(vo);
+						}
+					}
+				}
+
+				if (vo.getCapitalType3() == 1L) {// 积分
+					vo.setCapitalType(3L);
+					if (vo.getSyncGyFlag3() == 0L) {
+						bean = this.syncInterface.syncAddFee(vo);
+					} else {
+						bean = this.syncInterface.syncUpdateFee(vo);
+					}
+					if (bean != null) {
+						if (bean.isSyncSuccess()) {
+							vo.setSyncGyFlag3(1L);
+							vo.setMerchid(bean.getMerchid());
+							vo.setSyncTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+							this.addOrUpdateStoreFee(vo);
+						}
+					}
+				}
+
+			}
+		}
+
+	}
+}

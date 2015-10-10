@@ -1,0 +1,157 @@
+package com.cplatform.mall.back.sys.web;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.sys.dao.SysBlackUserDao;
+import com.cplatform.mall.back.sys.entity.SysBlackUser;
+import com.cplatform.mall.back.sys.service.SysInfoService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.util2.FileTools;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * Title. 系统信息-黑名单-管理控制器<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-22 上午9:37:35
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: BaiJie
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "/sys/black")
+public class SysBlackUserController {
+
+	@Autowired
+	private SysBlackUserDao sysBlackUserDao;
+
+	@Autowired
+	private SysInfoService sysInfoService;
+
+	@Autowired
+	private AppConfig appConfig;
+
+	private final static String MODULE_NAME = "内容源管理";
+
+	@RequestMapping(value = "/list")
+	public String listBlackUser(SysBlackUser blackUser, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+
+		Page<SysBlackUser> blackUserlist = sysInfoService.listBlackUser(blackUser, page, Page.DEFAULT_PAGESIZE);
+
+		model.addAttribute("levTapMap", SysBlackUser.levTagMap);
+		model.addAttribute("inTagMap", SysBlackUser.inTagMap);
+		model.addAttribute("pageData", blackUserlist);
+		return "sys/blackUser/blackUser-list";
+	}
+
+	@RequestMapping(value = "/preAdd")
+	public String preAddBlackUser(Model model) {
+		SysBlackUser blackUser = new SysBlackUser();
+		model.addAttribute("blackUser", blackUser);
+
+		model.addAttribute("levTapMap", SysBlackUser.levTagMap);
+		// List<String> inTagList = new ArrayList<String>();
+		//
+		// inTagList.add("手工输入");
+		// inTagList.add("批量导入");
+
+		return "sys/blackUser/blackUser-add";
+	}
+
+	@RequestMapping(value = "/add")
+	@ResponseBody
+	public Object addBlackUser(SysBlackUser blackUser, HttpSession session, Model model) {
+		blackUser.setInTag(0);// 手工录入
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		blackUser.setUnitId(sessionUser.getUnitId()); // 添加单位编码
+		List<SysBlackUser> blackUserList = sysBlackUserDao.findByTerminalId(blackUser.getTerminalId());
+		if (blackUserList.size() > 0) {
+			return JsonRespWrapper.success("黑名单已存在", "/sys/black/list");
+		}
+		sysBlackUserDao.save(blackUser);
+		return JsonRespWrapper.success("添加成功", "/sys/black/list");
+		// return "redirect:/sys/black/list";
+	}
+
+	@RequestMapping(value = "/preUpdate")
+	public String preUpdateBlackUser(@RequestParam(value = "id", required = true) long id, Model model) {
+		SysBlackUser blackUser = sysBlackUserDao.findOne(id);
+		model.addAttribute("blackUser", blackUser);
+		return "sys/blackUser/blackUser-update";
+	}
+
+	@RequestMapping(value = "/update")
+	@ResponseBody
+	public Object updateBlackUser(SysBlackUser blackUser, HttpSession session, Model model) {
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		blackUser.setUpdateUserId(sessionUser.getId());// 设置修改者编码
+		String currentTime = TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss);
+		blackUser.setUpdateTime(currentTime);// 设置修改时间
+		sysBlackUserDao.save(blackUser);
+		return JsonRespWrapper.success("修改成功", "/sys/black/list");
+	}
+
+	@RequestMapping(value = "/delete")
+	@ResponseBody
+	public Object deleteBlackUser(@RequestParam Long id, Model model) {
+		sysBlackUserDao.delete(id);
+		return JsonRespWrapper.success("删除成功", "/sys/black/list");
+	}
+
+	@RequestMapping(value = "preBatchadd")
+	public String preBatchadd(Model model) throws SQLException {
+		SysBlackUser blackUser = new SysBlackUser();
+		model.addAttribute("blackUser", blackUser);
+		model.addAttribute("levTapMap", SysBlackUser.levTagMap);
+		return "sys/blackUser/blackUser-batchadd";
+	}
+
+	@RequestMapping(value = "batchadd")
+	@ResponseBody
+	public Object batchAdd(@RequestParam("batchFile") MultipartFile batchFile, SysBlackUser blackUser, HttpSession session) throws SQLException {
+		try {
+			String filepath = appConfig.getUploadTmpDir() + TimeStamp.getTime(14) + ".txt";
+			FileTools.write(batchFile.getBytes(), filepath);
+			List<String> list = FileTools.readLines(filepath, "gbk");
+			if (null != list && list.size() > 0) {
+				SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+				Long unitId = sessionUser.getUnitId();
+				Integer levTag = blackUser.getLevTag();
+				String remark = blackUser.getRemark();
+				blackUser.setUnitId(unitId);
+				blackUser.setLevTag(levTag);
+				blackUser.setRemark(remark);
+				blackUser.setInTag(1);
+				int inertNum = sysInfoService.addBlackUserBatch(blackUser, list);
+
+				String suc = "导入成功" + inertNum + "条,重复" + (list.size() - inertNum) + "条。";
+				return JsonRespWrapper.success(suc, "/sys/black/list");
+			} else {
+				return JsonRespWrapper.success("您选择的文件内容为空。", "/sys/black/list");
+			}
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+}

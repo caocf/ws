@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_web_accesss_log ON "LIFE".t_web_access_log(sessionid);

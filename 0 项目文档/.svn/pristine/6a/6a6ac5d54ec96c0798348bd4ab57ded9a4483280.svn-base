@@ -1,0 +1,46 @@
+#sidebar .bodbde{ border-bottom:1px #dedede solid;}
+	#help .related-content{ margin-bottom:10px; border-bottom:1px solid #dedede;}
+	#help .related-title{ }
+		
+		#help .related-title h3 {
+			background-image: url("../img/related-title-slide.gif");
+			background-repeat: no-repeat;
+			display: block;
+			line-height: 32px;
+			cursor:pointer;
+			padding-left: 15px;
+			background-position:0 0;
+		}
+		#help .related-title h3.slide_down {
+			background-image: url("../img/related-title-slide.gif");
+			background-repeat: no-repeat;
+			display: block;
+			line-height: 32px;
+			cursor:pointer;
+			padding-left: 15px;
+			background-position:0 -32px;
+		}
+
+
+		#help .related-title-hide{ 
+    border-left: 1px solid #DDDDDD;
+    border-right: 1px solid #DDDDDD;
+    border-top: 2px solid #007BC7;
+	border-bottom:1px solid #dedede;
+    height: 32px;
+    line-height: 32px;
+    padding: 0 8px;
+	margin-bottom:10px;
+}
+		#help .related-title-hide h3{
+			color: #333333;
+			font-size: 14px;
+			font-weight: 400;
+			    background-image: url("../img/related-title-slide.gif");
+			background-position: 0 -32px;
+			background-repeat: no-repeat;
+			cursor: pointer;
+			display: block;
+			line-height: 32px;
+			padding-left: 15px;
+		}

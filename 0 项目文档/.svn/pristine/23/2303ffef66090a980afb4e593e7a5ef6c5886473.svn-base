@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_verify_reverse ON "LIFE".t_verify_reverse(order_id);

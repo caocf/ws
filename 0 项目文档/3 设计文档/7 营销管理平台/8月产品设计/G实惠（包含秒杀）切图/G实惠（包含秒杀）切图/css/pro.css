@@ -1,0 +1,5 @@
+#pro .related-title{ line-height:28px; height: 28px; border:1px solid #ddd; padding:0 8px; }
+#pro .related-content{ border:1px solid #ddd; border-top:0; padding:5px 8px; }
+
+.pro_gallery{  width:240px; height:320px; overflow:hidden;  position:relative;}
+.pro_gallery_wrap{ position:absolute;}

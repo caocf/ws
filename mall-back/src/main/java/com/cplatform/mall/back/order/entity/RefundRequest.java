@@ -1,0 +1,86 @@
+package com.cplatform.mall.back.order.entity;
+
+/**
+ * 
+ * 退款封装通用类. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-7-10 下午04:11:50
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+public class RefundRequest {
+	/** 支付渠道 **/
+	private String payChannel;
+	/** 结算商户ID **/
+	private String merchId;
+	/** 商品类型 **/
+	private String productionType;
+	/** 结算价格 **/
+	private String settlementPrice;
+	/** 名称 **/
+	private String title;
+	/** 退款原因 **/
+	private String reason;
+	/** 退款金额 **/
+	private double amount;
+	
+	public void setPayChannel(String payChannel) {
+	    this.payChannel = payChannel;
+    }
+
+	public String getPayChannel() {
+	    return payChannel;
+    }
+
+	public void setMerchId(String merchId) {
+	    this.merchId = merchId;
+    }
+
+	public String getMerchId() {
+	    return merchId;
+    }
+
+	public void setProductionType(String productionType) {
+	    this.productionType = productionType;
+    }
+
+	public String getProductionType() {
+	    return productionType;
+    }
+
+	public void setSettlementPrice(String settlementPrice) {
+	    this.settlementPrice = settlementPrice;
+    }
+
+	public String getSettlementPrice() {
+	    return settlementPrice;
+    }
+
+	public void setTitle(String title) {
+	    this.title = title;
+    }
+
+	public String getTitle() {
+	    return title;
+    }
+
+	public void setReason(String reason) {
+	    this.reason = reason;
+    }
+
+	public String getReason() {
+	    return reason;
+    }
+
+	public void setAmount(double amount) {
+	    this.amount = amount;
+    }
+
+	public double getAmount() {
+	    return amount;
+    }
+}

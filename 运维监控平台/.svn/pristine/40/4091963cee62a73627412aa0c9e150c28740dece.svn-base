@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- Base Jawr config -->
+    <bean abstract="true" id="jawrBase" class="net.jawr.web.servlet.JawrSpringController">
+        <property name="controllerMapping" value="/resources/"/>
+        <property name="configLocation" value="/jawr.properties"></property>
+    </bean>
+
+
+</beans>

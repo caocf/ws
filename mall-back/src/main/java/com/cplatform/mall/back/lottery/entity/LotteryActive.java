@@ -1,0 +1,206 @@
+package com.cplatform.mall.back.lottery.entity;
+
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.codehaus.jackson.annotate.JsonProperty;
+
+/**
+ * @Title	抽奖活动实体类
+ * @Description
+ * @Copyright: Copyright (c) 2013-7-22
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Entity
+@Table(name = "T_LOTTERY_ACTIVE")
+public class LotteryActive implements java.io.Serializable{
+	private static final long serialVersionUID = -1038979761018976052L;
+	/**活动状态map*/
+	public static Map<String, String> statusMap = null;
+	
+	static {
+		statusMap = new HashMap<String, String>();
+		statusMap.put("0", "草稿");
+		statusMap.put("1", "审核中");
+		statusMap.put("2", "审核通过");
+		statusMap.put("3", "驳回");
+	}
+	/**活动状态map*/
+	private static Map<String, String> typeMap = null;
+	static {
+		typeMap = new HashMap<String, String>();
+		typeMap.put("0", "转盘");
+		typeMap.put("1", "九宫格");
+	}
+	/**
+	 * 活动id
+	 */
+	private Long id;
+	/**
+	 * 活动名称
+	 */
+	private String name;
+	/**
+	 * 活动开始时间
+	 */
+	private String startTime;
+	/**
+	 * 活动结束时间
+	 */
+	private String stopTime;
+	/**
+	 * 活动类型,0不设置参与条件
+	 */
+	private Long activeType;
+	/**
+	 * 活动介绍
+	 */
+	private String activeDesc;
+	/**
+	 * 未中奖设置（预留）
+	 */
+	private Long unhit;
+	/**
+	 * 未中奖提示语
+	 */
+	private String unhitMsg;
+	/**
+	 * 创建时间
+	 */
+	private String createTime;
+	/**
+	 * 创建人id
+	 */
+	private Long createMemberId;
+	/**
+	 * 活动状态，0草稿，1审核中，2审核通过，3审核驳回
+	 */
+	private Long status;
+	
+	/**
+	 * 中奖次数，-1表示不限制次数
+	 */
+	private Long hitLimit;
+	
+	@SequenceGenerator(name = "seq_lottery_active", sequenceName = "SEQ_LOTTERY_ACTIVE")
+	@Id
+	@GeneratedValue(generator = "seq_lottery_active")
+	@JsonProperty
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	@Column(name = "NAME")
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	@Column(name = "START_TIME")
+	public String getStartTime() {
+		return startTime;
+	}
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+	@Column(name = "STOP_TIME")
+	public String getStopTime() {
+		return stopTime;
+	}
+	public void setStopTime(String stopTime) {
+		this.stopTime = stopTime;
+	}
+	@Column(name = "ACTIVE_TYPE")
+	public Long getActiveType() {
+		return activeType;
+	}
+	public void setActiveType(Long activeType) {
+		this.activeType = activeType;
+	}
+	
+	@Column(name = "ACTIVE_DESC")
+	public String getActiveDesc() {
+		return activeDesc;
+	}
+	public void setActiveDesc(String activeDesc) {
+		this.activeDesc = activeDesc;
+	}
+	
+	@Column(name = "UNHIT")
+	public Long getUnhit() {
+		return unhit;
+	}
+	
+	public void setUnhit(Long unhit) {
+		this.unhit = unhit;
+	}
+	@Column(name = "UNHIT_MSG")
+	public String getUnhitMsg() {
+		return unhitMsg;
+	}
+	public void setUnhitMsg(String unhitMsg) {
+		this.unhitMsg = unhitMsg;
+	}
+	@Column(name = "CREATE_TIME")
+	public String getCreateTime() {
+		return createTime;
+	}
+	
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+	@Column(name = "CREATE_MEMBER_ID")
+	public Long getCreateMemberId() {
+		return createMemberId;
+	}
+	public void setCreateMemberId(Long createMemberId) {
+		this.createMemberId = createMemberId;
+	}
+	@Column(name = "STATUS")
+	public Long getStatus() {
+		return status;
+	}
+	public void setStatus(Long status) {
+		this.status = status;
+	}
+	@Column(name = "HIT_LIMIT")
+	public Long getHitLimit() {
+		return hitLimit;
+	}
+	public void setHitLimit(Long hitLimit) {
+		this.hitLimit = hitLimit;
+	}
+	@Transient
+	public String getStatusName() {
+		return statusMap.get(this.getStatus() + "");
+	}
+	@Transient
+	public String getTypeName() {
+		return typeMap.get(this.getActiveType() + "");
+	}
+	private String prizeNumValue;//活动奖区数量
+	@Transient
+	public String getPrizeNumValue() {
+		return prizeNumValue;
+	}
+	@Transient
+	public void setPrizeNumValue(String prizeNumValue) {
+		this.prizeNumValue = prizeNumValue;
+	}
+
+}

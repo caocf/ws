@@ -1,0 +1,277 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <head>
+    <ht:head/>
+
+
+
+</head>
+<body>
+
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>添加单位</h5>
+    </div>
+    <!-- end box / title -->
+    <form:form method="post" id="fm" commandName="unit" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate" onsubmit="return sub();">
+	<input type="hidden" id="unitId" name="unitId" value="${unitId }" />
+        <div class="form">
+            <div class="fields">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">自动生成</div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        <label for="name" class="req">名称：</label>
+                    </div>
+                    <div class="input">
+                        <form:input path="name" cssClass="small required" maxlength="100"/>
+                        
+                    </div>
+                </div>
+              
+                <div class="field">
+                    <div class="label label-radio">
+                        <label for="unitType" class="req">分类:</label>
+                    </div>
+                    <div class="radios">
+                        <div class="radio">
+                        <c:if test="${unitId ==0 }">
+                            <input type="radio" id="unitType" name="unitType" value="1"/><label for="radio-1">电商基地单位</label>
+                       </c:if>
+                       <c:if test="${unitType<=1 }">
+                            <input type="radio" id="unitType" name="unitType" value="2"   /><label for="radio-2">省单位</label>
+                       </c:if>
+                       <c:if test="${unitType<=2 }">
+                            <input type="radio" id=unitType name="unitType" value="3"  class="validate-one-required"/><label for="radio-2">地市</label>
+                        </c:if>
+                        </div>
+                       <span class="error" id="advice-validate-one-required-unitType" style="display:none"></span>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="label">
+                        <label for="name" class="req">所属单位：</label>
+                    </div>
+                    <div class="input">
+                         <select id="parentUnitId" name="parentUnitId">
+                       <option value="">请选择</option>
+                       
+                       </select>
+                    </div>
+                </div>
+              
+
+                <div  class="field" >
+                    <div class="label">
+                        <label for="areaCode" class="req">选择地区：</label>
+                    </div>
+                    <div class="input">
+                    <form:hidden path="provId"/>
+                       <select id="prov" name="prov" >
+                       <option value="">请选择</option>
+                        <c:forEach items="${regonList}" var="item">
+                           <option value="${ item.regionCode}">${item.regionName }</option>
+                          </c:forEach>
+                       </select>
+                    <span id="provSpanId">省</span>
+                       	<select id="city" name="city" >
+                        <option value="">请选择</option>
+                       </select>
+                     <span id="citySpanId">市</span> 	
+                     <span id="countrySpanId"></span>
+                    </div>
+                </div>
+				
+                 <div class="field">
+                    <div class="label">
+                        <label for="remark" >备注：</label>
+                    </div>
+                    <div class="input">
+                    <form:textarea path="remark"/>
+                    </div>
+                </div>
+
+
+                
+
+                <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight" value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                    <a href="${ctx}/sys/unit/list" class="btnAnchor">返回</a>
+                </div>
+            </div>
+        </div>
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+
+
+<script type="text/javascript">
+$().ready(function() {
+	$("[name='unitType']").click(function(){
+		var unitId = $("#unitId").val();
+		var unitType = $(this).val();
+		selectArea(unitType);
+		$.ajax({
+   		type: "POST",
+   		url: "getPraentUnitList.do",
+   		cache : false, 
+	    dataType : "json",
+   		data: {unitId:unitId,unitType:unitType},
+   		success: function(msg){
+   			$("#parentUnitId").empty();   
+   			
+		    for(var i=0;i<msg.length;i++){
+		    $("#parentUnitId").append("<option value='"+msg[i].id+"'>"+msg[i].name+"</option>"); 
+		    }
+   		}
+	});
+		
+	});
+	
+	$("#prov").change(function(){
+		var prov = $(this).val();
+		$.ajax({
+			   type: "POST",
+			   url: "getCityList.do",
+			   cache : false, 
+			   dataType : "json",
+			   data: {parentRegonId:prov},
+			   success: function(msg){
+				   $("#city").empty();   
+				    for(var i=0;i<msg.length;i++){
+				    $("#city").append("<option value='"+msg[i].regionCode+"'>"+msg[i].regionName+"</option>"); 
+				    }
+			   }
+		}); 
+	});
+	
+});
+function selectArea(num){
+//alert(document.getElementById("area").style.value);
+	if(num == 1){
+		document.getElementById("prov").style.display="none";
+		document.getElementById("city").style.display="none";
+		document.getElementById("provSpanId").innerHTML = '';
+		document.getElementById("citySpanId").innerHTML = '';
+		document.getElementById("countrySpanId").innerHTML = '全国';
+	}else{
+		document.getElementById("prov").style.display="";
+		document.getElementById("provSpanId").innerHTML = '省';
+		if(num == 2){
+			document.getElementById("city").style.display="none";
+			document.getElementById("citySpanId").innerHTML = '';
+			document.getElementById("countrySpanId").innerHTML = '';
+		}else{
+			document.getElementById("city").style.display="";
+			document.getElementById("citySpanId").innerHTML = '市';
+			document.getElementById("countrySpanId").innerHTML = '';
+		}
+	}
+}
+
+
+function makeSelectMenu(response){
+//var obj = document.getElementById("parentUnitId");
+var obj = $("#parentUnitId");
+var ln = obj.options.length;
+while(ln--){
+	obj.remove(ln);		
+}
+var option = new Option("=请选择=",""); 
+obj.options.add(option);
+var value=response.split("#");
+for(var i=0;i<value.length;i++){
+	if(value[i]==""){
+		continue;
+	}	
+	var option = new Option(value[i].split(",")[1],value[i].split(",")[0]); 
+	obj.options.add(option);
+	//if(value[i].split(",")[1]== ${unit.id}){
+    //	ojb.options[i+1].selected = true;
+    //}
+}
+}
+
+function changeProvAjax(){
+var prov = document.getElementById("prov").value;
+if(prov!=""){
+	$.ajax({
+   type: "POST",
+   url: "getCityList.do",
+   data: "parentRegonId="+prov,
+   success: function(msg){
+    makeCityMenu(msg);
+   }
+}); 
+}
+	
+}
+function makeCityMenu(response){
+var obj = document.getElementById("city");
+var ln = obj.options.length;
+while(ln--){
+	obj.remove(ln);		
+}
+var option = new Option("=请选择=",""); 
+obj.options.add(option);
+
+var value=response.split("#");
+for(var i=0;i<value.length;i++){
+	if(value[i]==""){
+		continue;
+	}	
+	var option = new Option(value[i].split(",")[1],value[i].split(",")[0]); 
+	obj.options.add(option);
+	//if(value[i].split(",")[1]== ${unit.id}){
+    //	ojb.options[i+1].selected = true;
+    //}
+}
+}
+
+function sub(){
+	var unitTypeArray = document.getElementsByName("unitType");
+	var unitType = "";
+	for(var i=0;i<unitTypeArray.length;i++){
+		if(unitTypeArray[i].checked){
+		//alert(unitTypeArray[i].value);
+			unitType = unitTypeArray[i].value;
+		}
+	}
+	//if(unitType == ""){
+	//	alert("请选择分类");
+	//	return false;
+	//}
+	var parentUnitId = document.getElementById("parentUnitId").value;
+	//if(parentUnitId == ""){
+	//	alert("请选择所属单位");
+	//	return false;
+	//}
+	return true;
+}
+
+
+
+    <!--
+    ajaxFormSubmit('#fm');
+
+    //-->
+</script>
+
+
+</body>
+</html>

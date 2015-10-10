@@ -1,0 +1,96 @@
+package com.cplatform.mall.back.smsbuy.web.validator;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+import com.cplatform.mall.back.smsbuy.dao.SmsbuyItemRouterDao;
+import com.cplatform.mall.back.smsbuy.entity.SmsbuyItemRouter;
+
+/**
+ * 短信购帮助信息校验类. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-17 下午2:23:03
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: wuyn@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+
+@Component
+public class SmsbuyRouterValidator implements Validator {
+
+	@Autowired
+	private SmsbuyItemRouterDao smsbuyItemRouteDao;
+
+	@Override
+	public boolean supports(Class<?> clazz) {
+		return SmsbuyItemRouter.class.equals(clazz);
+	}
+
+	@Override
+	public void validate(Object target, Errors errors) {
+		SmsbuyItemRouter smsbuyItemRoute = (SmsbuyItemRouter) target;
+		validateCode(smsbuyItemRoute, errors);
+	}
+
+	/**
+	 * @param smsbuyHelp
+	 * @param errors
+	 */
+	private void validateCode(SmsbuyItemRouter smsbuyItemRoute, Errors errors) {
+		// String spCode = smsbuyItemRoute.getRootSpcode() +
+		// smsbuyItemRoute.getSpCode();
+		String spCode = smsbuyItemRoute.getSpCode();
+		String command = smsbuyItemRoute.getCommand();
+		if (command.toUpperCase().indexOf("Y") > -1 || command.toUpperCase().indexOf("N") > -1 || command.toUpperCase().indexOf("DZ") > -1) {
+			errors.rejectValue("command", null, "Y、N、DZ不能作为商品指令！");
+		}
+		// 修改指令
+		if (smsbuyItemRoute.getId() != null) {
+			if (smsbuyItemRouteDao.findBySpCodeAndCommand(spCode, command, smsbuyItemRoute.getId()).size() > 0) {
+				errors.rejectValue("command", null, "指令已存在！");
+			}
+		} else { // 添加指令
+			if (smsbuyItemRouteDao.findBySpCodeAndCommand(spCode, command).size() > 0) {
+				errors.rejectValue("command", null, "指令已存在！");
+			}
+		}
+
+		/*
+		 * 如果支付方式是商城币，相同的商品配置不同的指令时，价格要保持一致。
+		 * @add_by macl@c-platform.com @date 2013-7-13 start...
+		 */
+		if (null == smsbuyItemRoute.getItemPrice()) {
+			errors.rejectValue("itemPrice", null, "请填写价格!");
+		}
+		if (smsbuyItemRoute.getPayType() == 2) {
+			List<SmsbuyItemRouter> existsPriceList = smsbuyItemRouteDao.findByActIdAndItemIdAndPayType(smsbuyItemRoute.getActId(), smsbuyItemRoute
+			        .getItemId(), 2);
+			if (null != existsPriceList && existsPriceList.size() > 0) {
+				for (SmsbuyItemRouter existsPrice : existsPriceList) {
+
+					if (null != existsPrice.getItemPrice() && !"".equals(existsPrice.getItemPrice())) {
+						// 页面上显示和输入数字的计价单位是“元”，数据库保存的数字计价单位是“分”
+						// 将页面上输入的“元”转换为“分”
+						Double d = smsbuyItemRoute.getItemPrice() * 100;
+						if (d.equals(existsPrice.getItemPrice())) {
+							continue;
+						} else {
+							errors.rejectValue("itemPrice", null, "商品价格不一致!");
+						}
+					}
+				}
+			}
+		}
+		/* ... end */
+
+	}
+}

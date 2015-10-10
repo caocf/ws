@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><component name="dataSourceStorage">
+  <data-source source="LOCAL" name="szyd-14" product="Oracle" version="Oracle Database 10g Enterprise Edition Release 10.2.0.1.0 - 64bit Production&#10;With the Partitioning, OLAP and Data Mining options" jdbc-version="11.2" driver-name="Oracle JDBC driver" driver-version="11.2.0.3.0" uuid="1b57e43e-706e-49af-a942-3ed1627ac1f6">
+    <extra-name-characters>$#</extra-name-characters>
+    <identifier-quote-string>"</identifier-quote-string>
+    <synchronize>true</synchronize>
+    <jdbc-driver>oracle.jdbc.OracleDriver</jdbc-driver>
+    <jdbc-url>jdbc:oracle:thin:@192.168.1.14:1521:orcl</jdbc-url>
+    <user-name>life</user-name>
+    <user-password>dfc6dfc3dfccdfcfdfdadfcbdfd9dfd9</user-password>
+    <schema-pattern>*.LIFE</schema-pattern>
+    <default-schemas>*.LIFE</default-schemas>
+    <default-dialect>Oracle</default-dialect>
+    <libraries>
+      <library>
+        <url>jar://$MAVEN_REPOSITORY$/com/oracle/ojdbc/11.2.0.3/ojdbc-11.2.0.3-jdk16.jar!/</url>
+      </library>
+    </libraries>
+    <schema name="LIFE" catalog="" />
+    <table name="SEQ_MEMBER" schema="LIFE" catalog="" type="SEQUENCE" />
+    <table name="SEQ_SYS_COMM_ID" schema="LIFE" catalog="" type="SEQUENCE" />
+    <table name="T_BATCH_TASK" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" />
+      <column name="CUSTOM_TAG" sqlType="NUMBER" length="3" precision="0" nullable="true" jdbcType="3" />
+      <column name="TASK_TYPE" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="UNIT_ID" sqlType="VARCHAR2" length="20" precision="0" nullable="false" jdbcType="12" />
+      <column name="PRIORITY" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="SPEED" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="IS_REPORT" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="START_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="STOP_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="SLEEP_TIME" sqlType="VARCHAR2" length="250" precision="0" nullable="true" jdbcType="12" />
+      <column name="STATUS" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="SP_CODE" sqlType="VARCHAR2" length="20" precision="0" nullable="true" jdbcType="12" />
+      <column name="SERVICE_ID" sqlType="VARCHAR2" length="20" precision="0" nullable="true" jdbcType="12" />
+      <column name="FEE_TYPE" sqlType="NUMBER" length="3" precision="0" nullable="true" jdbcType="3" />
+      <column name="FEE" sqlType="NUMBER" length="5" precision="0" nullable="true" jdbcType="3" />
+      <column name="TRACE_RESPOND" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="RESPOND_TIMEOUT" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="INFO_ID" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="TITLE" sqlType="VARCHAR2" length="400" precision="0" nullable="true" jdbcType="12" />
+      <column name="CONTENT" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="SMIL" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="EXEC_START_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="EXEC_STOP_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="MOBILE_LIST_FILE" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="WHITE_LIST_FILE" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="BLACK_LIST_FILE" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="NOTICE_TERMINAL_ID" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="TASK_NAME" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="SUBMIT_CNT" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="SUCCESS_CNT" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="BLACK_CNT" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="FAIL_CNT" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="CREATOR_ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" />
+      <column name="CREATE_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="false" jdbcType="12" />
+      <column name="AUDITOR_ID" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <column name="AUDIT_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="ADVICE" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="SUBMIT_LOCALFLAG" sqlType="NUMBER" length="3" precision="0" nullable="true" jdbcType="3" />
+      <column name="AREA_CODE" sqlType="VARCHAR2" length="8" precision="0" nullable="true" jdbcType="12" />
+      <column name="SERVICE_DOC" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="ACT_ID" sqlType="NUMBER" length="9" precision="0" nullable="true" jdbcType="3" />
+      <primary-key name="PK_T_BATCH_TASK" columns="ID" />
+    </table>
+    <table name="T_MEMBER" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" />
+      <column name="USER_NAME" sqlType="VARCHAR2" length="30" precision="0" nullable="true" jdbcType="12" />
+      <column name="USER_PASS" sqlType="VARCHAR2" length="50" precision="0" nullable="true" jdbcType="12" />
+      <column name="EMAIL" sqlType="VARCHAR2" length="50" precision="0" nullable="true" jdbcType="12" />
+      <column name="REAL_NAME" sqlType="VARCHAR2" length="50" precision="0" nullable="true" jdbcType="12" />
+      <column name="TERMINAL_ID" sqlType="VARCHAR2" length="20" precision="0" nullable="true" jdbcType="12" />
+      <column name="REG_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="STATUS" sqlType="CHAR" length="1" precision="0" nullable="true" jdbcType="1" />
+      <column name="USER_TYPE" sqlType="CHAR" length="1" precision="0" nullable="true" jdbcType="1" />
+      <column name="UPDATE_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <primary-key name="PK_MEMBER_ID" columns="ID" />
+    </table>
+    <table name="T_SYS_MENU" schema="LIFE" catalog="" type="TABLE">
+      <column name="MENU_CODE" sqlType="VARCHAR2" length="20" precision="0" nullable="false" jdbcType="12" />
+      <column name="MENU_NAME" sqlType="VARCHAR2" length="50" precision="0" nullable="false" jdbcType="12" />
+      <column name="MENU_PCODE" sqlType="VARCHAR2" length="20" precision="0" nullable="false" jdbcType="12" />
+      <column name="MENU_URL" sqlType="VARCHAR2" length="100" precision="0" nullable="true" jdbcType="12" />
+      <column name="LEAF_YN" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="MODEL_CODE" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="URL_BTNS" sqlType="VARCHAR2" length="100" precision="0" nullable="true" jdbcType="12" />
+      <column name="SYS_TYPE" sqlType="NUMBER" length="1" precision="0" nullable="false" jdbcType="3" />
+      <primary-key name="PK_SYS_MENU" columns="MENU_CODE" />
+    </table>
+    <table name="T_SYS_TEMPLATE_EVENT" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="VARCHAR2" length="255" precision="0" nullable="false" jdbcType="12" />
+      <column name="TGID" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <column name="TYPE" sqlType="NUMBER" length="10" precision="0" nullable="false" jdbcType="3" />
+      <primary-key name="SYS_C0045530" columns="ID" />
+    </table>
+    <table name="T_SYS_TEMPLATE_GROUP" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="VARCHAR2" length="255" precision="0" nullable="false" jdbcType="12" />
+      <column name="GNAME" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <column name="MEMO" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <primary-key name="SYS_C0045532" columns="ID" />
+      <exported-key name="FK8516C2B87B50FFE" table="T_SYS_TEMPLATE_GROUP_REF" schema="LIFE" catalog="" columns="TEMPGROUP_ID" />
+    </table>
+    <table name="T_SYS_TEMPLATE_GROUP_REF" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="VARCHAR2" length="255" precision="0" nullable="false" jdbcType="12" />
+      <column name="TEMPGROUP_ID" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <column name="WEBTEMPLATE_ID" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <primary-key name="SYS_C0045534" columns="ID" />
+      <foreign-key name="FK8516C2B87B50FFE" columns="TEMPGROUP_ID" ref-table="T_SYS_TEMPLATE_GROUP" ref-schema="LIFE" ref-catalog="" ref-columns="ID" update-rule="0" delete-rule="1" deferrability="2" />
+      <foreign-key name="FK8516C2BE6417C5E" columns="WEBTEMPLATE_ID" ref-table="T_SYS_TEMPLATE_INFO" ref-schema="LIFE" ref-catalog="" ref-columns="ID" update-rule="0" delete-rule="1" deferrability="2" />
+    </table>
+    <table name="T_SYS_TEMPLATE_INFO" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="VARCHAR2" length="255" precision="0" nullable="false" jdbcType="12" />
+      <column name="DATAURL" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <column name="FILEPATH" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <column name="TNAME" sqlType="VARCHAR2" length="255" precision="0" nullable="true" jdbcType="12" />
+      <primary-key name="SYS_C0045536" columns="ID" />
+      <exported-key name="FK8516C2BE6417C5E" table="T_SYS_TEMPLATE_GROUP_REF" schema="LIFE" catalog="" columns="WEBTEMPLATE_ID" />
+    </table>
+    <table name="T_SYS_USER" schema="LIFE" catalog="" type="TABLE">
+      <column name="ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" />
+      <column name="USER_CODE" sqlType="VARCHAR2" length="20" precision="0" nullable="false" jdbcType="12" />
+      <column name="USER_PWD" sqlType="VARCHAR2" length="60" precision="0" nullable="false" jdbcType="12" />
+      <column name="USER_NAME" sqlType="VARCHAR2" length="100" precision="0" nullable="false" jdbcType="12" />
+      <column name="TERMINAL_ID" sqlType="VARCHAR2" length="30" precision="0" nullable="true" jdbcType="12" />
+      <column name="EMAIL" sqlType="VARCHAR2" length="100" precision="0" nullable="true" jdbcType="12" />
+      <column name="REMARK" sqlType="VARCHAR2" length="200" precision="0" nullable="true" jdbcType="12" />
+      <column name="VALID_TIME" sqlType="VARCHAR2" length="8" precision="0" nullable="true" jdbcType="12" />
+      <column name="CREATE_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="false" jdbcType="12" />
+      <column name="CHANGE_PWD_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="true" jdbcType="12" />
+      <column name="UPDATE_TIME" sqlType="VARCHAR2" length="14" precision="0" nullable="false" jdbcType="12" />
+      <column name="UPDATE_USER_ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" />
+      <column name="LOCK_STATUS" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" def="MCA=" />
+      <column name="STATUS" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" def="MSA=" />
+      <column name="FLAG" sqlType="NUMBER" length="3" precision="0" nullable="false" jdbcType="3" />
+      <column name="UNIT_ID" sqlType="NUMBER" length="9" precision="0" nullable="false" jdbcType="3" def="MCA=" />
+    </table>
+  </data-source>
+</component>

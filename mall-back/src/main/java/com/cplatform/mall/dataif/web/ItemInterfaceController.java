@@ -1,0 +1,183 @@
+package com.cplatform.mall.dataif.web;
+
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.dataif.model.CommentInfo;
+import com.cplatform.mall.dataif.model.ItemGroupInfo;
+import com.cplatform.mall.dataif.model.ItemInfo;
+import com.cplatform.mall.dataif.model.QuestionInfo;
+import com.cplatform.mall.dataif.service.ItemInterfaceService;
+import com.google.common.collect.Maps;
+
+/**
+ * Title.商品接口 <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-5 下午4:30:28
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: BaiJie
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping("/if_item")
+public class ItemInterfaceController {
+
+	
+	@Autowired
+	private LogUtils logUtils;
+	
+	@Autowired
+	ItemInterfaceService itemInterfaceService;
+
+	@RequestMapping(value = { "", "/", "/help" })
+	@ResponseBody
+	public String if_list() {
+		StringBuilder ret = new StringBuilder();
+		ret.append("<b>/history</b>").append("<br/>参数：<br/>").append("saleIds : 要查询的销售商品id列表，用逗号分隔<br/>");
+		ret.append("<b>/commentFlag</b>").append("<br/>参数：<br/>").append("commentId ：评论id <br/>").append("isUse: 是否有用(1,有用；0,没用)<br/>");
+		ret.append("<b>/questionList</b>").append("<br/>参数：<br/>").append("saleId ：销售商品id<br/>").append("curpage:当前页码<br/>")
+		        .append("pageRows:每页显示<br/>");
+		ret.append("<b>/commentList</b>").append("<br/>参数：<br/>").append("saleIds : 要查询的销售商品id列表，用逗号分隔<br/>");
+		ret.append("<b>/questionAct</b>").append("<br/>参数：<br/>").append("saleId ：销售商品id<br/>").append("type ：咨询类型<br/>")
+		        .append(" content :咨询内容<br/>").append("userId: 操作用户<br/>").append("pageRows:每页显示多少条<br/>");
+		ret.append("<b>/info</b>").append("<br/>参数：<br/>").append("saleId : 要查询的销售商品id<br/>");
+		ret.append("<b>/itemGroup</b>").append("<br/>参数：<br/>").append("saleId : 要查询的销售商品id");
+		ret.append("<b>/groupItems</b>").append("<br/>参数：<br/>").append("saleId : 要查询的销售套餐商品id");
+
+		return ret.toString();
+	}
+
+	/**
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping("/history")
+	@ResponseBody
+	public Object history(String saleIds) throws SQLException {
+		HashMap<String, Object> map = Maps.newHashMap();
+		if (StringUtils.isEmpty(saleIds)) {
+			map.put("historys", "");
+		} else {
+			List<ItemInfo> itemList = itemInterfaceService.getHistoryItem(saleIds);
+			map.put("historys", itemList);
+		}
+		return map;
+	}
+
+	@RequestMapping("/commentFlag")
+	@ResponseBody
+	public Object commentFlag(Long commentId, boolean isUse) throws SQLException {
+		boolean flag = itemInterfaceService.itemUse(commentId, isUse);
+		HashMap<String, Object> map = Maps.newHashMap();
+		map.put("isUse", isUse);
+		map.put("flag", flag ? 1 : 0);
+		return map;
+	}
+
+	@RequestMapping("/questionList")
+	@ResponseBody
+	public Object questionList(Long saleId, @RequestParam(defaultValue = "1") int curpage, @RequestParam(defaultValue = "20") int pageRows)
+	        throws SQLException {
+		HashMap<String, Object> map = Maps.newHashMap();
+		Page<QuestionInfo> questionPage = itemInterfaceService.getItemQuestionPage(saleId, curpage, pageRows);
+		map.put("consults", questionPage.getData());
+		map.put("pageInfo", new Object[] { questionPage.getRecordCount(), questionPage.getCurPage() });
+		return map;
+	}
+
+	@RequestMapping("/commentList")
+	@ResponseBody
+	public Object commentList(Long saleId, @RequestParam(defaultValue = "1") int curpage, @RequestParam(defaultValue = "20") int pageRows)
+	        throws SQLException {
+		HashMap<String, Object> map = Maps.newHashMap();
+		Page<CommentInfo> commentPage = itemInterfaceService.getItemCommentPage(saleId, curpage, pageRows);
+		map.put("purchases", commentPage.getData());
+		map.put("pageInfo", new Object[] { commentPage.getRecordCount(), commentPage.getCurPage() });
+		return map;
+	}
+
+	@RequestMapping("/questionAct")
+	@ResponseBody
+	public Object questionAct(Long saleId, @RequestParam(defaultValue = "1") int type, String content, Long userId,
+	        @RequestParam(defaultValue = "20") int pageRows) throws SQLException {
+		HashMap<String, Object> map = Maps.newHashMap();
+		if (itemInterfaceService.saveQuestionInfo(saleId, type, content, userId)) {
+			Page<QuestionInfo> questionPage = itemInterfaceService.getItemQuestionPage(saleId, 1, pageRows);
+			map.put("flag", 1);
+			map.put("consults", questionPage.getData());
+			map.put("pageInfo", new Object[] { questionPage.getRecordCount(), questionPage.getCurPage() });
+		} else {
+			map.put("flag", 0);
+		}
+		return map;
+	}
+	/**
+	 * 商品基础信息接口
+	 * @param saleId
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping("/info")
+	@ResponseBody
+	public Object getSaleInfo(Long saleId) {
+		HashMap<String, Object> map = Maps.newHashMap();
+	try {
+		ItemInfo itemInfo = itemInterfaceService.getItemInfo(saleId);
+		map.put("item", itemInfo);
+		map.put("properties", itemInterfaceService.getItemProperty(saleId));
+		
+		map.put("itemPrice", itemInterfaceService.getItemPrice(saleId));
+		logUtils.logAdd("商品详情接口", "商品编号："+saleId+",异常信息"+saleId);
+	} catch (Exception e) {
+		logUtils.logAdd("商品详情接口", "商品编号："+saleId+",异常信息"+e.getMessage());
+	}
+		return map;
+	}
+
+	/**
+	 * 套餐商品:
+	 * 获取套餐商品中包含的所有商品信息
+	 * @param saleId
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping("/itemGroup")
+	@ResponseBody
+	public Object itemGroup(Long saleId) throws SQLException {
+		HashMap<String, Object> map = Maps.newHashMap();
+		map.put("group", itemInterfaceService.getItemGroup(saleId));
+		return map;
+	}
+
+	/**
+	 * 套餐商品下的所有真实商品列表
+	 * 
+	 * @param gId
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping("/groupItems")
+	@ResponseBody
+	public Object groupItem(Long saleId) throws SQLException {
+		ItemGroupInfo ig = new ItemGroupInfo();
+		ig.setItems(itemInterfaceService.getGroupItemSales(String.valueOf(saleId)));
+		ig.setGroupItem(itemInterfaceService.getItemInfo(saleId));
+		return ig;
+	}
+
+}

@@ -1,0 +1,62 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, form, fieldset, input, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+fieldset, img, a img {
+    border: 0 none;
+}
+address, caption, cite, code, dfn, em, strong, th, var {
+    font-style: normal;
+    font-weight: normal;
+}
+ol, ul {
+    list-style: none outside none;
+}
+body {
+    background: none repeat scroll 0 0 #FFFFFF;
+    color: #404040;
+    font-family:"微软雅黑",Arial,Helvetica,Simsun,sans-serif;
+    font-size: 12px;
+    line-height: 25px;
+    text-align: center;
+}
+h1, h2, h3, h4, h5, h6, ul, li, em, dl, dt, dd {
+    font-size: 12px;
+    font-weight: normal;
+    list-style: none outside none;
+    text-align: left;
+}
+a:link {
+    color: #404040;
+    text-decoration: none;
+}
+a:visited {
+    color: #404040;
+    text-decoration: none;
+}
+a:hover, a:active {
+    color: #FF6600;
+    text-decoration: underline;
+}
+.clear {
+    clear: both;
+    font-size: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+}
+.clearfix {
+    clear: both;
+    font-size: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+}
+.right{ float:right; }
+.left{ float:left; }

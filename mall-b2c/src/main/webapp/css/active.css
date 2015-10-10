@@ -1,0 +1,45 @@
+#action_info{ 
+	float:right;		
+	width:480px;
+	height:500px;
+	padding-left:20px;
+	}
+		 
+	#action_info h1{    
+		height: 1.5em;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+#action_main{
+		float:left;
+		width:500px;
+		height:500px;
+	}
+	
+	.rotate-bg{
+		width:508px;
+		height:500px;
+		background:url("../img/rotate.png") center center no-repeat;;
+	}
+	
+	.ly-plate div.lottery-star{
+		width:214px;
+		height:214px;
+		position:absolute;
+		top:178px;
+		left:146px;
+		/*text-indent:-999em;
+		overflow:hidden;
+		background:url(./img/rotate.png);
+		-webkit-transform:rotate(0deg);*/
+		outline:none
+	}
+	
+	.ly-plate div.lottery-star #lotteryBtn{
+		cursor: pointer;
+		position: absolute;
+		top:0;
+		left:0;
+		*left:-107px
+	}
+	#alert_window{ position:absolute; left:50%;top:200px; cursor:pointer; width:350px; height:50px; padding:50px 25px 100px; font-size:18px; color:#000000; z-index:10000; margin-left:-200px; display:none; line-height:25px;text-align: center; }

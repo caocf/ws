@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_item_price_type_1 ON "LIFE".t_item_price_type(price_type_code);

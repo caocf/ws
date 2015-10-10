@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_sale_user_area_link_2 ON "LIFE".t_item_sale_user_area_link(sale_id,region_code);

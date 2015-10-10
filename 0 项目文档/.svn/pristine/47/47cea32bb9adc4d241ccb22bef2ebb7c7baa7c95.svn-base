@@ -1,0 +1,33 @@
+T_ITEM_SALE_LOGISTICS商品和模板关联表
+
+T_LOGISTICS_TEMPLATE物流模板表
+
+T_LOGISTICS_TEMPLATE_PRICE物流模板价格表
+
+--计费规则----------------------------------------------------------------------
+
+1.先看T_ITEM_SALE_LOGISTICS表内商品和模板是否有关联，
+  如果没关联则走现在的流程。
+
+
+2.如果有关联，先判断用户手机归属地，用户归属地是否在T_LOGISTICS_TEMPLATE_PRICE
+的REGION_CODE中，如果不在里面使用默认REGION_CODE=-1的记录
+如果REGION_CODE符合的话获取符合的记录计算
+
+
+3.计算规则为 :
+按照T_LOGISTICS_TEMPLATE_PRICE表内INIT_NUM起步数量的价格INIT_PRICE,
+起步外新增数量INCREMENT_NUM 起步外新增数量运价（分）INCREMENT_PRICE
+来计算：
+
+
+3.1如果购买的商品数量小于等于起步数量则获取INIT_PRICE
+3.2如果购买的商品数量大于起步数量，则INIT_PRICE+ 向上取整(（购买数量-INIT_NUM）% INCREMENT_NUM)    * INCREMENT_PRICE
+
+--------------------------------------------------------------------------------
+
+接口参数：        
+
+   手机号，[商品ID1，购买数量],[商品ID2，购买数量]，[商品IDN， 购买数量]
+
+接口返回值：[商品ID1，运费价格],[商品ID2，价格],[商品IDN，价格]

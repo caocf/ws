@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_pay_order_payment ON "LIFE".t_pay_order_payment(pid);

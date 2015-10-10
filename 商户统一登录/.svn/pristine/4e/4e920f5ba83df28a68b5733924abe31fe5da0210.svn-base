@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+.form-input .input-txt {
+	background: #ffffff;
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f5f5f5',GradientType=0 );
+	border: 1px solid #c9c9c9;
+	height: auto;
+	padding: 2px 3px;
+	margin-bottom: 10px;
+	font-size: 14px;
+	line-height: 22px;
+	color: #777777;
+	-webkit-border-radius: 1px;
+	-moz-border-radius: 1px;
+	border-radius: 1px;
+	height: 26px;
+	width: 268px;
+}
+.form-input a.removeTxt {
+    position: absolute;
+    right: 35px;
+    top: 6px;
+}

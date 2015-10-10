@@ -1,0 +1,158 @@
+package com.cplatform.mall.back.websys.entity;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+/**
+ * 
+ * Title.页面静态化失败实体表. <br>
+ * Description.用于存放页面静态化失败的商品或商户信息.
+ * <p>
+ * Copyright: Copyright (c) 2013-7-17 上午11:43:32
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: macl@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Table(name = "t_page_static_info")
+@Entity
+public class PageStaticInfo {
+	private Long id;
+
+	/** 类型,0是商品，1是商户 **/
+	private Integer type;
+
+	/** 资源ID，可以是商品ID，或者商户ID **/
+	private Long resourceId;
+
+	/** 静态化状态：0失败，1成功 **/
+	private Integer status;
+
+	/** 创建日期 **/
+	private String createTime;
+	
+	/**商户名称**/
+	private String storeName;
+	
+	/**商品名称**/
+	private String itemName;
+	
+	
+	/** 开始时间 **/
+	private String startTime;
+	
+	
+	@Transient
+	public String getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+	@Transient
+	public String getStopTime() {
+		return stopTime;
+	}
+
+	public void setStopTime(String stopTime) {
+		this.stopTime = stopTime;
+	}
+
+
+
+
+	/** 结束时间 **/
+	private String stopTime;
+	
+	@Transient
+	public String getItemName() {
+		return itemName;
+	}
+
+	public void setItemName(String itemName) {
+		this.itemName = itemName;
+	}
+
+	@Transient
+	public String getStoreName() {
+		return storeName;
+	}
+
+	public void setStoreName(String storeName) {
+		this.storeName = storeName;
+	}
+
+	
+
+
+	/** 商品类型 **/
+	public static final Integer TYPE_ITEM = 0;
+	
+	/** 商户类型 **/
+	public static final Integer TYPE_SHOP = 1;
+
+	/** 状态：静态化失败 **/
+	public static final Integer STATUS_FAIL = 0;
+	
+	/** 状态：静态化成功 **/
+	public static final Integer STATUS_SUCCESS = 1;
+
+	@SequenceGenerator(name = "seq_pageStaticInfo", sequenceName = "SEQ_PAGE_STATIC_INFO")
+	@Id
+	@GeneratedValue(generator = "seq_pageStaticInfo")
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	@Column(name = "type")
+	public Integer getType() {
+		return type;
+	}
+
+	public void setType(Integer type) {
+		this.type = type;
+	}
+
+	@Column(name = "resource_id")
+	public Long getResourceId() {
+		return resourceId;
+	}
+
+	public void setResourceId(Long resourceId) {
+		this.resourceId = resourceId;
+	}
+
+	@Column(name = "status")
+	public Integer getStatus() {
+		return status;
+	}
+
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
+
+	@Column(name = "create_time")
+	public String getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+}

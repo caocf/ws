@@ -1,0 +1,13 @@
+.lightshadow{ background:#333; position:absolute; 
+	filter:alpha(opacity=50); /*IE滤镜，透明度50%*/
+	-moz-opacity:0.5; /*Firefox私有，透明度50%*/
+	width:100%; height:100%;
+	opacity:0.5;/*其他，透明度50%*/
+	z-index:10000;
+	display:none;
+}		
+.lightcontent{ position:absolute; top:200px; width:620px; padding:20px 50px; background:#fff; left:50%; margin-left:-370px; z-index:10001; display:none;}
+.lightcontent p{ margin-bottom:20px; color:#999}
+.lightcontent li{ padding-bottom:12px; line-height:18px;}
+.lightcontent h2{ font-size:14px; line-height:36px; text-align:center; color:#666; margin-bottom:24px; border-bottom:1px #eee solid;}
+.lightcontent input{ margin-left:270px; padding:0 10px; }

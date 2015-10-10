@@ -1,0 +1,165 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.dao.SysTemplateEventDao;
+import com.cplatform.mall.back.websys.entity.SysTemplateEvent;
+import com.cplatform.mall.back.websys.entity.SysTemplateInfo;
+import com.cplatform.mall.back.websys.service.SysTemplateEventService;
+import com.cplatform.mall.back.websys.service.SysTemplateService;
+
+/**
+ * Title. <br>模版事件管理控制类
+ * Description.
+ * <p/>
+ * Copyright: Copyright (c) 13-6-13
+ * <p/>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p/>
+ * Author: zhouhui@c-platform.com
+ * <p/>
+ * Version: 1.0
+ * <p/>
+ */
+
+@Controller
+@RequestMapping("/websys/template/")
+public class SysTemplateEventController {
+	
+	@Autowired
+	private SysTemplateEventService service;
+	
+	@Autowired
+	private SysTemplateService templateService;
+	
+	@Autowired
+	private SysTemplateEventDao dao;
+	
+	@Autowired
+	AppConfig appConfig;
+
+
+	/**
+	 * 模版管理事件查询所有的板块
+	 * @param info
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "event_list")
+	public String templateList(@ModelAttribute("SysTemplateEvent") SysTemplateEvent info, @RequestParam(value = "page", required = false, defaultValue = "1") int page, HttpSession session,
+	        Model model) throws SQLException {
+		Page<SysTemplateEvent> templist = service.getSysTempLateEventInfo(info, page, Page.DEFAULT_PAGESIZE);
+		if(templist.getData().size() > 0){
+			model.addAttribute("pageData", templist);
+		}
+		return "websys/template/event_list";
+	}
+	
+	
+	/**
+	 * 添加板块事件转到添加页面
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "event_add", method = RequestMethod.GET)
+	public String templateAdd(HttpSession session, Model model) throws SQLException {
+		Page<SysTemplateInfo> sysTemplateInfo = templateService.list();
+		SysTemplateEvent info = new SysTemplateEvent();
+		model.addAttribute("sysTemplateInfo", sysTemplateInfo);
+		model.addAttribute("method", "add");
+		model.addAttribute("info", info);
+		return "websys/template/event_add";
+	}
+
+	/**
+	 * 添加模块事件 执行添加访问数据库
+	 * @param SysTemplateEvent
+	 * @param request
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "event_add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object templateSave(@ModelAttribute("info") SysTemplateEvent SysTemplateEvent, HttpServletRequest request) throws IOException {
+		String tName = request.getParameter("tName");
+		if (null == tName || tName.equals("")) {
+			// 提示用户必须要上传文件
+			return JsonRespWrapper.successAlert("请选择模板组。");//弹出提示
+		}
+		SysTemplateEvent.setType(1);
+		service.saveTemplate(SysTemplateEvent,tName);
+			// 提示并跳转
+		return JsonRespWrapper.success("添加成功", "/websys/template/event_list");
+	}
+
+	/**
+	 * 编辑模块事件访问到编辑页面
+	 * @param id
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "event_edit", method = RequestMethod.GET)
+	public String templateEdit(@RequestParam(value = "id") int id, HttpSession session, Model model) throws SQLException {
+		Page<SysTemplateInfo> sysTemplateInfo = templateService.list();
+		SysTemplateEvent sysTemplateEvent = this.service.findById(id);
+		model.addAttribute("sysTemplateInfo", sysTemplateInfo);
+		model.addAttribute("method", "edit");
+		model.addAttribute("info", sysTemplateEvent);
+		return "websys/template/event_add";
+	}
+	
+	/**
+	 * 编辑模块事件执行编辑访问数据库
+	 * @param SysTemplateEvent
+	 * @param request
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "event_edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object templateUpdate(@ModelAttribute("info") SysTemplateEvent SysTemplateEvent,HttpServletRequest request) throws SQLException {
+		String tName = request.getParameter("tName");
+		if (null == tName || tName.equals("")) {
+			// 提示用户必须要上传文件
+			return JsonRespWrapper.successAlert("请选择模板组。");//弹出提示
+		}
+		service.saveTemplate(SysTemplateEvent,tName);
+		return JsonRespWrapper.success("修改成功", "/websys/template/event_list");
+	}
+
+	/**
+	 * 删除模块事件
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "event_del")
+	@ResponseBody
+	public Object templateDel(@RequestParam(value = "id") int id) {
+		dao.delete(id);
+		return JsonRespWrapper.success("删除成功！", "/websys/template/event_list");
+	}
+}

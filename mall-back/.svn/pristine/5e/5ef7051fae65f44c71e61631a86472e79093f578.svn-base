@@ -1,0 +1,171 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.websys.dao.SysTemplateDao;
+import com.cplatform.mall.back.websys.entity.SysTemplateInfo;
+import com.cplatform.mall.back.websys.service.SysTemplateService;
+
+/**
+ * Title. <br>
+ * 模版管理控制类 Description.
+ * <p/>
+ * Copyright: Copyright (c) 13-6-9
+ * <p/>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p/>
+ * Author: zhouhui@c-platform.com
+ * <p/>
+ * Version: 1.0
+ * <p/>
+ */
+
+@Controller
+@RequestMapping("/websys/template/")
+public class SysTemplateController {
+
+	@Autowired
+	private SysTemplateService service;
+
+	@Autowired
+	private SysTemplateDao dao;
+
+	@Autowired
+	AppConfig appConfig;
+
+	/**
+	 * 模版管理下查询所有的板块
+	 * 
+	 * @param info
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "list")
+	public String templateList(@ModelAttribute("sysTemplateInfo") SysTemplateInfo info,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, HttpSession session, Model model) throws SQLException {
+		Page<SysTemplateInfo> templist = service.getSysTempLateInfo(info, page, Page.DEFAULT_PAGESIZE);
+		if (templist.getData().size() > 0) {
+			model.addAttribute("pageData", templist);
+		}
+		return "websys/template/list";
+	}
+
+	/**
+	 * 添加板块转到添加页面
+	 * 
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "add", method = RequestMethod.GET)
+	public String templateAdd(HttpSession session, Model model) throws SQLException {
+		SysTemplateInfo info = new SysTemplateInfo();
+		model.addAttribute("info", info);
+		model.addAttribute("method", "add");
+		model.addAttribute("charList", SysTemplateInfo.charList);
+		return "websys/template/add";
+	}
+
+	/**
+	 * 添加模块 执行添加访问数据库
+	 * 
+	 * @param uploadFile
+	 * @param sysTempLateInfo
+	 * @param request
+	 * @param session
+	 * @param result
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object templateSave(MultipartFile uploadFile, @ModelAttribute("info") SysTemplateInfo sysTempLateInfo, HttpServletRequest request,
+	        HttpSession session) throws Exception {
+		int isValid = Integer.parseInt(request.getParameter("isValid"));
+		if (isValid == 1) {
+			if (uploadFile == null || uploadFile.isEmpty()) {
+				// 提示用户必须要上传文件
+				return JsonRespWrapper.successAlert("未选择模板文件或者模板文件为空，请重新选择！");// 弹出提示
+			}
+		}
+		service.saveTemplate(sysTempLateInfo, uploadFile, isValid);
+		// 提示并跳转
+		return JsonRespWrapper.success("添加成功", "/websys/template/list");
+	}
+
+	/**
+	 * 编辑模块访问到编辑页面
+	 * 
+	 * @param id
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "edit", method = RequestMethod.GET)
+	public String templateEdit(@RequestParam(value = "id") int id, HttpSession session, Model model) throws SQLException {
+		SysTemplateInfo sysTempLateInfo = this.service.findById(id);
+		model.addAttribute("info", sysTempLateInfo);
+		model.addAttribute("method", "edit");
+		model.addAttribute("charList", SysTemplateInfo.charList);
+		return "websys/template/add";
+	}
+
+	/**
+	 * 编辑模块执行编辑访问数据库
+	 * 
+	 * @param uploadFile
+	 * @param sysTempLateInfo
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object templateUpdate(MultipartFile uploadFile, @ModelAttribute("info") SysTemplateInfo sysTempLateInfo, HttpServletRequest request)
+	        throws Exception {
+		sysTempLateInfo.setOutputCharTset("GBK");
+		int isValid = Integer.parseInt(request.getParameter("isValid"));
+		if (isValid == 1) {
+			if (null == uploadFile) {
+				// 提示用户必须要上传文件
+				return JsonRespWrapper.successAlert("请选择模板文件。");// 弹出提示
+			}
+		}
+		service.saveTemplate(sysTempLateInfo, uploadFile, isValid);
+		return JsonRespWrapper.success("修改成功", "/websys/template/list");
+	}
+
+	/**
+	 * 删除模块
+	 * 
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "del")
+	@ResponseBody
+	public Object templateDel(@RequestParam(value = "id") int id) {
+		dao.delete(id);
+		return JsonRespWrapper.success("删除成功！", "/websys/template/list");
+	}
+}

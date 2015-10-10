@@ -1,0 +1,112 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+    <head>
+        <ht:head/>
+    </head>
+<body>
+<br/>
+<div id="search-menu">
+    <ul>
+        <ht:menu-btn type="search"/>
+	</ul>
+    <br style="clear: left" />
+</div>
+<div class="queryContainer" >
+    <form name="queryForm" id="queryForm" action="?" method="get">
+        <table>
+            <tr>
+                <td width="70">号码：</td>
+                <td width="300"><input type="text" name="mobile" value="${param.mobile}" class="txt" style="width:206px"/></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <ct:btn type="search" />
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div class="container">
+    <br/>
+    <h3>查询结果</h3>
+
+    <div class="mainbox">
+    	<c:choose>
+        <c:when test="${not empty resultMap}">
+
+        <table class="datalist fixwidth">
+            <tr>
+            	<th nowrap="nowrap" width="100">号码</th>
+            	<!--  
+                <th nowrap="nowrap" width="100">品牌</th>
+                -->
+                <th nowrap="nowrap" width="100">积分余额</th>
+                <th nowrap="nowrap" width="100">商城币余额(元)</th>
+            </tr>
+            <tr>
+            	<td nowrap="nowrap">${mobile}</td>
+            	<c:choose>
+	        		<c:when test="${resultMap.scoreStatusCode == '0'}">
+	        		<!--  
+		                <td nowrap="nowrap">
+		                	<c:choose>
+		        			<c:when test="${not empty resultMap.brand}">
+		                        ${resultMap.brand}
+		                    </c:when>
+		                    <c:otherwise>
+		                    <a href="#this" title="状态：${resultMap.scoreStatusCode}，描述：${resultMap.scoreStatusText}">暂无数据</a>
+		                    </c:otherwise>
+		                    </c:choose>
+		                </td>
+		                -->
+		                <td nowrap="nowrap">
+		                	<c:choose>
+		        			<c:when test="${not empty resultMap.score}">
+		                        ${resultMap.score}
+		                    </c:when>
+		                    <c:otherwise>
+		                    <a href="#this" title="状态：${resultMap.scoreStatusCode}，描述：${resultMap.scoreStatusText}">暂无数据</a>
+		                    </c:otherwise>
+		                    </c:choose>
+		                </td>
+	                </c:when>
+	                <c:otherwise>
+	                <!-- 
+		                <td nowrap="nowrap"><a href="#this" title="状态：${resultMap.scoreStatusCode}，描述：${resultMap.scoreStatusText}">无</a></td>
+		                 -->
+		                <td nowrap="nowrap"><a href="#this" title="状态：${resultMap.scoreStatusCode}，描述：${resultMap.scoreStatusText}">无</a></td>
+	                </c:otherwise>
+                </c:choose>
+                <c:choose>
+	        		<c:when test="${resultMap.coinStatusCode == '0'}">
+		                <td nowrap="nowrap">
+		                <c:choose>
+		        			<c:when test="${not empty resultMap.coin}">
+		                        ${resultMap.coin/100}
+		                    </c:when>
+		                    <c:otherwise>
+		                    <a href="#this" title="状态：${resultMap.coinStatusCode}，描述：${resultMap.coinStatusText}">暂无数据</a>
+		                    </c:otherwise>
+		                    </c:choose>
+		                </td>
+	                </c:when>
+	                <c:otherwise>
+	                	<td nowrap="nowrap"><a href="#this" title="状态：${resultMap.coinStatusCode}，描述：${resultMap.coinStatusText}">无</a></td>
+	                </c:otherwise>
+                </c:choose>
+            </tr>
+        </table>
+        </c:when>
+        <c:otherwise>
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:otherwise>
+        </c:choose>        
+    </div>
+</div>
+</body>
+</html>

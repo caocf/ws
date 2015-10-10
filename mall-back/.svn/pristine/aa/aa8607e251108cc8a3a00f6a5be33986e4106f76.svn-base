@@ -1,0 +1,295 @@
+package com.cplatform.mall.back.giftcard.web;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.giftcard.entity.GiftRequiredItem;
+import com.cplatform.mall.back.giftcard.service.GiftRequiredItemService;
+import com.cplatform.mall.back.giftcard.service.GiftRequiredService;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.service.ItemManageService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.mall.back.websys.service.BsFileService;
+
+/**
+ * @Title
+ * @Description
+ * @Copyright: Copyright (c) 2013-9-22
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/gift/relateItem")
+public class GiftRequiredItemController {
+	@Autowired	
+	private GiftRequiredItemService giftRequiredItemService;
+	@Autowired
+	private GiftRequiredService giftRequiredService;
+	@Autowired
+	private ItemManageService itemManageService;
+	@Autowired
+	private LogUtils logUtils;
+	
+	/**
+	 * 待绑定列表
+	 * @param giftRequiredItem
+	 * @param model
+	 * @return
+	 * @throws SQLException 
+	 */
+	@RequestMapping(value="/list")
+	public String list(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page,Model model) throws SQLException{
+		giftRequired.setStatus(2L);
+//		Page<GiftRequired> pageData = giftRequiredService.giftRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+//		pageData=giftRequiredItemService.getAuditBindItem(pageData);
+		Page<GiftRequired> pageData = giftRequiredItemService.getAuditRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("statusMap", GiftRequired.statusMap);
+		model.addAttribute("bindItemStatusMap", GiftRequired.bindItemStatusMap);
+		model.addAttribute("bindStatusMap", GiftRequired.bindStatusMap);
+		return "/giftcard/relateItem/relateItem-list";
+	}
+	
+	
+	/**
+	 * 卡需求绑定商品添加页面
+	 * @param model
+	 * @param batchNo
+	 * @return
+	 */
+	@RequestMapping(value="/add",method=RequestMethod.GET)
+	public String preAdd(Model model,Long batchNo){
+		GiftRequired giftRequired=giftRequiredService.findById(batchNo);
+		model.addAttribute("giftRequired", giftRequired);
+		return "/giftcard/relateItem/relateItem-add";
+	}
+	
+	/**
+	 * 查询审核通过的礼品卡商品
+	 * @param model
+	 * @param itemSale
+	 * @param iseckillFlag
+	 * @param page
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/selectItem")
+	public String selectItem(Model model,ItemSale itemSale,
+			Long iseckillFlag,
+			@RequestParam(value = "page", defaultValue = "1", required = false) int page) throws SQLException{
+		itemSale.setIseckill(iseckillFlag);
+		itemSale.setStatus(3L);
+		model.addAttribute("iseckillFlag",iseckillFlag);
+		Page<ItemSale> itemOrgPage = itemManageService.listItemSale(itemSale,page, Page.DEFAULT_PAGESIZE, "");
+		model.addAttribute("pageData", itemOrgPage);
+		return "/giftcard/relateItem/relateItem-select-item";
+	}
+	
+	/**
+	 * 添加绑定商品
+	 * @param model
+	 * @param request
+	 * @param batchNo
+	 * @param storeId
+	 * @param itemId
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/add",method=RequestMethod.POST)
+	@ResponseBody
+	public Object addBind(Model model,HttpServletRequest request,
+			Long batchNo,
+			Long[] storeId,
+			Long[] itemId,
+			HttpSession session) throws SQLException{
+		//判断是否有重复商品
+		if(giftRequiredItemService.hasRepeatElement(itemId)){
+			return JsonRespWrapper.successAlert("不能选择重复商品");
+		}
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		giftRequiredItemService.saveBindItems(storeId, itemId, batchNo, sessionUser);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("操作成功", backUrl);
+	}
+	
+	@RequestMapping(value="/edit",method=RequestMethod.GET)
+	public String preEdit(Model model,Long batchNo) throws SQLException{
+		GiftRequired giftRequired=giftRequiredService.findById(batchNo);
+		model.addAttribute("giftRequired", giftRequired);
+		List<GiftRequiredItem> giftRequiredItems=giftRequiredItemService.listByBatchNo(batchNo);
+		model.addAttribute("giftRequiredItems", giftRequiredItems);
+		return "/giftcard/relateItem/relateItem-edit";
+	}
+	
+	/**
+	 * 修改绑定商品
+	 * @param model
+	 * @param request
+	 * @param batchNo
+	 * @param storeId
+	 * @param itemId
+	 * @param id
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/edit",method=RequestMethod.POST)
+	@ResponseBody
+	public Object editBind(Model model,HttpServletRequest request,
+			Long batchNo,
+			Long[] storeId,
+			Long[] itemId,
+			Long[] id,
+			HttpSession session) throws SQLException{
+		//判断是否有重复商品
+		if(giftRequiredItemService.hasRepeatElement(itemId)){
+			return JsonRespWrapper.successAlert("不能选择重复商品");
+		}
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		giftRequiredItemService.updateBindItems(id,storeId, itemId, batchNo, sessionUser);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("操作成功", backUrl);
+	}
+	
+	@RequestMapping(value="/delete/{batchNo}")
+	@ResponseBody
+	public Object delete(Model model,HttpServletRequest request,
+			@PathVariable Long batchNo) throws SQLException{
+		giftRequiredItemService.deleteBinds(batchNo);
+		return JsonRespWrapper.successReload("删除绑定成功");
+	}
+
+	@RequestMapping(value="/view")
+	public String view(Model model,Long batchNo,GiftRequiredItem giftRequiredItem,
+			@RequestParam(value = "page", defaultValue = "1", required = false) int page) throws SQLException{
+		giftRequiredItem.setBatchNo(batchNo);
+		Page<GiftRequiredItem> pageData = giftRequiredItemService.findByBatchNo(giftRequiredItem, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		return "/giftcard/relateItem/relateItem-view";
+	}
+	
+	/**
+	 * 送审
+	 * @param model
+	 * @param request
+	 * @param batchNo
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/firstAudit/{batchNo}")
+	@ResponseBody
+	public Object firstAudit(Model model,HttpServletRequest request,
+			@PathVariable Long batchNo) throws SQLException{
+		giftRequiredItemService.firstAudit(batchNo);
+		return JsonRespWrapper.successReload("送审成功");
+	}
+	
+	/**
+	 * 待审核列表
+	 * @param giftRequiredItem
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value="/auditlist")
+	public String auditList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page,Model model) throws SQLException{
+		giftRequired.setBindStatus(1);
+		Page<GiftRequired> pageData = giftRequiredItemService.getAuditRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("statusMap", GiftRequired.statusMap);
+		return "/giftcard/relateItem/relateItem-audit-list";
+	}
+	
+	/**
+	 * 审核页面
+	 * @param model
+	 * @param batchNo
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/audit",method=RequestMethod.GET)
+	public String preAudit(Model model,Long batchNo) throws SQLException{
+		GiftRequired giftRequired=giftRequiredService.findById(batchNo);
+		model.addAttribute("giftRequired", giftRequired);
+		List<GiftRequiredItem> giftRequiredItems=giftRequiredItemService.listByBatchNo(batchNo);
+		model.addAttribute("giftRequiredItems", giftRequiredItems);
+		model.addAttribute("batchNo", batchNo);
+		return "/giftcard/relateItem/relateItem-audit";
+	}
+	
+	
+	/**
+	 * 审核
+	 * @param model
+	 * @param batchNo
+	 * @param request
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value="/audit",method=RequestMethod.POST)
+	@ResponseBody
+	public Object audit(Model model,Long batchNo,HttpServletRequest request,
+			HttpSession session) throws SQLException{
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		Integer status=Integer.valueOf(request.getParameter("status"));
+		String auditMsg=request.getParameter("auditMsg");
+		giftRequiredItemService.audit(sessionUser,batchNo, status, auditMsg);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("操作成功", backUrl);
+	}
+	/**
+	 *二维码列表
+	 */
+	@RequestMapping(value="/qrCodeList")
+	public String qrCodeList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page,Model model) throws SQLException{
+		giftRequired.setBindStatus(2);
+		Page<GiftRequired> pageData = giftRequiredItemService.getAuditRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("dimcodeStatusMap", GiftRequired.dimcodeStatusMap);
+		return "/giftcard/qrCode-list";
+	}
+	/**
+	 *生成二维码
+	 */
+	@RequestMapping(value="/addQrCode/{id}")
+	@ResponseBody
+	public Object addQrCode(@PathVariable Long id,HttpServletRequest request ) throws Exception{
+		giftRequiredItemService.makeQrCode(id,request);
+		return JsonRespWrapper.success("操作成功", "/gift/relateItem/qrCodeList");
+	}
+	/**
+	 *查看二维码
+	 */
+	@RequestMapping(value="/viewQrCode/{id}")
+	public String viewQrCode(@PathVariable Long id,Model model ) throws Exception{
+		List<GiftRequiredItem> giftRequiredItems = giftRequiredItemService.findByBatchNo(id);
+		for(int i=0;i<giftRequiredItems.size();i++){
+			GiftRequiredItem giftRequiredItem = giftRequiredItems.get(i);
+			SysFileImg qrCode = giftRequiredItemService.getQrCode(giftRequiredItem.getId(), BsFileService.GIFT_CARD_QRCODE_KEY);
+			giftRequiredItem.setFileWebPath(qrCode.getFileWebPath());
+			giftRequiredItem.setItemName(itemManageService.findOneItemSale(giftRequiredItem.getItemId()).getName());
+		}
+		model.addAttribute("giftRequiredItems",giftRequiredItems);
+		return "/giftcard/qrCode-view";
+	}
+}

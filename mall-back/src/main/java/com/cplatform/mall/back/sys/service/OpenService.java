@@ -1,0 +1,332 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.security.SecureRandom;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.sys.dao.OpenRoleItemDao;
+import com.cplatform.mall.back.sys.entity.OpenCustomer;
+import com.cplatform.mall.back.sys.entity.OpenRoleItem;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+/**
+ * 客服信息dao
+ * <p>
+ * Copyright: Copyright (c) 2013-8-16 下午08:32:07
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author jisn@c-platform.com
+ * @version 1.0.0
+ */
+
+@Service
+public class OpenService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	OpenRoleItemDao customerServiceDao;
+
+	private static final String POSSIBLE_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	public Page<OpenRoleItem> getPageListRoleItem(OpenRoleItem openRoleItem, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_ROLE_ITEM where 1=1 ");
+
+		if (openRoleItem != null) {
+			if (StringUtils.isNotEmpty(openRoleItem.getName())) {
+				sql.append(" and NAME like ? ");
+				params.add("%" + openRoleItem.getName().trim() + "%");
+			}
+		}
+		sql.append(" order by id desc ");
+		return dbHelper.getPage(sql.toString(), OpenRoleItem.class, pageNo, pageSize, params.toArray());
+	}
+
+	public Page<OpenCustomer> getPageListCustomer(OpenCustomer openCustomer, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql
+		        .append(" select c.*,s.name storeName,sh.name shopName from T_OPEN_CUSTOMER c left join t_store s  on c.store_id = s.id  left join t_shop sh on c.shop_id = sh.id  where 1=1 ");
+
+		if (openCustomer != null) {
+			if (StringUtils.isNotEmpty(openCustomer.getName())) {
+				sql.append(" and c.NAME like ? ");
+				params.add("%" + openCustomer.getName().trim() + "%");
+			}
+			if (StringUtils.isNotEmpty(openCustomer.getStatus())) {
+				sql.append(" and c.STATUS = ? ");
+				params.add(openCustomer.getStatus());
+			}
+			if (openCustomer.getAppId() != null) {
+				sql.append(" and c.app_id = ? ");
+				params.add(openCustomer.getAppId());
+			}
+		}
+		sql.append(" order by c.APP_ID desc ");
+		return dbHelper.getPage(sql.toString(), OpenCustomer.class, pageNo, pageSize, params.toArray());
+	}
+
+	public List<OpenRoleItem> getOpenRoleItemList() throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_ROLE_ITEM where 1=1 ");
+		sql.append(" order by id desc ");
+		// params.add(appId);
+		return dbHelper.getBeanList(sql.toString(), OpenRoleItem.class, params.toArray());
+	}
+
+	public List<Map<String, String>> getListRoleItemMap(Long appId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select t.APP_ID,t.ROLE_ID from T_OPEN_CUSTOMER_ROLE t where t.APP_ID = ? ");
+		sql.append(" order by  t.ROLE_ID desc ");
+		params.add(appId);
+		return dbHelper.getMapList(sql.toString(), params.toArray());
+	}
+
+	public void saveRole(OpenCustomer openCustomer, String[] roles) throws SQLException {
+		String delSql = "delete from T_OPEN_CUSTOMER_ROLE where APP_ID = ? ";
+		dbHelper.execute(delSql, new Object[] { openCustomer.getAppId() });
+		if (roles != null) {
+			String insertSql = "insert into T_OPEN_CUSTOMER_ROLE values(? , ? ) ";
+			for (String role : roles) {
+				dbHelper.execute(insertSql, new Object[] { openCustomer.getAppId(), role });
+			}
+		}
+	}
+
+	public void getRanddomString(int length, OpenCustomer openCustomer) throws SQLException {
+		StringBuilder sb = new StringBuilder(length);
+		SecureRandom random = new SecureRandom();
+		for (int i = 0; i < length; i++) {
+			sb.append(POSSIBLE_CHARS.charAt(random.nextInt(POSSIBLE_CHARS.length())));
+		}
+		StringBuilder sql = new StringBuilder(100);
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_CUSTOMER where app_key = ? ");
+		params.add(sb.toString());
+		List<OpenRoleItem> listOpenRoleItem = dbHelper.getBeanList(sql.toString(), OpenRoleItem.class, params.toArray());
+		if (listOpenRoleItem.size() > 0) {
+			getRanddomString(length, openCustomer);
+		} else {
+			openCustomer.setAppKey(sb.toString());
+		}
+	}
+
+	public String validIps(OpenCustomer openCustomer) {
+		String msg = null;
+		String index = "";
+		if(StringUtils.isEmpty(openCustomer.getIps())){
+			return null;
+		}
+		String[] ips = openCustomer.getIps().split(",");
+		Pattern pattern = Pattern
+		        .compile("\\b((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\b");
+		for (int i = 0; i < ips.length; i++) {
+			Matcher matcher = pattern.matcher(ips[i]);
+			if (!matcher.matches()) {
+				if (index == "") {
+					index += (i + 1);
+				} else {
+					index += "," + (i + 1);
+				}
+
+			}
+		}
+		if (index != "") {
+			msg = "第" + index + "个ip地址格式不正确,请重新修改！";
+		}
+		return msg;
+	}
+	
+	/**
+	 * 查询商品发信息
+	 * 
+	 * @param itemOrg
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ItemSale> listItemSale(ItemSale itemSale, int pageNo, int pageSize, String ids, int configStatus,long appId) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		List<Object> params = new ArrayList<Object>();
+		sql.append("select sa.*,st.name as storeName,sa.name as itemName ,stype.name as typeName")
+		        .append("	from t_item_sale sa  join  t_store st on  sa.store_id = st.id  ")
+		        .append(" left join  t_sys_type stype  on  sa.type_Id = stype.id ");
+		if (StringUtils.isNotEmpty(itemSale.getSaleAreaCode())) {
+			sql.append(" join t_item_sale_area_link isal on isal.sale_id = sa.id and isal.REGION_CODE = ? ");
+			params.add(itemSale.getSaleAreaCode());
+		}
+
+		sql.append(" where 1=1");
+		if (StringUtils.isNotEmpty(itemSale.getStoreName())) {
+			sql.append(" and st.name like ? ");
+			params.add("%" + itemSale.getStoreName().trim() + "%");
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getTypeName())) {
+			sql.append(" and stype.name like ? ");
+			params.add("%" + itemSale.getTypeName().trim() + "%");
+		}
+
+		if (StringUtils.isNotEmpty(ids)) {
+			sql.append(" and sa.id not in ( ").append(ids).append(" )");
+		}
+
+		if (itemSale.getId() != null) {
+			sql.append(" and sa.id = ? ");
+			params.add(itemSale.getId());
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getName())) {
+			sql.append(" and sa.name like ? ");
+			params.add("%" + itemSale.getName().trim() + "%");
+		}
+		// 查询更新时间
+		if (StringUtils.isNotEmpty(itemSale.getSaleStartTime())) {
+			sql.append(" and sa.update_time >= ? ");
+			params.add(itemSale.getSaleStartTime() + "000000");
+		}
+		if (StringUtils.isNotEmpty(itemSale.getSaleStopTime())) {
+			sql.append(" and sa.update_time <= ? ");
+			params.add(itemSale.getSaleStopTime() + "235959");
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getVerifyCodeType() == null ? "" : itemSale.getVerifyCodeType().toString())) {
+			sql.append(" and sa.verify_code_type = ? ");
+			params.add(itemSale.getVerifyCodeType());
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getSendCodeMode() == null ? "" : itemSale.getSendCodeMode().toString())) {
+			sql.append(" and sa.send_code_mode = ? ");
+			params.add(itemSale.getSendCodeMode());
+		}
+		if (itemSale.getSendCodeChannel() != null) {
+			sql.append(" and sa.send_code_channel = ? ");
+			params.add(itemSale.getSendCodeChannel());
+		}
+		// 默认不显示删除的，除非手动指定删除条件
+		if (itemSale.getStatus() != null) {
+			sql.append(" and sa.status = ? ");
+			params.add(itemSale.getStatus());
+		} else {
+			sql.append(" and sa.status != " + ItemSale.STATUS_DELETE);
+		}
+
+		if (itemSale.getSyncGyFlag() != null) {
+			sql.append(" and sa.sync_gy_flag = ? ");
+			params.add(itemSale.getSyncGyFlag());
+		}
+		if (itemSale.getStoreId() != null) {
+			sql.append(" and sa.store_id = ? ");
+			params.add(itemSale.getStoreId());
+		}
+		if (itemSale.getGroupFlag() != null) {
+			sql.append(" and sa.group_flag = ? ");
+			params.add(itemSale.getGroupFlag());
+		}
+		if (itemSale.getIsValid() != null) {
+			sql.append(" and sa.is_valid = ? ");
+			params.add(itemSale.getIsValid());
+		}
+		if (itemSale.getItemMode() != null) {
+			sql.append(" and sa.item_mode = ? ");
+			params.add(itemSale.getItemMode());
+		}
+		// 套餐商品过滤库存 xq
+		if (itemSale.getStockNumFilter() != null) {
+			sql.append(" and sa.stock_num != ? ");
+			params.add(itemSale.getStockNumFilter());
+		}
+		// 礼品卡功能
+		if (null != itemSale.getIseckill()) {
+			sql.append(" and sa.iseckill = ? ");
+			params.add(itemSale.getIseckill());
+		}
+		// if (StringUtils.isNotEmpty(itemSale.getSaleAreaCode())) {
+		// sql.append(" join t_item_sale_area_link isal on isal.sale_id = sa.id and isal.REGION_CODE = ? ");
+		// params.add(itemSale.getSaleAreaCode());
+		// }
+		
+		//过滤是否已选
+		if(configStatus==0) {
+			//全部
+		}else if(configStatus==1){
+			//已选
+			sql.append(" and sa.id in (select item_id from t_open_customer_item where app_id = ?) ");
+			params.add(appId);
+		}else if(configStatus==2){
+			//未选
+			sql.append(" and sa.id not in (select item_id from t_open_customer_item where app_id = ?) ");
+			params.add(appId);
+		}
+
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_ITEM));// 控制数据访问
+		/* 修改排序方式 @modify_by macl@c-paltform.com @date 2013-7-12 start .... */
+		// sql.append(" order by sa.update_time desc");
+		sql.append(" order by  sa.update_time desc, sa.status asc ");
+		/* 修改排序方式 ....end */
+		return dbHelper.getPage(sql.toString(), ItemSale.class, pageNo, pageSize, params.toArray());
+	}
+	
+	/**
+	 * 更新开放应用和商品关系
+	 * @param appId
+	 * @param itemId
+	 * @param type
+	 * @throws SQLException
+	 */
+	public void updateAppItem(Long appId,Long itemId, int type) throws SQLException {
+		String sql = "";
+		if(type==0) {
+			//删除
+			 sql = "delete from t_open_customer_item where app_id = ? and item_id = ? ";
+		}else if(type==1) {
+			//添加
+			 sql = "insert into t_open_customer_item (app_id,item_id) values (?, ?) ";
+		}else {
+			return;
+		}
+		
+		dbHelper.execute(sql, new Object[] { appId,itemId });
+	}
+	
+	/**
+	 * 获得已配置商品
+	 * @param appId
+	 * @return
+	 * @throws SQLException
+	 */
+	public Map<Long,String> getAppItemMap(Long appId) throws SQLException {
+		Map<Long,String> appItemMap = new HashMap<Long,String>();
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select item_id from t_open_customer_item t where t.app_id = ? ");
+		params.add(appId);
+		List<Map<String, String>> list = dbHelper.getMapList(sql.toString(), params.toArray());
+		for(Map m : list) {
+			appItemMap.put(Long.parseLong(String.valueOf(m.get("item_id"))), String.valueOf(m.get("item_id")));
+		}
+		return appItemMap;
+	}
+
+}

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index2_verify_store_code_commo ON "LIFE".t_verify_store_code_common(order_id);

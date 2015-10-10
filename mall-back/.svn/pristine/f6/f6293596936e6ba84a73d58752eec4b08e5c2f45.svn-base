@@ -1,0 +1,122 @@
+package com.cplatform.mall.back.comment.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.comment.dao.ItemCommentDao;
+import com.cplatform.mall.back.comment.dao.ItemCommentReplyDao;
+import com.cplatform.mall.back.comment.entity.ItemComment;
+import com.cplatform.mall.back.comment.entity.ItemCommentReply;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+/**
+ * Title.评论模块操作类 <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-1 下午4:44:20
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: BaiJie
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class CommentService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private ItemCommentDao itemCommentDao;
+
+	@Autowired
+	private ItemCommentReplyDao itemCommentReplyDao;
+
+	public ItemComment findItemCommentById(Long id) {
+		return itemCommentDao.findOne(id);
+	}
+
+	public ItemComment addOrUpdateItemComment(ItemComment po) {
+		return itemCommentDao.save(po);
+	}
+
+	public ItemCommentReply findItemCommentReplyById(Long id) {
+		return itemCommentReplyDao.findOne(id);
+	}
+
+	public ItemCommentReply addOrUpdateItemCommentReply(ItemCommentReply po) {
+		return itemCommentReplyDao.save(po);
+	}
+
+	public ItemCommentReply findItemCommentReplyByCommentId(Long commentId) {
+		return itemCommentReplyDao.findByCommentId(commentId);
+	}
+
+	/**
+	 * 查询评判内容
+	 * 
+	 * @param comment
+	 * @param pageNo
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ItemComment> findComment(ItemComment comment, int pageNo) throws SQLException {
+
+		List params = new ArrayList();
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select ic.*, ");
+		sqlBuff.append("       tio.name, ");
+		sqlBuff.append("       reply.content     replycontent, ");
+		sqlBuff.append("       reply.nickname    replynickname, ");
+		sqlBuff.append("       reply.update_time replyupdatetime ");
+		sqlBuff.append("  from t_item_comment ic ");
+		sqlBuff.append("  left join t_item_sale tio ");
+		sqlBuff.append("    on tio.id = ic.SALE_ID ");
+		sqlBuff.append("  left join t_item_comment_reply reply ");
+		sqlBuff.append("    on ic.id = reply.comment_id ");
+		if (StringUtils.isNotEmpty(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_ITEMCOMMENT))) {
+			sqlBuff.append(" left join t_store store  on tio.store_id = store.id");
+		}
+		sqlBuff.append(" where 1 = 1");
+
+		if (StringUtils.isNotBlank(comment.getName())) {
+			sqlBuff.append(" and tio.name like ? ");
+			params.add("%" + comment.getName().trim() + "%");
+		}
+
+		if (StringUtils.isNotBlank(comment.getNickname())) {
+			sqlBuff.append(" and ic.nickname like ? ");
+			params.add("%" + comment.getNickname().trim() + "%");
+		}
+
+		if (comment.getType() != null) {
+			sqlBuff.append(" and ic.type=? ");
+			params.add(comment.getType());
+		}
+
+		if (StringUtils.isNotBlank(comment.getStartTime())) {
+			String startTime = comment.getStartTime() + "000000";
+			sqlBuff.append("and ic.update_Time > ? ");
+			params.add(startTime);
+		}
+
+		if (StringUtils.isNotBlank(comment.getEndTime())) {
+			String endTime = comment.getEndTime() + "235959";
+			sqlBuff.append("and ic.update_Time < ? ");
+			params.add(endTime);
+		}
+		sqlBuff.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sqlBuff.append(" order by ic.update_Time  desc ");
+		return dbHelper.getPage(sqlBuff.toString(), ItemComment.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+}

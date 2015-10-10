@@ -1,0 +1,17 @@
+.tip_warning{padding:0 0px 0 20px; background:url(http://mall.12580life.com/img/bind_mobile/icon_waring.gif) left center no-repeat; margin-left:5px; line-height:24px; color:#E95098;}
+.tip_right{padding:0 0px 0 20px; background: url(http://mall.12580life.com/img/bind_mobile/icon_right.gif) left center no-repeat; margin-left:5px; line-height:16px; color:#06C; min-width:10px;}
+#mobileVerifyCode,#bindMobileSmt,#bindClose{margin-top:5px; border: 0 none; display: inline-block; font-weight: bold; height: 31px; line-height: 31px; margin-bottom: 5px; text-align: center; width: 120px;}
+.btn_active{background: url('http://mall.12580life.com/img/bind_mobile/btn1.gif') repeat scroll 0 0 #fff; color: #FFFFFF;}
+.btn_gray{background: url('http://mall.12580life.com/img/bind_mobile/btn2.gif') repeat scroll 0 0 #fff; color:#666666;}
+.td_ceil{text-align:left; line-height:24px;}
+.bind_input{background: none repeat scroll 0 0 #FFFFFF;border: 1px solid #BAC5D4; font-family: Verdana,Geneva,sans-serif; font-size: 20px; font-weight: 700;  height: 35px; padding: 0 5px; width: 200px;}
+#verifyTip{display:none;}
+#bindMobileDialog{position:absolute; left:50%; width:480px; top:20px; margin-left:-245px; min-height:240px;  border:5px #E0E0E0 solid; background:#f7f7f7; z-index:1000000; display:none;}
+#shadeDialog{width:100%; height:100%; background:#000; z-index:999999; filter:alpha(opacity=50);-moz-opacity:0.5; -khtml-opacity:0.5; opacity: 0.5; position:absolute;top:0; display:none;}
+#{background:#E0E0E0; color:#616161; font-family:'Microsoft Yahei'; font-size:16px; height:30px;  line-height: 30px; text-align:center; padding:10px;}
+.bind-mobile-title{background:#E0E0E0; color: #616161; font-family:"Microsoft Yahei";font-size: 16px; height: 30px; line-height: 30px; text-align:center; padding : 10px;}
+.bind-mobile-content{padding:20px; color:#666;}
+.bind-mobile-t2{text-align:center;}
+.bind-mobile-t{text-align:left;}
+.bind-mobile-t2 strong{color:#2777c6; font-size:14px;}
+.bind-mobile-table{margin:20px 0;}

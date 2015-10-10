@@ -1,0 +1,17 @@
+/* dec---store , Created by xb , 2008-6-3 */
+
+
+@import url("global.css");
+@import url("channl_css.css");
+@import url("channl_css001.css");
+@import url("channl_cssbak.css");
+@import url("ajaxdialog.css");
+@import url("style.css");
+/*********切换广告样式**************/
+.ad_page{text-align:center;position:absolute;bottom:10px;right:15px}
+.ad_page li{float:left;width:17px;height:17px;margin-right:3px;}
+.ad_page_li01{position:relative;background-color:#ffffff;filter:alpha(opacity=80);color:#ffffff;} 
+.ad_page_li01 a:link,.ad_page_li01 a:visited,.ad_page_li01 a:hover{color:#ffde2b;}
+.ad_page_li02{position:relative;background-color:#c60000;filter:alpha(opacity=80);color:#fdf100;}
+.ad_page_li02 a{color:#fdf100;font-weight:bold;color:#fdf100;}
+

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_store_id ON "LIFE".t_item_sale(store_id);

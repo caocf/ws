@@ -1,0 +1,665 @@
+package com.cplatform.mall.back.store.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.store.entity.Shop;
+import com.cplatform.mall.back.store.entity.ShopPosLink;
+import com.cplatform.mall.back.store.entity.ShopTag;
+import com.cplatform.mall.back.store.entity.ShopTypeLink;
+import com.cplatform.mall.back.store.entity.ShopUser;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.entity.StoreAgent;
+import com.cplatform.mall.back.store.service.ShopService;
+import com.cplatform.mall.back.store.service.ShopUserService;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.entity.SysPos;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 
+ * @Title	门店管理控制层
+ * @Description
+ * @Copyright: Copyright (c) 2013-9-18
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/store/shop")
+public class ShopController {
+
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private AppConfig config;
+
+	@Autowired
+	private ShopService shopService;
+
+	@Autowired
+	private SysRegionService sysRegionService;
+
+	@Autowired
+	private ShopUserService shopUserService;
+
+	@Autowired
+	private StoreService storeService;
+
+	/**
+	 * 门店查询
+	 * 
+	 * @param shop
+	 *            门店实体类
+	 * @param page
+	 *            当前页
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String list(Shop shop, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+	
+		
+
+		Page<Shop> shopPage = shopService.findShop(shop, page);
+		model.addAttribute("shopPage", shopPage);
+		model.addAttribute("isBaseShopMap", Shop.getIsBaseShopMap());
+		model.addAttribute("isChainMap", Shop.getIsChainMap());
+		model.addAttribute("isValidMap", Shop.getIsValidMap());
+		model.addAttribute("shopClassMap", Shop.getShopClassMap());
+		model.addAttribute("sortMap", Shop.getSortMap());
+		model.addAttribute("statusMap", Shop.getStatusMap());
+		return "store/shop/shop_list";
+	}
+
+	/**
+	 * 门店审核
+	 * 
+	 * @param shop
+	 *            门店实体类
+	 * @param page
+	 *            当前页
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/audit_list")
+	public String auditList(Shop shop, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		shop.setStatus(1L);
+		Page<Shop> shopPage = shopService.findShop(shop, page);
+		model.addAttribute("shopPage", shopPage);
+		model.addAttribute("isBaseShopMap", Shop.getIsBaseShopMap());
+		model.addAttribute("isChainMap", Shop.getIsChainMap());
+		model.addAttribute("isValidMap", Shop.getIsValidMap());
+		model.addAttribute("shopClassMap", Shop.getShopClassMap());
+		model.addAttribute("sortMap", Shop.getSortMap());
+		model.addAttribute("statusMap", Shop.getStatusMap());
+		return "store/shop/shop_audit_list";
+	}
+
+	/**
+	 * 跳转添加门店
+	 * 
+	 * @param acShopId
+	 *            结算商户ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.GET)
+	public String add(@RequestParam(value = "acShopId") Long acShopId, HttpServletRequest request, Model model) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		Shop shop = new Shop();
+		if (null != acShopId) {
+			shop.setAcShopId(acShopId);
+			shop.setStoreName(shopService.findOneStore(shop.getAcShopId()).getName());
+			Store store = shopService.findOneStore(acShopId);
+			model.addAttribute("address", store.getAddress());
+			SysRegion region = sysRegionService.findByRegionCode(store.getAreaCode());
+			model.addAttribute("storeAreaName", region.getRegionName());
+		}
+		model.addAttribute("method", "add");
+		model.addAttribute("shop", shop);
+		List<SysPos> sysPosList = this.shopService.findSysPos();
+		model.addAttribute("sysPosList", sysPosList);// 终端列表
+		model.addAttribute("mapabcKey", config.getMapABCKey());// 向添加页面传递mapabc的key值
+		model.addAttribute("regionCode", sessionUser.getSysUnit().getAreaCode());// 账户权限登录限制
+		return "store/shop/shop_add";
+	}
+
+	/**
+	 * 添加门店
+	 * 
+	 * @param fileRequest
+	 *            批量文件上传
+	 * @param shop
+	 *            门店实体类
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object addShopInfo(MultipartHttpServletRequest fileRequest, @ModelAttribute("shop") Shop shop, HttpServletRequest request) {
+		shop.setStartTime(shop.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") );
+		shop.setStopTime(shop.getStopTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") );
+		shop.setStatus(shop.STATUS_1);
+		shop.setShopClass(shop.SHOP_CLASS_1);
+		shop.setCreateTime(TimeStamp.getTime(14));
+		// 校验名称唯一 判断门店名、简称是否重复
+		List<Shop> nameList = shopService.checkOneName(shop.getName());
+		if (nameList.size() > 0) {
+			return JsonRespWrapper.successAlert("门店名称重复，请重新填写！");
+		}
+		List<Shop> shortNameList = shopService.checkOneShortName(shop.getShortName());
+		if (shortNameList.size() > 0) {
+			return JsonRespWrapper.successAlert("门店简称重复，请重新填写！");
+		}
+		if (shop.getAreaCode().isEmpty()) {
+			return JsonRespWrapper.successAlert("请选择地市！");
+		}
+		String typeIds = request.getParameter("typeId");
+		if (typeIds.isEmpty()) {
+			return JsonRespWrapper.successAlert("请选择至少一个商户分类！");
+		}
+		String[] posIds = request.getParameterValues("posId");
+		String[] posNos = request.getParameterValues("posNo");
+		String[] terminalIds = request.getParameterValues("terminalId");
+		// *Mark 用于标识重复的个数
+		int posNoMark = 0;
+		int terminalIdMark = 0;
+		if (null == posIds && null == posNos) {
+			return JsonRespWrapper.successAlert("请选择至少1个终端！");
+		}
+		if (null != posIds && ((posNos.length > 0 && posIds.length > 0) && (posNos.length != posIds.length))) {
+			return JsonRespWrapper.successAlert("请填写并勾选完整的终端信息！");
+		}
+		for (int i = 0; i < posIds.length; i++) {
+			posNoMark++;
+			terminalIdMark++;
+			// 校验设备号唯一
+			List<ShopPosLink> posNoList = shopService.checkOnePosNo(posNos[i]);
+			if (posNoList.size() > 0) {
+				return JsonRespWrapper.successAlert("第" + posNoMark + "个终端设备号(" + posNos[i] + ")已存在，请重新配置终端！");
+			}
+			// 校验标识唯一
+			List<ShopPosLink> terminalIdList = shopService.checkOneTerminalId(terminalIds[i]);
+			if (terminalIdList.size() > 0) {
+				return JsonRespWrapper.successAlert("第" + terminalIdMark + "个终端标识(" + terminalIds[i] + ")已存在，请重新配置终端！");
+			}
+		}
+		String tagsStr = request.getParameter("tag").replace("；", ";").replace(" ", "");
+		String[] tags = tagsStr.split(";");
+		if (tags[0].isEmpty() && tags.length < 1) {
+			return JsonRespWrapper.successAlert("请填写门店标签！");
+		}
+		for (int i = 0; i < tags.length; i++) {
+			if (tags[i].length() > 10) {
+				return JsonRespWrapper.successAlert("门店标签名字过长！");
+
+			}
+		}
+
+		try {
+			logUtils.logAdd("录入门店信息", "录入");
+			// 执行业务逻辑
+			shop = shopService.saveShop(shop, typeIds, posIds, posNos, terminalIds, tags);
+			return JsonRespWrapper.success("门店录入成功", "/store/shop/list");
+
+		}
+		catch (Exception ex) {
+			logUtils.logOther("录入门店信息异常：", ex.toString());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 跳转编辑门店
+	 * 
+	 * @param id
+	 *            待编辑门店ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/edit", method = RequestMethod.GET)
+	public String edit(@RequestParam(required = false) Long id, HttpServletRequest request, Model model) {
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		Shop shop = shopService.findOneShop(id);
+		if (null != shop.getAcShopId()) {
+			Store store = shopService.findOneStore(shop.getAcShopId());
+			if (null != store) {
+				shop.setStoreName(store.getName());
+			}
+		}
+		model.addAttribute("method", "edit");
+		model.addAttribute("shop", shop);
+		SysRegion region = sysRegionService.findByRegionCode(shop.getAreaCode());
+		if (null != region) {
+			model.addAttribute("regionName", region.getRegionName());
+		}
+		List<SysPos> sysPosList = this.shopService.findSysPos();
+		model.addAttribute("sysPosList", sysPosList);
+		List<ShopTag> shopTagList = shopService.findShopTagByShopId(shop.getId());
+		model.addAttribute("shopTagList", shopTagList);
+		model.addAttribute("mapabcKey", config.getMapABCKey());
+		model.addAttribute("regionCode", sessionUser.getSysUnit().getAreaCode());
+		ShopPosLink shopPosLink = new ShopPosLink();
+		if (null != shop.getId()) {
+			shopPosLink.setShopId(shop.getId());
+		}
+		List<ShopPosLink> shopPosLinkList = shopService.findShopPosLinkByShopId(shop.getId());
+		model.addAttribute("shopPosLinkList", shopPosLinkList);
+		List<ShopTypeLink> shopTypeList = shopService.findShopTypeLinkByShopId(shop.getId());
+		model.addAttribute("shopTypeList", shopTypeList);
+		Store store = shopService.findOneStore(shop.getAcShopId());
+		model.addAttribute("address", store.getAddress());
+		return "store/shop/shop_add";
+	}
+
+	/**
+	 * 编辑门店
+	 * 
+	 * @param shop
+	 *            门店实体类
+	 * @param fileRequest
+	 *            批量文件上传
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePost(@ModelAttribute("shop") Shop shop, HttpServletRequest request, String oldName, String oldShortName) {
+		shop.setAreaCode(shop.getAreaCode().split(",")[0]);
+		shop.setStartTime(shop.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "");
+		shop.setStopTime(shop.getStopTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") + "");
+		shop.setUpdateTime(TimeStamp.getTime(14));
+		shop.setStatus(shop.STATUS_1);
+		// 校验名称唯一 判断门店名、简称是否重复
+		if (!oldName.equals(shop.getName())) {
+			List<Shop> nameList = shopService.checkOneName(shop.getName());
+			if (nameList.size() > 0) {
+				return JsonRespWrapper.successAlert("门店名称重复，请重新填写！");
+			}
+		}
+		if (!oldShortName.equals(shop.getShortName())) {
+			List<Shop> shortNameList = shopService.checkOneShortName(shop.getShortName());
+			if (shortNameList.size() > 0) {
+				return JsonRespWrapper.successAlert("门店简称重复，请重新填写！");
+			}
+		}
+		if (shop.getAreaCode().isEmpty()) {
+			return JsonRespWrapper.successAlert("请选择地市！");
+		}
+		String typeIds = request.getParameter("typeId");
+		if (typeIds.isEmpty()) {
+			return JsonRespWrapper.successAlert("请选择至少一个商户分类！");
+		}
+		String[] posIds = request.getParameterValues("posId");
+		String[] posNos = request.getParameterValues("posNo");
+		String[] terminalIds = request.getParameterValues("terminalId");
+		// 判断终端信息是否为空，如果为空提示用户
+		List<ShopPosLink> shopPosLinkList = shopService.findShopPosLinkByShopId(shop.getId());
+		if (shopPosLinkList.size() == 0) {
+			if (posIds == null || posNos == null || terminalIds == null) {
+				return JsonRespWrapper.successAlert("终端信息不完整，请重新填写！");
+			}
+		}
+		// *Mark 用于标识重复的个数
+		int posNoMark = 0;
+		int terminalIdMark = 0;
+		if ((null != posIds && null == posNos) || (null == posIds && null != posNos)) {
+			return JsonRespWrapper.successAlert("请填写并勾选完整的终端信息！");
+		}
+		if (posIds != null) {
+			for (int i = 0; i < posIds.length; i++) {
+				posNoMark++;
+				terminalIdMark++;
+				// 校验设备号唯一
+				List<ShopPosLink> posNoList = shopService.checkOnePosNo(posNos[i]);
+				if (posNoList.size() > 0) {
+					return JsonRespWrapper.successAlert("第" + posNoMark + "个终端设备号(" + posNos[i] + ")已存在，请重新配置终端！");
+				}
+				// 校验标识唯一
+				List<ShopPosLink> terminalIdList = shopService.checkOneTerminalId(terminalIds[i]);
+				if (terminalIdList.size() > 0) {
+					return JsonRespWrapper.successAlert("第" + terminalIdMark + "个终端标识(" + terminalIds[i] + ")已存在，请重新配置终端！");
+				}
+			}
+		}
+		String tagsStr = request.getParameter("tag").replace("；", ";");
+		String[] tags = tagsStr.split(";");
+		if (tags[0].isEmpty() && tags.length < 1) {
+			return JsonRespWrapper.successAlert("请填写门店标签！");
+		}
+
+		for (int i = 0; i < tags.length; i++) {
+			if (tags[i].length() > 10) {
+				return JsonRespWrapper.successAlert("门店标签名字过长！");
+
+			}
+
+		}
+		// 如果typeIds不为空，则执行删除分类操作
+		shopService.editShopType(shop, typeIds);
+		// 如果tags不为空，则执行删除标签操作
+		shopService.editShopTag(shop, tags);
+		try {
+			logUtils.logModify("修改门店信息", "门店id"+shop.getId());
+			// 执行业务逻辑
+			shop = shopService.saveShop(shop, typeIds, posIds, posNos, terminalIds, tags);
+			// 提示并跳转
+			// return JsonRespWrapper.success("门店修改成功", "/store/shop/list");
+			// 返回到来源页面
+			String backUrl = request.getParameter("backUrl");
+			return JsonRespWrapper.success("门店修改成功", backUrl);
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			log.error(ex.getMessage());
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+
+	}
+
+	/**
+	 * 查看门店
+	 * 
+	 * @param id
+	 *            被查看门店ID
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/view")
+	public String viewShop(@RequestParam(required = false) Long id, Model model) throws SQLException {
+		Shop shop = shopService.findOneShop(id);
+		if (null != shop.getAcShopId()) {
+			Store store = shopService.findOneStore(shop.getAcShopId());
+			if (null != store) {
+				shop.setStoreName(store.getName());
+			}
+		}
+		if (!shop.getAreaCode().isEmpty()) {
+			SysRegion sysRegion = sysRegionService.findByRegionCode(shop.getAreaCode());
+			if (null != sysRegion) {
+				shop.setRegionName(sysRegion.getRegionName());
+			}
+		}
+		List<ShopTypeLink> shopTypeList = shopService.findShopTypeLinkByShopId(shop.getId());
+		List<ShopPosLink> shopPosLinkList = shopService.findShopPosLinkByShopId(shop.getId());
+		List<ShopTag> shopTagList = shopService.findShopTagByShopId(shop.getId());
+		model.addAttribute("shop", shop);
+		model.addAttribute("shopTypeList", shopTypeList);
+		model.addAttribute("shopPosLinkList", shopPosLinkList);
+		model.addAttribute("shopTagList", shopTagList);
+		model.addAttribute("mapabcKey", config.getMapABCKey());
+		return "store/shop/shop_view";
+	}
+
+	@RequestMapping(value = "delete/{id}")
+	@ResponseBody
+	public Object deleteShop(@PathVariable Long id) {
+		List<ShopPosLink> posLinkList = shopService.findShopPosLinkByShopId(Long.valueOf(id));
+		if (posLinkList.size() > 0) {
+			return JsonRespWrapper.successAlert("该业务门店配置有多个终端，请先删除配置终端，再进行删除操作");
+		}
+		List<ShopTag> tagList = shopService.findShopTagByShopId(Long.valueOf(id));
+		if (tagList.size() > 0) {
+			return JsonRespWrapper.successAlert("该业务门店配置有标签，请先删除标签，再进行删除操作");
+		}
+		shopService.deleteShopTypeLink(id);
+		shopService.deleteShop(id);
+		return JsonRespWrapper.successReload("删除成功！");
+	}
+
+	@RequestMapping(value = "pos_delete/{id}")
+	@ResponseBody
+	public Object deleteShopPosLink(@PathVariable Long id) {
+		shopService.deleteShopPosLink(id);
+		return true;
+	}
+
+	/**
+	 * 门店审核前操作
+	 * 
+	 * @param id
+	 * @param status
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/process/{status}/{id}/{whereAbout}")
+	@ResponseBody
+	public Object process(@PathVariable Long id, @PathVariable Long status, @PathVariable String whereAbout, Model model) {
+		// String url = null;
+		// if ("view".equals(whereAbout)) {
+		// url = "/store/shop/view?id=" + id;
+		// } else if ("audit".equals(whereAbout)) {
+		// url = "/store/shop/audit_list";
+		// } else {
+		// }
+		try {
+			Shop shop = shopService.findOneShop(id);
+			if (0 == status) {// 送审
+				Store store = shopService.findOneStore(shop.getAcShopId());
+				if (null != store.getShopEditAuditFlag() && store.getShopEditAuditFlag() == 1L) {// 商户门店编辑是否免审
+					// 0--需要审核
+					// 1--免审
+					shop.setStatus(shop.STATUS_3);// 审核通过
+					shop.setIsValid(shop.IS_VALID_1);
+					shop = shopService.saveShop(shop, null, null, null, null, null);
+					logUtils.logAudit("门店送审成功", "进入免审,ID:" + shop.getId().toString() + ",状态 STATUS：" + shop.getStatusName());
+					// 创建账户
+					if (null == shop.getShopUserId()) {
+						ShopUser user = shopUserService.saveShopUser(shop.getShopClass(), shop.getId(), 1L);
+						shop.setShopUserId(user.getId());
+						shopService.saveShop(shop, null, null, null, null, null);
+					}
+					return JsonRespWrapper.successReload("门店免审,审核通过");
+				} else {
+					shop.setStatus(shop.STATUS_1);// 待审核
+					shop = shopService.saveShop(shop, null, null, null, null, null);
+					logUtils.logAudit("门店送审成功", "ID:" + shop.getId().toString() + ",状态 STATUS：" + shop.getStatusName());
+					return JsonRespWrapper.successReload("门店送审成功");
+				}
+			} else {
+				return null;
+			}
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			log.error(ex.getMessage());
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 跳转门店审核
+	 * 
+	 * @param id
+	 *            待审核门店ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/shop_auditing", method = RequestMethod.GET)
+	public String auditing(@RequestParam(required = false) Long id, Model model, @RequestParam(required = false) String whereAbout) {
+		Shop shop = shopService.findOneShop(id);
+		model.addAttribute("method", "auditing");
+		model.addAttribute("shop", shop);
+		model.addAttribute("whereAbout", whereAbout);
+		return "store/shop/shop_auditing";
+	}
+
+	/**
+	 * 门店审核
+	 * 
+	 * @param id
+	 *            待审核门店ID
+	 * @param status
+	 * @return
+	 */
+	@RequestMapping(value = "/shop_auditing", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPostAuditing(@RequestParam(required = false) Long id, @RequestParam(required = false) Long status,
+	        @RequestParam(required = false) String whereAbout) {
+		Shop shop = shopService.findOneShop(id);
+		// 判断门店完整性
+		// List<ShopPosLink> posLinkList =
+		// shopService.findShopPosLinkByShopId(Long.valueOf(id));
+		// if (posLinkList.size() < 1) {
+		// return JsonRespWrapper.successAlert("请先添加终端，再进审核操作");
+		// }
+		// List<ShopTag> tagList =
+		// shopService.findShopTagByShopId(Long.valueOf(id));
+		// if (tagList.size() < 1) {
+		// return JsonRespWrapper.successAlert("请先添加标签，再进行审核操作");
+		// }
+		if (3L == status) {
+			shop.setIsValid(shop.IS_VALID_1);
+		}
+		shop.setStatus(status);
+		try {
+			// 执行业务逻辑
+			shop = shopService.saveShop(shop, null, null, null, null, null);
+			logUtils.logAudit("成功审核门店", "ID:" + shop.getId().toString() + ",审核状态 STATUS：" + shop.getStatusName());
+			if (3L == shop.getStatus()) {
+				if (null == shop.getShopUserId()) {
+					// 创建账户
+					ShopUser user = shopUserService.saveShopUser(shop.getShopClass(), shop.getId(), 1L);
+					shop.setShopUserId(user.getId());
+					shopService.saveShop(shop, null, null, null, null, null);
+				}
+			}
+			if ("view".equals(whereAbout)) {
+				return JsonRespWrapper.success("审核成功", "/store/shop/view?id=" + id);
+			} else {
+				return JsonRespWrapper.success("审核成功", "/store/shop/audit_list");
+			}
+		}
+		catch (Exception ex) {
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 门店有效性操作
+	 * 
+	 * @param id
+	 * @param status
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/valid/{status}/{id}/{whereAbout}")
+	@ResponseBody
+	public Object valid(@PathVariable Long id, @PathVariable Long status, @PathVariable String whereAbout, Model model) {
+		// String url = null;
+		// if ("view".equals(whereAbout)) {
+		// url = "/store/shop/view?id=" + id;
+		// } else if ("audit".equals(whereAbout)) {
+		// url = "/store/shop/audit_list";
+		// } else {
+		// }
+		try {
+			Shop shop = shopService.findOneShop(id);
+			if (3 == status) {// 设置为有效门店
+				shop.setIsValid(shop.IS_VALID_1);
+				shop = shopService.saveShop(shop, null, null, null, null, null);
+				logUtils.logAudit("成功设置门店为有效", "ID:" + shop.getId().toString() + ",有效状态 IS_VALID：" + shop.getIsValidName());
+				return JsonRespWrapper.successReload("成功设置门店为有效");
+			} else if (31 == status) {// 设置为无效门店
+				shop.setIsValid(shop.IS_VALID_0);
+				shop = shopService.saveShop(shop, null, null, null, null, null);
+				logUtils.logAudit("成功设置门店为无效", "ID:" + shop.getId().toString() + ",有效状态 IS_VALID：" + shop.getIsValidName());
+				return JsonRespWrapper.successReload("成功设置门店为无效");
+			} else {
+				return null;
+			}
+
+		}
+		catch (Exception ex) {
+			log.error(ex.getMessage());
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	// -------------------------------------------------------
+
+	/**
+	 * 进入选择商户页面
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/selectStoreShop", method = RequestMethod.GET)
+	public String findShop(@RequestParam(required = true) Long storeid, @RequestParam(required = false) String ids, Model model) throws IOException,
+	        Exception {
+		Store vo = this.shopService.findOneStore(storeid);
+		if (vo.getShopClass() == Store.STORE) {
+			model.addAttribute("shopList", shopService.findStoreValidShops(storeid));
+
+		} else if (vo.getShopClass() == Store.CHANNEL) {
+			List<StoreAgent> agentList = storeService.findStoreAgentByQdStoreId(vo.getId());
+			if (agentList != null && agentList.size() > 0) {
+				String id = "";
+				for (StoreAgent agent : agentList) {
+					id += agent.getJsStoreId() + ",";
+				}
+				if (id.length() > 0) {
+					id = id.substring(0, id.length() - 1);
+				}
+				model.addAttribute("shopList", shopService.findChannelValidShops(id));
+			}
+		}
+		model.addAttribute("selectIds", ids);
+		// 跳转到列表页面
+		return "/store/shop/select-shop-list";
+	}
+	/**
+	 * 进入选择商户页面
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/selectShop", method = RequestMethod.GET)
+	public String findAllShop(Shop shop, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+		shop.setStatus(3L);
+		shop.setIsValid(1L);
+		Page<Shop> shopPage = shopService.findAllShop(shop, page);
+		model.addAttribute("pageData", shopPage);
+		return "/store/shop/select-shop";
+	}
+}

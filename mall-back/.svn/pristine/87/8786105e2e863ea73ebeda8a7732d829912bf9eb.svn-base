@@ -1,0 +1,155 @@
+package com.cplatform.mall.back.giftcard.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.giftcard.entity.GiftCardCbHandle;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.utils.ExcelExportUtil;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+/**
+ * @Title
+ * @Description
+ * @Copyright: Copyright (c) 2013-9-26
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Service
+public class GiftCardExchangeService {
+	@Autowired
+	private DbHelper dbHelper;
+	
+	
+	public Page<GiftRequired> exchangeList(GiftRequired giftRequired, int pageNo, int pageSize) throws SQLException{
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.setLength(0);
+		sql.append(" select t.exchangeNum,giftRequired.* from t_gift_required giftRequired ");
+		sql.append(" left join ");
+		sql.append(" (select count(handle.id) exchangeNum,re.batch_no from t_gift_required re  ");
+		sql.append(" left join t_gift_card card on re.batch_no=card.batch_no ");
+		sql.append(" left join t_gift_card_cb_handle handle on card.serial_no=handle.serial_no ");
+		sql.append(" group by re.batch_no) t ");
+		sql.append(" on giftRequired.batch_no=t.batch_no ");
+		sql.append(" where giftRequired.status=2 ");
+		if(null != giftRequired.getBatchNo()){
+			sql.append(" and giftRequired.batch_no = ? ");
+			params.add(giftRequired.getBatchNo());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getModelNo())) {
+			sql.append(" and giftRequired.model_no like ? ");
+			params.add("%" + giftRequired.getModelNo().trim() + "%");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getRequiredUser())) {
+			sql.append(" and giftRequired.required_user like ? ");
+			params.add("%" + giftRequired.getRequiredUser().trim() + "%");
+		}
+		if(null != giftRequired.getCardNum()){
+			sql.append(" and giftRequired.card_num = ? ");
+			params.add(giftRequired.getCardNum());
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getBeginTime())) {
+			sql.append(" and giftRequired.issuing_time > ?  ");
+			params.add(giftRequired.getBeginTime()+"000000");
+		}
+		if (StringUtils.isNotEmpty(giftRequired.getEndTime())) {
+			sql.append(" and giftRequired.issuing_time < ?  ");
+			params.add(giftRequired.getEndTime()+"000000");
+		}
+		if (null != giftRequired.getMakeCardStatus()) {
+			sql.append(" and giftRequired.make_card_status = ? ");
+			params.add(giftRequired.getMakeCardStatus());
+		}
+		if (null != giftRequired.getPrintFaceStatus()) {
+			sql.append(" and giftRequired.print_face_status = ? ");
+			params.add(giftRequired.getPrintFaceStatus());
+		}
+		if (null != giftRequired.getBindItemStatus()) {
+			sql.append(" and giftRequired.bind_item_status = ? ");
+			params.add(giftRequired.getBindItemStatus());
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));// 控制数据访问
+		sql.append(" order by giftRequired.batch_no desc");
+		Page<GiftRequired> pageData = dbHelper.getPage(sql.toString(), GiftRequired.class, pageNo, pageSize, params.toArray());
+		return pageData;
+	}
+	
+	public Page<GiftCardCbHandle> exchangeViewList(GiftCardCbHandle giftCardCbHandle, int pageNo, int pageSize) throws SQLException{
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("select req.batch_no batchNo,req.model_no modelNo,card.status cardStatus,mem.user_name userName,handle.*  ");
+		sql.append(" from t_gift_card card  ");
+		sql.append(" left join T_GIFT_CARD_CB_HANDLE handle on handle.serial_no=card.serial_no ");
+		sql.append(" left join t_gift_required req on card.batch_no=req.batch_no ");
+		sql.append(" left join t_member mem on handle.user_id=mem.id ");
+		sql.append(" where 1=1 ");
+		List<Object> params = new ArrayList<Object>();
+		if(giftCardCbHandle.getBatchNo()!=null){
+			sql.append(" and card.batch_no=? ");
+			params.add(giftCardCbHandle.getBatchNo());
+		}
+		if(giftCardCbHandle.getId()!=null){
+			sql.append(" and handle.id=? ");
+			params.add(giftCardCbHandle.getId());
+		}
+		if(giftCardCbHandle.getStatus()!=null){
+			sql.append(" and handle.status=? ");
+			params.add(giftCardCbHandle.getStatus());
+		}
+		if(giftCardCbHandle.getCardStatus()!=null){
+			sql.append(" and card.status=? ");
+			params.add(giftCardCbHandle.getCardStatus());
+		}
+		if(StringUtils.isNotEmpty(giftCardCbHandle.getSerialNo())){
+			sql.append(" and handle.serial_no =? ");
+			params.add(giftCardCbHandle.getSerialNo().trim());
+		}
+		if(StringUtils.isNotEmpty(giftCardCbHandle.getModelNo())){
+			sql.append(" and req.model_no =? ");
+			params.add(giftCardCbHandle.getModelNo().trim());
+		}
+		if(StringUtils.isNotEmpty(giftCardCbHandle.getUserName())){
+			sql.append(" and mem.user_name like ? ");
+			params.add("%" + giftCardCbHandle.getUserName().trim() + "%");
+		}
+		if (StringUtils.isNotEmpty(giftCardCbHandle.getBeginTime())) {
+			sql.append(" and handle.create_time > ?  ");
+			params.add(giftCardCbHandle.getBeginTime()+"000000");
+		}
+		if (StringUtils.isNotEmpty(giftCardCbHandle.getEndTime())) {
+			sql.append(" and handle.create_time < ?  ");
+			params.add(giftCardCbHandle.getEndTime()+"235959");
+		}
+		sql.append(" order by handle.id desc ");
+		Page<GiftCardCbHandle> pageData = dbHelper.getPage(sql.toString(), GiftCardCbHandle.class, pageNo, pageSize, params.toArray());
+		return pageData;
+	}
+	
+	
+	public void download(Long batchNo,HttpServletRequest request,HttpServletResponse response) throws Exception{
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select req.batch_no batchNo,req.model_no modelNo,card.status cardStatus,mem.user_name userName,handle.serial_no,handle.create_time  ");
+		sqlBuff.append(" from t_gift_card card  ");
+		sqlBuff.append(" left join T_GIFT_CARD_CB_HANDLE handle on handle.serial_no=card.serial_no ");
+		sqlBuff.append(" left join t_gift_required req on card.batch_no=req.batch_no ");
+		sqlBuff.append(" left join t_member mem on handle.user_id=mem.id ");
+		sqlBuff.append(" where req.batch_no = "+batchNo);
+		String[] head = {"批次号","卡型号","礼品卡状态","用户名","礼品卡号","兑换时间"};
+		ExcelExportUtil.exportExcel(dbHelper.getConn(),head,"cardExchange_", sqlBuff.toString(),request,response);
+	}
+
+}

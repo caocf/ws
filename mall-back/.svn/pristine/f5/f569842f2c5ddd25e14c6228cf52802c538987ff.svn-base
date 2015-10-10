@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"
+    default-lazy-init="true">
+    
+    <description>第三方工具类注入</description>
+
+	  <!--  码中心客户端Spring配置 --> 
+	<bean class="com.cplatform.verifycode.CodeServiceClient">
+	        <property name="serverAddress" value="http://192.168.1.14:19001" />
+	        <property name="retryTimes" value="5" />
+	        <property name="timeout" value="10000" />
+	        <property name="retryInterval" value="1000" />
+	</bean>
+    <!-- 订单中心服务 -->
+	<bean class="com.cplatform.order.ActOrderServiceClient">
+		<property name="serverAddress" value="http://192.168.1.148:18701" />
+		<property name="retryTimes" value="5" />
+		<property name="timeout" value="10000" />
+		<property name="retryInterval" value="1000" />
+	</bean>
+	
+	<!-- 支付网关服务 -->
+	<bean class="com.cplatform.pay.PayServiceClient">
+		<property name="serverAddress" value="http://192.168.1.14:18901" />
+		<property name="retryTimes" value="5" />
+		<property name="timeout" value="10000" />
+		<property name="retryInterval" value="1000" />
+	</bean>
+
+</beans>

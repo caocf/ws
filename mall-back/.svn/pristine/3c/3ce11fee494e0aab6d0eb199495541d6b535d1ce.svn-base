@@ -1,0 +1,163 @@
+package com.cplatform.mall.back.member.web;
+
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import net.sf.json.JSONObject;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.member.entity.Member;
+import com.cplatform.mall.back.member.service.MemberService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * 会员管理控制器. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:59:26
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/member/management")
+public class MemberController {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private MemberService memberService;
+
+	@Autowired
+	private AppConfig config;
+	
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+
+	/**
+	 * 会员管理列表
+	 * 
+	 * @param member
+	 *            会员实体类
+	 * @param page
+	 *            当前页
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String memberList(Member member, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+		Page<Member> memberPage = memberService.memberQuery(member, page);
+		model.addAttribute("memberPage", memberPage);
+		model.addAttribute("statusMap", Member.getStatusMap());
+		model.addAttribute("userLevelMap", Member.getUserLevelMap());
+		return "member/management/member_list";
+	}
+
+	/**
+	 * 查看会员
+	 * 
+	 * @param id
+	 *            会员ID
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/view")
+	public String view(@RequestParam(required = false) Long id, Model model) {
+		Member member = memberService.findOneMember(id);
+		String mobile = member.getTerminalId();
+		Map<String, String> resultMap = new HashMap<String, String>();
+		if (null != mobile) {
+			// 积分
+			String resultScore = InterfaceQueryController.sendPost(config.getMemberScore(), mobile, "mobile=" + mobile);
+			if (!resultScore.isEmpty()) {
+				JSONObject jsonScore = JSONObject.fromObject(resultScore);
+				if ("0".equals(jsonScore.get("statusCode").toString())) {
+					resultMap.put("brand", jsonScore.get("brand").toString());
+					resultMap.put("score", jsonScore.get("score").toString());
+					resultMap.put("scoreStatusCode", jsonScore.get("statusCode").toString());
+				} else {
+					resultMap.put("scoreStatusText", jsonScore.get("statusText").toString());
+					resultMap.put("scoreStatusCode", jsonScore.get("statusCode").toString());
+				}
+			}
+			// 商城币
+			String resultCoin = InterfaceQueryController.sendPost(config.getMemberCoin(), mobile, "mobile=" + mobile);
+			if (!resultCoin.isEmpty()) {
+				JSONObject jsonCoin = JSONObject.fromObject(resultCoin);
+				if ("0".equals(jsonCoin.get("statusCode").toString())) {
+					resultMap.put("coin", jsonCoin.get("coin").toString());
+					resultMap.put("coinStatusCode", jsonCoin.get("statusCode").toString());
+				} else {
+					resultMap.put("coinStatusText", jsonCoin.get("statusText").toString());
+					resultMap.put("coinStatusCode", jsonCoin.get("statusCode").toString());
+				}
+			}
+		}
+		model.addAttribute("resultMap", resultMap);
+		model.addAttribute("member", member);
+		return "member/management/member_view";
+	}
+
+	/**
+	 * 操作
+	 * 
+	 * @param id
+	 * @param status
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/operate/{status}/{id}/{whereAbout}")
+	@ResponseBody
+	public Object operate(@PathVariable Long id, @PathVariable Long status, @PathVariable String whereAbout, Model model) {
+		String url = null;
+		if ("view".equals(whereAbout)) {
+			url = "/member/management/view?id=" + id;
+		} else {
+			url = "/member/management/list";
+		}
+		try {
+			Member member = memberService.findOneMember(id);
+			if (1 == status) {// 暂停
+				member.setStatus(Member.STATUS_2);
+				member = memberService.saveMember(member);
+				logUtils.logAudit("会员状态暂停成功", "ID:" + member.getId().toString() + ",状态 STATUS：" + member.getStatusName());
+				return JsonRespWrapper.successReload("暂停成功");
+			} else if (2 == status) {// 恢复
+				member.setStatus(Member.STATUS_1);
+				member = memberService.saveMember(member);
+				logUtils.logAudit("会员状态恢复成功", "ID:" + member.getId().toString() + ",状态 STATUS：" + member.getStatusName());
+				return JsonRespWrapper.successReload("恢复成功");
+			} else {
+				return null;
+			}
+
+		}
+		
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			log.error(ex.getMessage());
+			logUtils.logAdd("操作报错", ex.getMessage());
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+		
+	}
+
+}

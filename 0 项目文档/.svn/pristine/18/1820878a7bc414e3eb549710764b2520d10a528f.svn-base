@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_act_orderid ON "LIFE".t_redpackage_order(act_order_id);

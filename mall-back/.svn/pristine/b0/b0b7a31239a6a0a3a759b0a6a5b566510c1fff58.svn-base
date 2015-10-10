@@ -1,0 +1,688 @@
+package com.cplatform.mall.back.order.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.entity.StoreCode;
+import com.cplatform.mall.back.item.service.ItemManageService;
+import com.cplatform.mall.back.order.entity.Order;
+import com.cplatform.mall.back.order.entity.OrderExpress;
+import com.cplatform.mall.back.order.entity.OrderGoods;
+import com.cplatform.mall.back.order.entity.OrderPage;
+import com.cplatform.mall.back.order.entity.OrderPayment;
+import com.cplatform.order.ActOrderGoodsInfo;
+import com.cplatform.order.ActOrderInfo;
+import com.cplatform.order.ActOrderPaymentInfo;
+import com.cplatform.order.ActOrderServiceClient;
+import com.cplatform.verifycode.GenerateReqInfo;
+import com.cplatform.verifycode.GenerateRespInfo;
+import com.cplatform.verifycode.QueryReqInfo;
+import com.cplatform.verifycode.QueryRespInfo;
+import com.cplatform.verifycode.ResendReqInfo;
+import com.cplatform.verifycode.ResendRespInfo;
+import com.cplatform.verifycode.VerifyService;
+
+/**
+ * 订单服务类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-8 上午10:02:00
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class OrderService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private ItemManageService itemManageService;
+
+	@Autowired
+	private ActOrderServiceClient actOrderServiceClient;
+
+	@Autowired
+	private VerifyService verifyClient;
+
+	private OrderGoods findOrderGoodsById(Long id) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_act_order_goods where id = ?");
+		return dbHelper.getBean(sqlBuff.toString(), OrderGoods.class, new Object[] { id });
+	}
+
+	public Order findOrderById(Long id) throws SQLException {
+		// return this.orderDao.findOne(id);
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*, m.real_name userName ");
+		sqlBuff.append("  from t_act_order t ");
+		sqlBuff.append("  left join t_member m ");
+		sqlBuff.append("    on t.user_id = m.id ");
+		sqlBuff.append(" where t.id = ?");
+		return dbHelper.getBean(sqlBuff.toString(), Order.class, new Object[] { id });
+	}
+
+	public Map<String, String> findOneOrderById(Long id) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*, m.real_name userName ");
+		sqlBuff.append("  from t_act_order t ");
+		sqlBuff.append("  left join t_member m ");
+		sqlBuff.append("    on t.user_id = m.id ");
+		sqlBuff.append(" where t.id = ?");
+		try {
+			return dbHelper.getMap(sqlBuff.toString(), new Object[] { id });
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public List<OrderGoods> findOrderGoodsByOrderId(Long orderId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select goods.*, ts.name goodsName ");
+		sqlBuff.append("  from t_act_order_goods goods ");
+		sqlBuff.append("  left join t_item_sale ts ");
+		sqlBuff.append("    on goods.goods_id = ts.id ");
+		sqlBuff.append(" where goods.act_order_id = ? ");
+		sqlBuff.append(" order by goods.id desc");
+
+		return dbHelper.getBeanList(sqlBuff.toString(), OrderGoods.class, new Object[] { orderId });
+	}
+
+	public List<Map<String, String>> findOrderGoodsListByOrderId(Long orderId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select goods.*, ts.name goodsName ");
+		sqlBuff.append("  from t_act_order_goods goods ");
+		sqlBuff.append("      ,t_item_sale ts ");
+		sqlBuff.append(" where goods.act_order_id = ? ");
+		sqlBuff.append("   and goods.goods_id = ts.id ");
+//		sqlBuff.append("   and goods.id not in(select rg.order_goods_id from t_order_refund_goods rg, t_order_refund r where rg.refund_id=r.id and r.order_id=? "); 
+		//商家拒绝确认和审核失败的数据，不过滤
+		//@add_by macl@c-platform.com start>>>
+//		sqlBuff.append(" and r.status != 3 and r.status != 5 ");
+		//@add_by macl@c-platform.com <<<end
+//		sqlBuff.append("						) ");
+		sqlBuff.append(" order by goods.id desc");
+
+		try {
+			return dbHelper.getMapList(sqlBuff.toString(), new Object[] { orderId});
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public List<OrderExpress> findOrderExpressByOrderId(Long orderId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * ");
+		sqlBuff.append("  from t_act_order_express ");
+		sqlBuff.append(" where act_order_id = ? ");
+		sqlBuff.append(" order by id desc");
+
+		return dbHelper.getBeanList(sqlBuff.toString(), OrderExpress.class, new Object[] { orderId });
+	}
+
+	public Map<String, String> findOneOrderExpressByOrderId(Long orderId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * ");
+		sqlBuff.append("  from t_act_order_express ");
+		sqlBuff.append(" where act_order_id = ? ");
+		sqlBuff.append(" order by id desc");
+
+		try {
+			return dbHelper.getMap(sqlBuff.toString(), new Object[] { orderId });
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public List<OrderPayment> findOrderPaymentByOrderId(Long orderId) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_act_order_payment t ");
+		sqlBuff.append(" where t.act_order_id = ? ");
+		sqlBuff.append(" order by t.id desc");
+
+		return dbHelper.getBeanList(sqlBuff.toString(), OrderPayment.class, new Object[] { orderId });
+	}
+
+	/**
+	 * 获取指定订单的支付信息
+	 * 
+	 * @param orderId
+	 *            订单号
+	 * @return
+	 */
+	public List<Map<String, String>> findOrderPaymentListByOrderId(Long orderId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_act_order_payment t ");
+		sqlBuff.append(" where t.act_order_id = ? ");
+		sqlBuff.append(" order by t.id desc");
+
+		try {
+			return dbHelper.getMapList(sqlBuff.toString(), new Object[] { orderId });
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 获取页面数据
+	 * 
+	 * @param order
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<Order> findPageList(Order order, int pageNo, int pageSize) throws SQLException {
+		List<Object> params = new ArrayList<Object>();
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * ");
+		sqlBuff.append("  from t_act_order t ");
+		sqlBuff.append(" where 1 = 1 ");
+		if (order.getId() != 0) {
+			sqlBuff.append(" and t.id = ? ");
+			params.add(order.getId());
+		}
+		if (order.getActType() != 0) {
+			sqlBuff.append(" and t.act_type = ? ");
+			params.add(order.getActType());
+		}
+		// if (order.getPayStatus() != null && !"".equals(order.getPayStatus()))
+		// {
+		// sqlBuff.append(" and t.pay_status = ? ");
+		// params.add(order.getPayStatus());
+		// }
+		sqlBuff.append(" order by t.id desc");
+		Page<Order> pageData = dbHelper.getPage(sqlBuff.toString(), Order.class, pageNo, pageSize, params.toArray());
+		// if (pageData != null && pageData.getData() != null) {
+		// List<Order> pagelist = pageData.getData();
+		// if (pagelist != null && pagelist.size() > 0) {
+		// sqlBuff.setLength(0);
+		// sqlBuff.append("select * from t_act_order_goods t where t.act_order_id = ?");
+		// StringBuilder sqlBuff1 = new StringBuilder();
+		// sqlBuff1.setLength(0);
+		// sqlBuff1.append("select * from t_act_order_express t where t.act_order_id = ?");
+		// for (int i = 0; i < pagelist.size(); i++) {
+		// List<ActOrderGoodsInfo> goodsInfos =
+		// dbHelper.getBeanList(sqlBuff.toString(), ActOrderGoodsInfo.class, new
+		// Object[] { pagelist
+		// .get(i).getId() });
+		// pagelist.get(i).setGoodsInfos(goodsInfos);
+		// ActOrderExpressInfo expressInfo =
+		// dbHelper.getBean(sqlBuff1.toString(), ActOrderExpressInfo.class, new
+		// Object[] { pagelist.get(i)
+		// .getId() });
+		// pagelist.get(i).setExpressInfo(expressInfo);
+		// }
+		// }
+		//
+		// }
+		return pageData;
+	}
+
+	/**
+	 * 获取订单页面列表（暂不用）
+	 * 
+	 * @param order
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<OrderPage> findOrderList(OrderPage order, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t1.id id, ");
+		sqlBuff.append("t1.user_id userId, ");
+		sqlBuff.append("t1.subject subject, ");
+		sqlBuff.append("t1.shop_subject shop_subject, ");
+		sqlBuff.append("t1.act_type actType, ");
+		sqlBuff.append("t1.create_time createTime, ");
+		sqlBuff.append("t1.close_status closeStatus, ");
+		sqlBuff.append("t1.pay_status payStatus, ");
+		// sqlBuff.append("t1.verify_status verifyStatus, ");
+		sqlBuff.append("t2.receiver_name  userName ");
+		sqlBuff.append("from t_act_order t1 ");
+		sqlBuff.append("left join t_act_order_express t2 ");
+		sqlBuff.append("on t1.id = t2.act_order_id ");
+		sqlBuff.append("where 1 = 1 ");
+		if (order.getId() != null) {
+			sqlBuff.append(" and t1.id = ? ");
+			params.add(order.getId());
+		}
+		if (order.getActType() != null && !"".equals(order.getActType())) {
+			sqlBuff.append(" and t1.act_type = ? ");
+			params.add(order.getActType());
+		}
+		if (order.getPayStatus() != null && !"".equals(order.getPayStatus())) {
+			sqlBuff.append(" and t1.pay_status = ? ");
+			params.add(order.getPayStatus());
+		}
+		sqlBuff.append(" order by t1.id desc");
+		Page<OrderPage> pageData = dbHelper.getPage(sqlBuff.toString(), OrderPage.class, pageNo, pageSize, params.toArray());
+		// if (pageData != null && pageData.getData() != null) {
+		// sqlBuff.setLength(0);
+		// sqlBuff.append("select t.name ");
+		// sqlBuff.append("  from t_item_org t ");
+		// sqlBuff.append(" where t.id in (select t1.org_id ");
+		// sqlBuff.append("                  from t_item_sale t1 ");
+		// sqlBuff.append("                 where t1.id in (select t2.goods_id ");
+		// sqlBuff.append("                                   from t_act_order_goods t2 ");
+		// sqlBuff.append("                                  where t2.act_order_id = ?))");
+		//
+		// List<OrderPage> pagelist = pageData.getData();
+		// if (pagelist != null && pagelist.size() > 0) {
+		// StringBuilder sqlBuff1 = new StringBuilder();
+		// sqlBuff1.setLength(0);
+		// sqlBuff1.append("select nvl(sum(fee_price), '0') ");
+		// sqlBuff1.append("  from t_act_order_goods t ");
+		// sqlBuff1.append(" where t.act_order_id = ?");
+		//
+		// for (int i = 0; i < pagelist.size(); i++) {
+		// String[] goodsNames = dbHelper.getArray(sqlBuff.toString(), new
+		// Object[] { pagelist.get(i).getId() });
+		// // String[] goodsNames = { "笔记本", "IPHONE", "冰箱" };
+		// pagelist.get(i).setGoodsNames(goodsNames);
+		// String[] price = dbHelper.getArray(sqlBuff1.toString(), new Object[]
+		// { pagelist.get(i).getId() });
+		// pagelist.get(i).setPrice(Float.parseFloat(price[0]) / 100 + "元");
+		// }
+		// }
+		// }
+
+		return pageData;
+	}
+
+	/**
+	 * 补发验证码
+	 * 
+	 * @param order
+	 * @return
+	 */
+	public String reissued(Long id) {
+		String msg = "验证码已补发";
+		try {
+			OrderGoods goods = this.findOrderGoodsById(id);
+			QueryReqInfo request = new QueryReqInfo();
+			request.setCodeType(QueryReqInfo.CodeType.OrderNo); // 按商品订单号
+			request.setCode(goods.getId() + ""); // 商品订单号
+			ItemSale sale = this.itemManageService.findItemSaleById(goods.getGoodsId());
+			if (sale.getSendCodeChannel() == null) {
+				return "该商品发码方式有误，无法补发验证码";
+			}
+			if (sale.getSendCodeChannel() == 1L ) {
+				request.setPlatform_id("FOUNDER");
+			}else if(sale.getSendCodeChannel() == 0L){
+				request.setPlatform_id("CPLATFORM");
+			}else if(sale.getSendCodeChannel() == 2L){
+				request.setPlatform_id("STORE");
+			}
+			
+			Order order = this.findOrderById(goods.getActOrderId());
+			request.setStoreId(order.getShopId() + ""); // 商户编号
+			QueryRespInfo response = verifyClient.query(request);
+
+			GenerateReqInfo grequest = new GenerateReqInfo();
+			if (sale.getSendCodeChannel() == 1L ) {
+				grequest.setPlatform_id("FOUNDER");
+			}else if(sale.getSendCodeChannel() == 0L){
+				grequest.setPlatform_id("CPLATFORM");
+			}else if(sale.getSendCodeChannel() == 2L){
+				grequest.setPlatform_id("STORE");
+			}
+			grequest.setStoreId(order.getShopId() + ""); // 商户编号
+			// grequest.setStoreId("lj123456789"); // 结算商户
+			// grequest.setShopId("sxm001"); // 门店编号
+
+			grequest.setActOrderNo(goods.getActOrderId() + ""); // 业务订单编号
+			// grequest.setOrderNo(goods.getId() + ""); // 商品订单编号
+			// grequest.setItemOrderNo(goods.getId() + ""); // 商品订单编号
+			// grequest.setItemSerial(1); // 多个商品时的商品序号，默认为
+
+			// grequest.setVerifyTime(3); // 条码可验次数
+			grequest.setValidDate(sale.getSaleStartTime() + "000000"); // 码有效日期
+			grequest.setExpireDate(sale.getSaleStopTime() + "235959"); // 码失效日期
+
+			grequest.setItemId(sale.getId().toString()); // 商品编号
+			grequest.setItemName(goods.getGoodsSubject()); // 商品名称
+			grequest.setItemPrice(goods.getFeePrice()); // 商品单价
+			grequest.setItemQuantity(goods.getCount()); // 商品数量
+			grequest.setTotlePrice(order.getTotalPayAmount()); // 商品总金额
+			List<OrderExpress> list = this.findOrderExpressByOrderId(goods.getActOrderId());
+			if (list != null && list.size() > 0) {
+				grequest.setTerminalId(list.get(0).getCellphoneNumber()); // 接手号码
+			}
+			grequest.setSmsContent("订单已经下发"); // 发码模板
+
+			GenerateRespInfo gresponse = null;
+			if (0 == response.getStatusCode()) {
+				// 已经请求过
+				grequest.setItemInfo("patch"); // 补码
+				gresponse = verifyClient.generate(grequest);
+			} else {
+				gresponse = verifyClient.generate(grequest);
+			}
+			msg = gresponse.getStatusText();
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return msg;
+	}
+
+	/**
+	 * 重发验证码
+	 * 
+	 * @param order
+	 * @return
+	 */
+	public String resend(Long id) {
+		String msg = "验证码已重发";
+
+		try {
+			OrderGoods goods = this.findOrderGoodsById(id);
+			ResendReqInfo request = new ResendReqInfo();
+			request.setCodeType(ResendReqInfo.CodeType.OrderNo);
+			request.setCode(goods.getId() + "");
+			ItemSale sale = this.itemManageService.findItemSaleById(goods.getGoodsId());
+			if (sale.getSendCodeChannel() == null) {
+				return "该商品发码方式有误，无法重发验证码";
+			}
+			if (sale.getSendCodeChannel() == 1L ) {
+				request.setPlatform_id("FOUNDER");
+			}else if(sale.getSendCodeChannel() == 0L){
+				request.setPlatform_id("CPLATFORM");
+			}else if(sale.getSendCodeChannel() == 2L){
+				request.setPlatform_id("STORE");
+			}
+			Order order = this.findOrderById(goods.getActOrderId());
+			request.setStoreId(order.getShopId() + ""); // 商户编号
+			ResendRespInfo response = verifyClient.resend(request);
+			msg = response.getStatusText();
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			// msg = e.getMessage();
+		}
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			// msg = e.getMessage();
+		}
+
+		return msg;
+
+	}
+
+	public List<Map<String, String>> findVerifyCodeListByOrderId(Long orderId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_verify_code_info t");
+		sqlBuff.append(" where t.act_order_id = ?");
+		sqlBuff.append(" order by t.item_order_id desc");
+		try {
+			return dbHelper.getMapList(sqlBuff.toString(), new Object[] { orderId });
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 根据订单id获取运输方式(只要订单商品中有一个运输方式是物流，那么运输方式就是物流)
+	 * 
+	 * @param actOrderId
+	 *            订单id
+	 * @return
+	 * @throws SQLException
+	 */
+	public Map<String, String> getOrderDeliveryMode(long actOrderId) throws SQLException {
+		StringBuilder sql = new StringBuilder(500);
+		sql.append(" select its.item_mode itemMode,its.id itemId,decode(sum(nvl(its.post_flag, 0)), 0, 0, 1) post_flag ");
+		sql.append(" from t_act_order o, t_act_order_goods g, t_item_sale its ");
+		sql.append(" where o.id = ?");
+		sql.append(" and o.id = g.act_order_id");
+		sql.append(" and g.goods_id = its.id");
+		sql.append(" group by its.item_mode,its.id");
+		Object[] params = new Object[] { actOrderId };
+		return dbHelper.getMap(sql.toString(), params);
+	}
+
+	/**
+	 * 获取订单对象
+	 * 
+	 * @param id
+	 *            订单id
+	 * @return
+	 * @throws Exception
+	 */
+	public ActOrderInfo getActOrderInfoById(long id) throws Exception {
+		
+		StringBuilder builder  = new StringBuilder();
+		builder.append(" select i.*,s.name storeName from t_item_sale i  inner join  t_Store s  on s.id = i.store_id where  i.id="+id);
+ 		return actOrderServiceClient.getActOrderInfo(id);
+	}
+
+	public Map<String, String> getSaleMode(String ids) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.id,t.item_mode from t_item_sale t  where t.id in(").append(ids).append(")");
+		Map<String, String> map = null;
+		try {
+			dbHelper.getMap(sqlBuff.toString());
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+
+		}
+		return map;
+	}
+	
+	/**
+	 * 根据订单id获取用户昵称,商户名称
+	 * @param actOrderId
+	 * @return
+	 * @throws SQLException
+	 */
+	public Map<String, String> getUserByOrderId(long actOrderId) throws SQLException {
+		StringBuilder sql = new StringBuilder(500);
+		sql.append(" select m.nick_name nickName,s.name storeName from t_act_order o ");
+		sql.append(" left join t_member m on o.user_id=m.id ");
+		sql.append(" left join t_store s  on o.shop_id=s.id ");
+		sql.append(" where o.id=?");
+		Object[] params = new Object[] { actOrderId };
+		return dbHelper.getMap(sql.toString(), params);
+	}
+	
+	
+	/**
+	 * 获取订单
+	 * @param order
+	 * @param model
+	 * @throws SQLException 
+	 */
+	public void getPayMsg(ActOrderInfo order,Model model) throws SQLException{
+		
+		//支付信息
+		List<ActOrderPaymentInfo> payments = order.getPaymentInfos();
+		if (payments != null) {
+			if (payments.size() > 1) {
+				model.addAttribute("payment", "组合支付");
+				for (ActOrderPaymentInfo actOrderPaymentInfo : payments) {
+					if (actOrderPaymentInfo.getCurrency().equals("cash")) {
+						model.addAttribute("cashAmount", actOrderPaymentInfo
+								.getAmount());
+					} else if (actOrderPaymentInfo.getCurrency().equals("coin")) {
+						model.addAttribute("coinAmount", actOrderPaymentInfo
+								.getAmount());
+					}else if (actOrderPaymentInfo.getCurrency().equals("score")) {
+						model.addAttribute("payment", "积分支付");
+						model.addAttribute("scoreAmount", actOrderPaymentInfo
+								.getAmount());
+					}
+				}
+			} else if (payments.size() == 1) {
+				ActOrderPaymentInfo actOrderPaymentInfo = payments.get(0);
+				if (actOrderPaymentInfo.getCurrency().equals("cash")) {
+					model.addAttribute("payment", "现金支付");
+					model.addAttribute("cashAmount", actOrderPaymentInfo
+							.getAmount());
+				} else if (actOrderPaymentInfo.getCurrency().equals("coin")) {
+					model.addAttribute("payment", "商城币支付");
+					model.addAttribute("coinAmount", actOrderPaymentInfo
+							.getAmount());
+				}else if (actOrderPaymentInfo.getCurrency().equals("score")) {
+					model.addAttribute("payment", "积分支付");
+					model.addAttribute("scoreAmount", actOrderPaymentInfo
+							.getAmount());
+				}
+			}
+		}
+		
+		// 结算信息
+		// 商品总费用
+		double totalPrice = 0;
+		// 商品优惠费用
+		double discount = 0;
+		// 商品运费
+		double freight = 0;
+		if (order.getExpressInfo() != null) {
+			freight = (double) order.getExpressInfo().getExpressCost() / 100;
+		}
+		for (ActOrderGoodsInfo goodInfo : order.getGoodsInfos()) {
+			totalPrice += (double) goodInfo.getPayPrice() * goodInfo.getCount()/ 100;
+			discount += (double) goodInfo.getDiscount() / 100;
+		}
+		// 商品结算价格取两位小数
+		model.addAttribute("totalPrice",
+				(double) Math.round(totalPrice * 100) / 100);
+		model.addAttribute("discount",
+				(double) Math.round(discount * 100) / 100);
+		model.addAttribute("freight", (double) Math.round(freight * 100) / 100);
+		model.addAttribute("payPrice", (double) Math.round((totalPrice
+				+ freight - discount) * 100) / 100);
+		
+		
+		//订单状态信息
+		//买家未付款（等待买家付款）：未支付、订单未关闭
+		//买家正在付款：支付中、订单未关闭
+		//买家已付款：已支付、订单未关闭、未发货
+		//等待买家收货：订单未关闭、已发货
+		//已完成：订单未关闭、已支付、已收货
+		//已取消：订单关闭
+		//其他说明：
+		//订单关闭状态：0未关闭，1已关闭；
+		//订单支付状态：0未支付，1支付中，2已支付
+		//订单删除状态: 0未删除，1已删除
+		//发货状态：0未发货，1已发货，2已收货
+		Map<String,String> itemMap=getOrderDeliveryMode(order.getId());
+		//实物商品
+		if(itemMap !=null && itemMap.get("itemMode").equals("0")){
+			if(order.getCloseStatus()==1){
+				model.addAttribute("orderStatus", "已取消");
+			}else if(order.getCloseStatus()==0){
+				if(order.getPayStatus()==0){
+					model.addAttribute("orderStatus", "等待买家付款");
+				}else if(order.getPayStatus()==1){
+					model.addAttribute("orderStatus", "买家正在付款");
+				}else if(order.getPayStatus()==2 && order.getExpressInfo().getStatus()==0){
+					model.addAttribute("orderStatus", "买家已付款");
+				}else if(order.getExpressInfo().getStatus()==1){
+					model.addAttribute("orderStatus", "等待买家收货");
+				}else if(order.getPayStatus()==2 && order.getExpressInfo().getStatus()==2){
+					model.addAttribute("orderStatus", "已完成");
+				}
+			}
+		}else if(itemMap !=null && itemMap.get("itemMode").equals("1")){//虚拟商品
+			if(order.getCloseStatus()==1){
+				model.addAttribute("orderStatus", "已取消");
+			}else if(order.getCloseStatus()==0){
+				if(order.getPayStatus()==0){
+					model.addAttribute("orderStatus", "等待买家付款");
+				}else if(order.getPayStatus()==1){
+					model.addAttribute("orderStatus", "买家正在付款");
+				}else if(order.getPayStatus()==2 ){
+					model.addAttribute("orderStatus", "买家已付款");
+				}
+			}
+		}
+		
+		
+		
+	}
+	
+	/**
+	 * 查询订单中虚拟商品的验证码
+	 * @param storeCode
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<StoreCode> getStoreCodes(StoreCode storeCode) throws SQLException{
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* ");
+		sqlBuff.append("  from t_verify_store_code_common t ");
+		sqlBuff.append(" where 1 = 1 ");
+		if (StringUtils.isNotEmpty(storeCode.getItemId())) {
+			sqlBuff.append("   and t.item_id = ? ");
+			params.add(storeCode.getItemId());
+		}
+		if (StringUtils.isNotEmpty(storeCode.getStoreId())) {
+			sqlBuff.append("   and t.store_id = ?");
+			params.add(storeCode.getStoreId());
+		}
+		if (StringUtils.isNotEmpty(storeCode.getOrderId())) {
+			sqlBuff.append("   and t.order_id = ?");
+			params.add(storeCode.getOrderId());
+		}
+		sqlBuff.append(" order by t.create_date desc ");
+		return dbHelper.getBeanList(sqlBuff.toString(), StoreCode.class, params.toArray());
+	}
+	
+}

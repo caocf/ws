@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_verify_card_code_common

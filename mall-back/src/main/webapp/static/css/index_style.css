@@ -1,0 +1,40 @@
+* { margin:0; padding:0; list-style:none;}
+body {
+	background:#d5fbff url(../images/backlogin_02.jpg) repeat-x top left;	
+	margin: 0px;	
+}
+div { color:#707070; font-family:Verdana, Arial, Helvetica, sans-serif,"ËÎÌו"; font-size:12px; line-height:18px;}
+textarea,input,select { border:1px solid #67f8ff; padding:2px; background:#ddfeff; height:14px; width: 130px;}
+input.txt:hover, input.txt:focus, textarea:hover, textarea:focus{ border-color:#00629a; background:#F5F9FD; }
+.radio{ margin-top:-1px; border:none; vertical-align:middle; }
+.checkbox{ height:14px; border:none; vertical-align:middle; }
+
+A:link, A:active, A:visited	{
+	color:#707070;
+	text-decoration:none;
+}
+A:hover	{
+	color:#1e78d1;
+	text-decoration:underline;
+}
+#midmain { width:724px; margin:0 auto;}
+#top { background:url(../images/backlogin_05.jpg) no-repeat left top; height:102px; width:520px; margin:65px 0 0 0; float:left}
+#mainbox { width:724px; float:left;}
+   .leftpic { background:url(../images/backlogin_07.jpg) no-repeat left top; width:407px; height:237px; float:left;}
+   .rightlog { background:url(../images/backlogin_08.jpg) no-repeat left top; width:317px; height:237px; float:left;}
+   .userlog { margin:20px 0 0 60px; font-size:14px; color:#fff;}
+   .alertDiv { margin:35px 0 0 60px;*margin:35px 0 0 280px;}   
+   .alignmid { width:90%; margin:0 auto; padding-top:15px;}
+   .fontwhite,.fontwhite td { color:#fff;}
+   .btn_bg2 { background:#cfe2f1 url(../images/index_59.jpg) no-repeat left top; width:60px; height:26px; line-height:23px; text-align:center; margin:3px 5px; font-weight:bold; cursor:pointer; font-size:12px; border:0;}
+   #logfoot { width:700px; float:left;padding-top:20px; height:26px; text-align:center; color:#045584;}
+
+
+.errormsg{ margin:10px 0; padding:10px; width:580px; border:1px solid #DD3D11; background:#FFEBEB; }
+	.errormsg p{ padding-left:15px; background:url(../images/bg_repno.gif) no-repeat -300px -648px; }
+	.errormsg em{ color:#DD3D11; font-weight:700; }
+.correctmsg{ margin:10px 0; padding:10px; width:580px; border:1px solid #4EBB20; background:#FCFFF0; }
+	.correctmsg p{ padding-left:17px; background:url(../images/bg_repno.gif) no-repeat -335px -598px; }
+	.correctmsg em{ color:#4EBB20; font-weight:700; }
+.loginmsg{ position:absolute; margin:-45px 0 0 -11px; *margin:-45px 0 0 -230px; width:230px; line-height:150%; text-align:left; font-size:12px; font-weight:400; }
+	.loginmsg p{ margin:0; }  

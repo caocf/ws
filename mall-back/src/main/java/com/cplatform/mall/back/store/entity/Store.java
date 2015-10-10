@@ -1,0 +1,747 @@
+package com.cplatform.mall.back.store.entity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.codehaus.jackson.annotate.JsonProperty;
+
+/**
+ * 代理商和商户表 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-28 下午3:22:07
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: baibo@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Entity
+@Table(name = "T_STORE")
+public class Store implements java.io.Serializable {
+
+	public static final Long STORE = 2L;
+
+	public static final Long CHANNEL = 3L;
+
+	/**
+	 * 草稿
+	 */
+	public static final Long STATUS_SAVE = 0L;
+
+	/**
+	 * 待审核
+	 */
+	public static final Long STATUS_NO_AUDIT = 1L;
+
+	/**
+	 * 审核中
+	 */
+
+	public static final Long STATUS_AUDITING = 2L;
+
+	/**
+	 * 审核通过
+	 */
+
+	public static final Long STATUS_AUDIT_PASS = 3L;
+
+	/**
+	 * 审核驳回
+	 */
+
+	public static final Long STATUS_AUDIT_REJECT = 4L;
+
+	public static Map<Long, String> sortMap = null;
+
+	public static Map<Long, String> isBsAccountMap = null;
+
+	public static Map<Long, String> shopClassMap = null;
+
+	public static Map<Long, String> statusMap = null;
+
+	public static Map<Long, String> syncGyFlagMap = null;
+
+	public static Map<Long, String> itemEditAuditFlagMap = null;
+
+	public static Map<Long, String> itemPublishAuditFlagMap = null;
+
+	public static Map<Long, String> shopEditAuditFlagMap = null;
+
+	public static Map<Long, String> shopAgentFlagMap = null;
+
+	public static Map<Long, String> goodsAgentFlagMap = null;
+
+	public static Map<Long, String> isValidMap = null;
+
+	public static Map<Long, String> syncGyFlagMsg = null;
+	
+	public static Map<Long, String> accountTypeMap = null;
+	static {
+		syncGyFlagMsg = new HashMap<Long, String>();
+		syncGyFlagMsg.put(0L, "确定同步结算信息吗？ ");
+		syncGyFlagMsg.put(1L, "当前同步结算信息状态:成功，您确定要重新同步结算信息吗？");
+		syncGyFlagMsg.put(2L, "当前同步结算信息状态:失败，您确定要重新同步结算信息吗？");
+		syncGyFlagMsg.put(3L, "当前同步结算信息状态:审核通过，您确定要重新同步结算信息吗？");
+		syncGyFlagMsg.put(4L, "当前同步结算信息状态:审核驳回，您确定要重新同步结算信息吗？");
+	}
+	static {
+		isValidMap = new HashMap<Long, String>();
+		isValidMap.put(0L, "已删除");
+		isValidMap.put(1L, "正常");
+	}
+	static {
+		sortMap = new HashMap<Long, String>();
+		sortMap.put(0l, "非签约 ");
+		sortMap.put(1l, "签约");
+	}
+	static {
+		isBsAccountMap = new HashMap<Long, String>();
+		isBsAccountMap.put(0l, "否 ");
+		isBsAccountMap.put(1l, "是");
+	}
+	static {
+		shopClassMap = new HashMap<Long, String>();
+		// shopClassMap.put(1l, "业务门店 ");
+		shopClassMap.put(2l, "结算商户");
+		shopClassMap.put(3l, "渠道商");
+	}
+
+	static {
+		statusMap = new HashMap<Long, String>();
+		statusMap.put(0l, "草稿");
+		statusMap.put(1l, "待审核");
+		statusMap.put(2l, "审核中");
+		statusMap.put(3l, "审核通过");
+		statusMap.put(4l, "审核驳回");
+	}
+
+	static {
+		syncGyFlagMap = new HashMap<Long, String>();
+		syncGyFlagMap.put(0L, "未同步 ");
+		syncGyFlagMap.put(1L, "已同步");
+		syncGyFlagMap.put(2L, "销户");
+		syncGyFlagMap.put(3L, "生效");
+		syncGyFlagMap.put(4L, "取消/删除");
+		syncGyFlagMap.put(5L, "待一级审核");
+		syncGyFlagMap.put(6L, "一级审核退回");
+		syncGyFlagMap.put(7L, "待财务复核");
+		syncGyFlagMap.put(8L, "财务复核退回");
+	}
+
+	static {
+		itemEditAuditFlagMap = new HashMap<Long, String>();
+		itemEditAuditFlagMap.put(0l, "需要审核 ");
+		itemEditAuditFlagMap.put(1l, "免审");
+	}
+	static {
+		itemPublishAuditFlagMap = new HashMap<Long, String>();
+		itemPublishAuditFlagMap.put(0l, "需要审核 ");
+		itemPublishAuditFlagMap.put(1l, "免审");
+	}
+	static {
+		shopEditAuditFlagMap = new HashMap<Long, String>();
+		shopEditAuditFlagMap.put(0l, "需要审核 ");
+		shopEditAuditFlagMap.put(1l, "免审");
+	}
+
+	static {
+		shopAgentFlagMap = new HashMap<Long, String>();
+		shopAgentFlagMap.put(0l, "否 ");
+		shopAgentFlagMap.put(1l, "是");
+	}
+	static {
+		goodsAgentFlagMap = new HashMap<Long, String>();
+		goodsAgentFlagMap.put(0l, "否 ");
+		goodsAgentFlagMap.put(1l, "是");
+	}
+	
+	static{
+		accountTypeMap = new HashMap<Long, String>();
+		accountTypeMap.put(0L, "移动账户");
+		accountTypeMap.put(1L, "宽连账户");
+	}
+
+	@Transient
+	public String getIsValidName() {
+		return isValidMap.get(this.isValid);
+	}
+
+	@Transient
+	public String getSortName() {
+		return sortMap.get(this.sort);
+	}
+
+	@Transient
+	public String getIsBsAccountName() {
+		return isBsAccountMap.get(this.isBsAccount);
+	}
+
+	@Transient
+	public String getShopClassName() {
+		return shopClassMap.get(this.shopClass);
+	}
+
+	@Transient
+	public String getSyncGyFlagName() {
+		return syncGyFlagMap.get(this.syncGyFlag);
+	}
+
+	@Transient
+	public String getItemEditAuditFlagName() {
+		return itemEditAuditFlagMap.get(this.itemEditAuditFlag);
+	}
+
+	@Transient
+	public String getStatusName() {
+		return statusMap.get(this.status);
+	}
+
+	@Transient
+	public String getItemPublishAuditFlagName() {
+		return itemPublishAuditFlagMap.get(this.itemPublishAuditFlag);
+	}
+
+	@Transient
+	public String getShopEditAuditFlagName() {
+		return shopEditAuditFlagMap.get(this.shopEditAuditFlag);
+	}
+
+	@Transient
+	public String getShopAgentFlagName() {
+		return shopAgentFlagMap.get(this.shopAgentFlag);
+	}
+
+	@Transient
+	public String getGoodsAgentFlagName() {
+		return goodsAgentFlagMap.get(this.goodsAgentFlag);
+	}
+
+	private Long id;
+
+	/** 商户名称 **/
+	private String name;
+
+	/** 商户简称 **/
+	private String shortName;
+
+	/** 归属地市 **/
+	private String areaCode;
+
+	/** 归属地市 **/
+	private String areaName;
+
+	/** 是否移动签约 0--非签约 1--签约 **/
+	private Long sort;
+
+	/** 总店名称 **/
+	private String baseShopName;
+
+	/** 创建时间 **/
+	private String createTime;
+
+	/** 更新时间 **/
+	private String updateTime;
+
+	/** 商户地址 **/
+	private String address;
+
+	/** 创建后台用户 **/
+	private Long sysUserId;
+
+	/** 是否企业帐户 0--不是 1--是 **/
+	private Long isBsAccount;
+
+	/** 业务主管 **/
+	private String bsManagerName;
+
+	/** 业务主管电话 **/
+	private String bsManagerPhone;
+
+	/** 财务主管 **/
+	private String fcManagerName;
+
+	/** 财务主管电话 **/
+	private String fcManagerPhone;
+
+	/** 联系人 **/
+	private String linkName;
+
+	/** 联系电话 **/
+	private String linkPhone;
+
+	/** 联系传真 **/
+	private String linkFax;
+
+	/** 高阳结算ID */
+	private String merchid;
+
+	private String startTime;
+	//账号来源
+	private Long accountType;
+
+	@Column(name = "START_TIME")
+	public String getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+
+	@Column(name = "STOP_TIME")
+	public String getStopTime() {
+		return stopTime;
+	}
+
+	public void setStopTime(String stopTime) {
+		this.stopTime = stopTime;
+	}
+
+	private String stopTime;
+
+	@Column(name = "MERCHID")
+	public String getMerchid() {
+		return merchid;
+	}
+
+	public void setMerchid(String merchid) {
+		this.merchid = merchid;
+	}
+
+	/** 商户分类 1--业务门店 2--结算商户 3--渠道商 **/
+	private Long shopClass;
+
+	/** 商户状态 0--草稿 1--待审核 2--审核中 3--审核通过 4--审核驳回 **/
+	private Long status;
+
+	/** 商户是否有效 0--下架 1--上架 **/
+	private Long isValid;
+
+	/** 商品编辑免审 0--需要审核 1--免审 **/
+	private Long itemEditAuditFlag;
+
+	/** 商品发布免审 0--需要审核 1--免审 **/
+	private Long itemPublishAuditFlag;
+
+	/** 门店编辑免审 0--需要审核 1--免审 **/
+	private Long shopEditAuditFlag;
+
+	/** 更新用户 **/
+	private Long updateUserId;
+
+	/**
+	 * 是否折扣商户代理 0否 1是 **
+	 * 
+	 * @deprecated 该属性已经不使用
+	 */
+
+	@Deprecated
+	private Long shopAgentFlag;
+
+	/**
+	 * 是否商品销售代理 0否 1是 **
+	 * 
+	 * @deprecated 该属性已经不使用
+	 */
+	@Deprecated
+	private Long goodsAgentFlag;
+
+	private Long settleStatus;
+
+	@Transient
+	public Long getSettleStatus() {
+		return settleStatus;
+	}
+
+	public void setSettleStatus(Long settleStatus) {
+		this.settleStatus = settleStatus;
+	}
+
+	@SequenceGenerator(name = "seq_store", sequenceName = "SEQ_STORE")
+	@Id
+	@GeneratedValue(generator = "seq_store")
+	@JsonProperty
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	/**
+	 * 是否成功同步高阳 0--未成功同步 1--成功同步
+	 **/
+	private Long syncGyFlag;
+
+	/** 营业范围 **/
+	private String bsScope;
+
+	/** 客服电话 **/
+	private String servicePhone;
+
+	/** 行政编码 **/
+	private String areaId;
+
+	@Column(name = "NAME", length = 50)
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Column(name = "SHORT_NAME", length = 20)
+	public String getShortName() {
+		return shortName;
+	}
+
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
+	}
+
+	@Column(name = "AREA_CODE", length = 10)
+	public String getAreaCode() {
+		return areaCode;
+	}
+
+	public void setAreaCode(String areaCode) {
+		this.areaCode = areaCode;
+	}
+
+	@Column(name = "SORT", precision = 1, scale = 0)
+	public Long getSort() {
+		return sort;
+	}
+
+	public void setSort(Long sort) {
+		this.sort = sort;
+	}
+
+	@Transient
+	public String getBaseShopName() {
+		return baseShopName;
+	}
+
+	public void setBaseShopName(String baseShopName) {
+		this.baseShopName = baseShopName;
+	}
+
+	@Column(name = "CREATE_TIME", length = 14)
+	public String getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+	@Column(name = "UPDATE_TIME", length = 14)
+	public String getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(String updateTime) {
+		this.updateTime = updateTime;
+	}
+
+	@Column(name = "ADDRESS", length = 100)
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	@Column(name = "SYS_USER_ID", precision = 8, scale = 0)
+	public Long getSysUserId() {
+		return sysUserId;
+	}
+
+	public void setSysUserId(Long sysUserId) {
+		this.sysUserId = sysUserId;
+	}
+
+	@Transient
+	public Long getIsBsAccount() {
+		return isBsAccount;
+	}
+
+	public void setIsBsAccount(Long isBsAccount) {
+		this.isBsAccount = isBsAccount;
+	}
+
+	@Column(name = "BS_MANAGER_NAME", length = 50)
+	public String getBsManagerName() {
+		return bsManagerName;
+	}
+
+	public void setBsManagerName(String bsManagerName) {
+		this.bsManagerName = bsManagerName;
+	}
+
+	@Column(name = "BS_MANAGER_PHONE", length = 50)
+	public String getBsManagerPhone() {
+		return bsManagerPhone;
+	}
+
+	public void setBsManagerPhone(String bsManagerPhone) {
+		this.bsManagerPhone = bsManagerPhone;
+	}
+
+	@Column(name = "FC_MANAGER_NAME", length = 50)
+	public String getFcManagerName() {
+		return fcManagerName;
+	}
+
+	public void setFcManagerName(String fcManagerName) {
+		this.fcManagerName = fcManagerName;
+	}
+
+	@Column(name = "FC_MANAGER_PHONE", length = 50)
+	public String getFcManagerPhone() {
+		return fcManagerPhone;
+	}
+
+	public void setFcManagerPhone(String fcManagerPhone) {
+		this.fcManagerPhone = fcManagerPhone;
+	}
+
+	@Column(name = "LINK_NAME", length = 50)
+	public String getLinkName() {
+		return linkName;
+	}
+
+	public void setLinkName(String linkName) {
+		this.linkName = linkName;
+	}
+
+	@Column(name = "LINK_PHONE", length = 50)
+	public String getLinkPhone() {
+		return linkPhone;
+	}
+
+	public void setLinkPhone(String linkPhone) {
+		this.linkPhone = linkPhone;
+	}
+
+	@Column(name = "LINK_FAX", length = 50)
+	public String getLinkFax() {
+		return linkFax;
+	}
+
+	public void setLinkFax(String linkFax) {
+		this.linkFax = linkFax;
+	}
+
+	@Column(name = "SHOP_CLASS", precision = 1, scale = 0)
+	public Long getShopClass() {
+		return shopClass;
+	}
+
+	public void setShopClass(Long shopClass) {
+		this.shopClass = shopClass;
+	}
+
+	@Column(name = "STATUS", precision = 1, scale = 0)
+	public Long getStatus() {
+		return status;
+	}
+
+	public void setStatus(Long status) {
+		this.status = status;
+	}
+
+	@Column(name = "IS_VALID", precision = 1, scale = 0)
+	public Long getIsValid() {
+		return isValid;
+	}
+
+	public void setIsValid(Long isValid) {
+		this.isValid = isValid;
+	}
+
+	@Column(name = "ITEM_EDIT_AUDIT_FLAG", precision = 1, scale = 0)
+	public Long getItemEditAuditFlag() {
+		return itemEditAuditFlag;
+	}
+
+	public void setItemEditAuditFlag(Long itemEditAuditFlag) {
+		this.itemEditAuditFlag = itemEditAuditFlag;
+	}
+
+	@Column(name = "ITEM_PUBLISH_AUDIT_FLAG", precision = 1, scale = 0)
+	public Long getItemPublishAuditFlag() {
+		return itemPublishAuditFlag;
+	}
+
+	public void setItemPublishAuditFlag(Long itemPublishAuditFlag) {
+		this.itemPublishAuditFlag = itemPublishAuditFlag;
+	}
+
+	@Column(name = "SHOP_EDIT_AUDIT_FLAG", precision = 1, scale = 0)
+	public Long getShopEditAuditFlag() {
+		return shopEditAuditFlag;
+	}
+
+	public void setShopEditAuditFlag(Long shopEditAuditFlag) {
+		this.shopEditAuditFlag = shopEditAuditFlag;
+	}
+
+	@Column(name = "SYNC_GY_FLAG", precision = 1, scale = 0)
+	public Long getSyncGyFlag() {
+		return syncGyFlag;
+	}
+
+	public void setSyncGyFlag(Long syncGyFlag) {
+		this.syncGyFlag = syncGyFlag;
+	}
+
+	@Column(name = "BS_SCOPE", length = 200)
+	public String getBsScope() {
+		return bsScope;
+	}
+
+	public void setBsScope(String bsScope) {
+		this.bsScope = bsScope;
+	}
+
+	@Column(name = "SERVICE_PHONE", length = 50)
+	public String getServicePhone() {
+		return servicePhone;
+	}
+
+	public void setServicePhone(String servicePhone) {
+		this.servicePhone = servicePhone;
+	}
+
+	@Column(name = "AREA_ID", length = 50)
+	public String getAreaId() {
+		return areaId;
+	}
+
+	public void setAreaId(String areaId) {
+		this.areaId = areaId;
+	}
+
+	@Column(name = "UPDATE_USER_ID")
+	public Long getUpdateUserId() {
+		return updateUserId;
+	}
+
+	public void setUpdateUserId(Long updateUserId) {
+		this.updateUserId = updateUserId;
+	}
+
+	/** 查询用创建开始时间 **/
+	private String beginTime;
+
+	/** 查询用创建结束时间 **/
+	private String endTime;
+
+	/** 选择渠道商和商户返回的id **/
+	private String storeIds;
+
+	/** 选择渠道商和商户返回的名称 **/
+	private String storeNames;
+
+	/** 协议文件地址 **/
+	private String isreUpload;
+
+	/**
+	 * 审核时间
+	 */
+	private String auditTime;
+
+	@Transient
+	public String getBeginTime() {
+		return beginTime;
+	}
+
+	@Transient
+	public void setBeginTime(String beginTime) {
+		this.beginTime = beginTime;
+	}
+
+	@Transient
+	public String getEndTime() {
+		return endTime;
+	}
+
+	@Transient
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
+	}
+
+	@Transient
+	public String getStoreIds() {
+		return storeIds;
+	}
+
+	@Transient
+	public void setStoreIds(String storeIds) {
+		this.storeIds = storeIds;
+	}
+
+	@Transient
+	public String getStoreNames() {
+		return storeNames;
+	}
+
+	@Transient
+	public void setStoreNames(String storeNames) {
+		this.storeNames = storeNames;
+	}
+
+	@Transient
+	public String getIsreUpload() {
+		return isreUpload;
+	}
+
+	@Transient
+	public void setIsreUpload(String isreUpload) {
+		this.isreUpload = isreUpload;
+	}
+
+	@Transient
+	public String getAreaName() {
+		return areaName;
+	}
+
+	@Transient
+	public void setAreaName(String areaName) {
+		this.areaName = areaName;
+	}
+
+	@Transient
+	public String getAuditTime() {
+		return auditTime;
+	}
+
+	public void setAuditTime(String auditTime) {
+		this.auditTime = auditTime;
+	}
+	@Column(name = "ACCOUNT_TYPE")
+	public Long getAccountType() {
+		return accountType;
+	}
+
+	public void setAccountType(Long accountType) {
+		this.accountType = accountType;
+	}
+	
+
+}

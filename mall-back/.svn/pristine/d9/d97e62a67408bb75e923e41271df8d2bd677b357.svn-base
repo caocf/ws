@@ -1,0 +1,89 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+    <head>
+     <script type="text/javascript">
+     $(function(){
+          $("#commercial").click(
+          $("#commercial").css("display","none");
+          );
+          
+     })
+     </script>
+    
+        <ht:head/>
+    </head>
+<body>
+<br/>
+<div id="search-menu">
+    <ul  id="commercial">
+    <ct:display model="pos_list" btn="add_btn">
+        <ht:menu-btn text="商户列表" url="/websys/pageStatic/list" type="add"/>
+	</ct:display>
+	</ul>
+	   <ul>
+    <ct:display model="pos_list" btn="add_btn">
+    
+        <ht:menu-btn text="商品列表" url="/websys/pageStatic/Itemlist" type="add"/>
+	</ct:display>
+	</ul>
+    <br style="clear: left" />
+</div>
+
+
+<div class="container">
+    <br/>
+    <h3>商户静态化列表</h3>
+    <div class="mainbox">
+        <c:if test="${not empty pageData.data}">
+        <table class="datalist fixwidth" >
+       		<tr>
+        		<td colspan="6" align="left">
+        		<ht:table-action-btn  text="执行商户静态化" url="/websys/pageStatic/staticAll"/><!--
+        		<ht:table-action-btn  text="执行全部静态化" url="/websys/pageStatic/batchSataticAll"/>
+        		--></td>
+        	</tr>
+            <tr>
+     
+            	<th nowrap="nowrap" width="80"><input type="checkbox" class="checkall"/>编号</th>
+                <th nowrap="nowrap" width="60">商户名称</th>
+                <th nowrap="nowrap" width="80">资源编号</th>
+                <th nowrap="nowrap" width="200">页面是否静态化</th>
+                <th nowrap="nowrap" width="150">时间</th>
+                <th nowrap="nowrap">操作</th>
+               
+            </tr>
+ 
+            <c:forEach items="${pageData.data}" var="item">
+            <tr>
+            	<td  nowrap="nowrap"><input type="checkbox"  name="id" value="${item.id }"/>${item.id }</td>
+                <td  nowrap="nowrap">${item.storeName}</td>
+                <td  nowrap="nowrap" class="ellipsis">	${item.resourceId } </td>
+                <td  nowrap="nowrap" class="ellipsis"><c:if test="${item.status eq 0}">否</c:if><c:if test="${item.status eq 1}">是</c:if> </td>
+                <td  nowrap="nowrap" ><ct:time source="${item.createTime}"/></td>
+              
+                <td  nowrap="nowrap"> 
+	                <ct:display model="firstAudit" btn="view_btn">
+	                 <a href="#" onclick="dealInfo('确认静态化？','staticOne?id=${item.id}')">静态化</a>&nbsp;&nbsp;
+					</ct:display> 
+                 </td>
+            </tr>
+            </c:forEach>
+        </table>
+
+        <ht:page pageData="${pageData}" />
+        </c:if>
+        <c:if test="${empty pageData.data}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+</div>
+
+
+  
+
+</body>
+</html>

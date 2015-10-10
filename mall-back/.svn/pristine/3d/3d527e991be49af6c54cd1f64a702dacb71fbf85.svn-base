@@ -1,0 +1,880 @@
+package com.cplatform.mall.back.order.service;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import net.sf.json.JSONObject;
+import net.sf.json.JsonConfig;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.service.ItemManageService;
+import com.cplatform.mall.back.order.dao.OrderRefundDao;
+import com.cplatform.mall.back.order.dao.OrderRefundGoodsDao;
+import com.cplatform.mall.back.order.entity.Order;
+import com.cplatform.mall.back.order.entity.OrderRefund;
+import com.cplatform.mall.back.order.entity.OrderRefundGoods;
+import com.cplatform.mall.back.order.entity.RefundRequest;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.order.ActOrderGoodsInfo;
+import com.cplatform.order.ActOrderInfo;
+import com.cplatform.order.ActOrderPaymentInfo;
+import com.cplatform.order.PaymentSpliteGoodsInfo;
+import com.cplatform.order.PaymentSpliteOrderInfo;
+import com.cplatform.pay.CommonRequest;
+import com.cplatform.pay.PayMode;
+import com.cplatform.pay.PayOrderInfo;
+import com.cplatform.pay.PayServiceClient;
+import com.cplatform.pay.PaymentInfo;
+import com.cplatform.pay.RequestOperate;
+import com.cplatform.pay.unify_pay.info.ProductionInfo;
+import com.cplatform.pay.unify_pay.info.UnifyPayResponse;
+import com.cplatform.pay.unify_pay.info.UnifyRefundRequest;
+import com.cplatform.pay.unify_pay.info.UnifyRefundType;
+import com.cplatform.util2.TimeStamp;
+import com.cplatform.verifycode.RevokeReqInfo;
+import com.cplatform.verifycode.RevokeRespInfo;
+import com.cplatform.verifycode.VerifyService;
+
+/**
+ * 订单退款相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:58:59
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class OrderRefundService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private OrderRefundDao orderRefundDao;
+
+	@Autowired
+	private OrderRefundGoodsDao orderRefundGoodsDao;
+
+	@Autowired
+	private VerifyService verifyClient;
+
+	@Autowired
+	private OrderService orderService;
+
+	@Autowired
+	private ItemManageService itemManageService;
+
+	@Autowired
+	PayServiceClient payService;
+
+	/**
+	 * 退款管理查询
+	 * 
+	 * @param terminalId
+	 * @param orderId
+	 * @param pageNo
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<OrderRefund> getOrderRefundList(OrderRefund orderRefund, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("  select refund.*          ");
+		sql.append("    from t_order_refund refund,t_store store  ");
+		sql.append("   where 1 = 1 and refund.store_id = store.id              ");
+		List params = new ArrayList();
+		if (null != orderRefund) {
+			if (null != orderRefund.getId()) {
+				sql.append(" and refund.id = ? ");
+				params.add(orderRefund.getId());
+			}
+			if (null != orderRefund.getOrderId()) {
+				sql.append(" and refund.order_id = ? ");
+				params.add(orderRefund.getOrderId());
+			}
+			if (null != orderRefund.getStatus()) {
+				sql.append(" and refund.status = ? ");
+				params.add(orderRefund.getStatus());
+			}
+			if (StringUtils.isNotEmpty(orderRefund.getCreateTimeBegin())) {
+				sql.append(" and refund.create_time >= ? ");
+				params.add(orderRefund.getCreateTimeBegin().replaceAll("-", "").replace(" ", "").replace(":", ""));
+			}
+
+			if (StringUtils.isNotEmpty(orderRefund.getCreateTimeEnd())) {
+				sql.append(" and refund.create_time <= ? ");
+				params.add(orderRefund.getCreateTimeEnd().replaceAll("-", "").replace(" ", "").replace(":", ""));
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sql.append("order by refund.create_time desc        ");
+		return dbHelper.getPage(sql.toString(), OrderRefund.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 退款管理查询
+	 * 
+	 * @param terminalId
+	 * @param orderId
+	 * @param pageNo
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<Order> orderRefundQuery(String terminalId, Long orderId, String actType, String payStatus,String closeStatus, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("  select tm.terminal_id terminalId, ");
+		sql.append("         od.id,                     ");
+		sql.append("         od.create_time,            ");
+		sql.append("         od.act_type,               ");
+		sql.append("         od.close_status,           ");
+		sql.append("         od.pay_status,             ");
+		sql.append("         od.delete_status             ");
+//		sql.append("         refund.refund_id refundIds ");
+		sql.append("    from t_act_order od, t_store store,  ");
+		sql.append("         t_member tm               ");
+//		sql.append(" (select order_id,                  ");
+//		sql.append("         to_char(wm_concat(orf.id)) refund_id");
+//		sql.append("    from  t_order_refund orf         ");
+//		sql.append("group by orf.order_id) refund       ");
+		sql.append("   where od.shop_id = store.id and od.user_id = tm.id         ");
+//		sql.append("     and od.id = refund.order_id(+) ");
+		sql.append("     and od.id is not null          ");
+		List params = new ArrayList();
+		if (StringUtils.isNotEmpty(terminalId)) {
+			sql.append(" and tm.terminal_id = ? ");
+			params.add(terminalId);
+		}
+		if (null != orderId) {
+			sql.append(" and od.id = ? ");
+			params.add(orderId);
+		}
+		if (actType != null && !"".equals(actType)) {
+			sql.append(" and od.act_type = ? ");
+			params.add(actType);
+		}
+		if (payStatus != null && !"".equals(payStatus)) {
+			sql.append(" and od.pay_status = ? ");
+			params.add(payStatus);
+		}
+		if(StringUtils.isNotEmpty(closeStatus)){
+			sql.append(" and od.close_status = ? ");
+			params.add(closeStatus);
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sql.append("order by od.create_time desc        ");
+		return dbHelper.getPage(sql.toString(), Order.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 查询指定退款单
+	 * 
+	 * @param id
+	 *            退款单ID
+	 * @return
+	 */
+	@Transactional
+	public OrderRefund findOne(Long id) {
+		OrderRefund orderRefund = orderRefundDao.findOne(id);
+		return orderRefund;
+	}
+	
+	
+	/**
+	 * 根据退款单号查询商户信息
+	 * @param actOrderId
+	 * @return
+	 * @throws SQLException
+	 */
+	public Map<String, String> getStoreById(long id) throws SQLException {
+		StringBuilder sql = new StringBuilder(500);
+		sql.append(" select s.name name from t_order_refund r  ");
+		sql.append(" join t_store s on r.store_id=s.id ");
+		sql.append(" where r.id=?");
+		Object[] params = new Object[] { id };
+		return dbHelper.getMap(sql.toString(), params);
+	}
+
+	/**
+	 * 根据订单ID查询退款单
+	 * 
+	 * @param orderId
+	 *            订单ID
+	 * @return
+	 */
+	@Transactional
+	public List<OrderRefund> findList(Long orderId) {
+		List<OrderRefund> orderRefundList = orderRefundDao.findByOrderId(orderId);
+		return orderRefundList;
+	}
+
+	/**
+	 * 根据订单ID查询成功退款单
+	 * 
+	 * @param orderId
+	 *            订单ID
+	 * @return
+	 */
+	@Transactional
+	public List<OrderRefund> getSuccessRefund(Long orderId) {
+		List<OrderRefund> successOrderRefundList = orderRefundDao.findSuccessByOrderId(orderId);
+		return successOrderRefundList;
+	}
+
+	/**
+	 * 根据退款单ID查询退款商品
+	 * 
+	 * @param refundId
+	 *            退款单ID
+	 * @return
+	 * @throws SQLException 
+	 */
+	@Transactional
+	public List<OrderRefundGoods> findOrderRefundGoodsList(Long refundId) throws SQLException {
+		try{
+			List<OrderRefundGoods> orderRefundGoodsList = orderRefundGoodsDao.findByRefundId(refundId);
+			return orderRefundGoodsList;
+		}catch(Exception e){
+			throw new SQLException(e);
+		}
+	}
+
+	/**
+	 * 保存退款单
+	 * 
+	 * @param orderRefund
+	 *            订单退款实体类
+	 * @return 订单退款实体类
+	 */
+	@Transactional
+	public OrderRefund saveOrderRefund(OrderRefund orderRefund, String[] orderGoodsIds, String[] goodsIds, String[] backNumbers, String[] cashs,
+	        String[] coins, String method) {
+		orderRefund = orderRefundDao.save(orderRefund);
+		if ("add".equals(method) && null != backNumbers) {
+			// 退款商品
+			for (int i = 0; i < backNumbers.length; i++) {
+				OrderRefundGoods orderRefundGoods = new OrderRefundGoods();
+				// 判断是否退款商品
+				if (StringUtils.isEmpty(backNumbers[i])) {
+					continue;
+				}
+				orderRefundGoods.setRefundId(orderRefund.getId());
+				orderRefundGoods.setOrderGoodsId(Long.valueOf(orderGoodsIds[i]));
+				orderRefundGoods.setGoodsId(Long.valueOf(goodsIds[i]));
+				orderRefundGoods.setBackNumber(Long.valueOf(backNumbers[i]));
+				if (StringUtils.isEmpty(cashs[i])) {
+					orderRefundGoods.setCash(0d);
+				} else {
+					orderRefundGoods.setCash(Double.valueOf(cashs[i]) * 100);
+				}
+				if (StringUtils.isEmpty(coins[i])) {
+					orderRefundGoods.setCoin(0d);
+				} else {
+					orderRefundGoods.setCoin(Double.valueOf(coins[i]) * 100);
+				}
+				orderRefundGoods = orderRefundGoodsDao.save(orderRefundGoods);
+			}
+		}
+		return orderRefund;
+	}
+
+	/**
+	 * 查询订单（包含退款单）
+	 * @param orderPage
+	 * @return
+	 */
+	public Page<Order> getOrderRefund(Page<Order> orderPage) {
+		if (null != orderPage && 0 < orderPage.getData().size()) {
+			for (int i = 0; i < orderPage.getData().size(); i++) {
+//				if (StringUtils.isNotEmpty(orderPage.getData().get(i).getRefundIds())) {
+					Order order=orderPage.getData().get(i);
+					//查询订单下所有退款单
+					List<OrderRefund> orderRefunds=orderRefundDao.findRefundByOrderId(orderPage.getData().get(i).getId());
+					order.setRefundCount(orderRefunds.size());
+					order.setOrderRefunds(orderRefunds);
+					//查询订单下成功退款单
+//					List<OrderRefund> successOrderRefundList = orderRefundDao.findSuccessByOrderId(orderPage.getData().get(i).getId());
+//					order.setSuccessRefundCount(successOrderRefundList.size());
+					List<OrderRefund> successOrderRefundList=new ArrayList<OrderRefund>();
+					for(OrderRefund refund:orderRefunds){
+						if(null!=refund.getStatus() && refund.getStatus()==6){
+							successOrderRefundList.add(refund);
+						}
+					}
+					order.setSuccessRefundCount(successOrderRefundList.size());
+					//设置是否有增加退款单权限
+					//已支付的订单才可以增加退款单
+					if(order.getPayStatus()==2){
+						//2次退款成功后不可以增加退款单
+						if(order.getSuccessRefundCount()>=2){
+							order.setCanRefund(false);
+						}else{
+							if(null!=orderRefunds && orderRefunds.size()==0){
+								//第一次增加退款单
+								order.setCanRefund(true);
+							}else if(null!=orderRefunds && orderRefunds.size()>0){
+								//获取最新退款单状态
+								//只有退款单状态为3（商户拒绝确认）,5（审核失败）,6(退款成功),7（退款失败）才可以增加退款单
+								OrderRefund refund=orderRefunds.get(orderRefunds.size()-1);
+								if(null!=refund.getStatus() && (refund.getStatus()==3 || refund.getStatus()==5 || refund.getStatus()==6 || refund.getStatus()==7)){
+									order.setCanRefund(true);
+								}else{
+									order.setCanRefund(false);
+								}
+							}
+						}
+					}else{
+						order.setCanRefund(false);
+					}
+					
+//					String[] refundIds = orderPage.getData().get(i).getRefundIds().split(",");
+//					orderPage.getData().get(i).setRefundCount(refundIds.length);
+//					if (1 == refundIds.length) {
+//						orderPage.getData().get(i).setOrderRefundFirstId(Long.valueOf(refundIds[0]));
+//						orderPage.getData().get(i).setRefundFirstStatus(findOne(Long.valueOf(refundIds[0])).getStatus());
+//					}
+//					if (2 == refundIds.length) {
+//						if (Long.valueOf(refundIds[0]) < Long.valueOf(refundIds[1])) {
+//							orderPage.getData().get(i).setOrderRefundFirstId(Long.valueOf(refundIds[0]));
+//							orderPage.getData().get(i).setRefundFirstStatus(findOne(Long.valueOf(refundIds[0])).getStatus());
+//							orderPage.getData().get(i).setOrderRefundSecondId(Long.valueOf(refundIds[1]));
+//						} else {
+//							orderPage.getData().get(i).setOrderRefundFirstId(Long.valueOf(refundIds[1]));
+//							orderPage.getData().get(i).setRefundFirstStatus(findOne(Long.valueOf(refundIds[1])).getStatus());
+//							orderPage.getData().get(i).setOrderRefundSecondId(Long.valueOf(refundIds[0]));
+//						}
+//					}
+				}
+			}
+//		}
+		return orderPage;
+	}
+
+	/**
+	 * 判断退款单是否需要退码 虚拟商品需要退码
+	 * 
+	 * @param orderPage
+	 * @return
+	 * @throws SQLException 
+	 */
+	public Page<OrderRefund> isRefundCode(Page<OrderRefund> orderRefundPage) throws SQLException {
+		if (null != orderRefundPage && 0 < orderRefundPage.getData().size()) {
+			for (int i = 0; i < orderRefundPage.getData().size(); i++) {
+				Long refundId = orderRefundPage.getData().get(i).getId();
+				List<OrderRefundGoods> orderRefundGoodsList = null;
+				try{
+					orderRefundGoodsList = findOrderRefundGoodsList(refundId);
+				}catch(SQLException e){
+					continue;
+				}
+				if (0 < orderRefundGoodsList.size()) {
+					ItemSale itemSale = null;
+					itemSale = itemManageService.findOneItemSale(orderRefundGoodsList.get(0).getGoodsId());
+					 
+					// 商品类型0--实物 1--虚拟物
+					if (1L == itemSale.getItemMode()) {
+						// 系统退码
+						orderRefundPage.getData().get(i).setRefundVerifyCode("1");
+					} else {
+						orderRefundPage.getData().get(i).setRefundVerifyCode("0");
+					}
+				}
+			}
+		}
+		return orderRefundPage;
+	}
+
+	/**
+	 * 设置添加退款单时的基本信息
+	 * 
+	 * @param orderId
+	 *            订单号
+	 * @return
+	 */
+	public OrderRefund setOrderRefundBaseInfo(Long orderId) {
+		Map<String, String> order = orderService.findOneOrderById(orderId);
+		OrderRefund orderRefund = new OrderRefund();
+		orderRefund.setOrderId(orderId);
+		orderRefund.setStoreId(Long.valueOf(order.get("shop_id")));
+		return orderRefund;
+	}
+
+	/**
+	 * 查询退款单商品，以及商品现金总额和商城币总额
+	 * @param model
+	 * @param paymengList	支付订单集合
+	 * @param orderId	订单id
+	 * @return
+	 */
+	public List<Map<String, String>> setActOrderGoodsList(Model model,List<Map<String, String>> paymengList, Long orderId) {
+		//现金总额
+		Double totalCash=0.0;
+		//商城币总额
+		Double totalCoin=0.0;
+		//查询订单下商品
+		List<Map<String, String>> actOrderGoodsList = orderService.findOrderGoodsListByOrderId(orderId);
+		if(null!=actOrderGoodsList && actOrderGoodsList.size()>0){
+			//遍历商品，算出每个商品现金和商城币值
+    		for(int i=0;i<actOrderGoodsList.size();i++){
+    			long goodsId=Long.parseLong(actOrderGoodsList.get(i).get("id"));
+    			// 单个商品退款金额T0,单个商品退款现金T1,单个商品退款商城币T2
+    			Double T0 =0d;
+    			//现金
+    			Double cash = 0d;
+    			//商城币
+				Double coin = 0d;
+				if(null!=paymengList && paymengList.size()>0){
+					for(int j=0;j<paymengList.size();j++){
+						//查询支付表中"SPLITE_INFO"，算出每个商品支付情况
+						String jsonString = paymengList.get(j).get("SPLITE_INFO").toString();
+						if(StringUtils.isNotEmpty(jsonString)){
+							jsonString = StringEscapeUtils.unescapeJavaScript(jsonString);
+					        JSONObject jsonObject = JSONObject.fromObject(jsonString);
+					        //转换规则
+					        JsonConfig jsonConfig = new JsonConfig();
+					        Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
+					        classMap.put("spliteGoodsInfos", PaymentSpliteGoodsInfo.class);
+					        jsonConfig.setClassMap(classMap);
+					        jsonConfig.setRootClass(PaymentSpliteOrderInfo.class);
+					        // 转换
+					        PaymentSpliteOrderInfo splitOrderInfo = (PaymentSpliteOrderInfo) JSONObject.toBean(jsonObject, jsonConfig);
+					        List<PaymentSpliteGoodsInfo> spliteGoodsInfo = splitOrderInfo.getSpliteGoodsInfos();
+					        //遍历订单中各个商品
+					        for(PaymentSpliteGoodsInfo spliteGoods:spliteGoodsInfo){
+					        	//获取商品现金和商城币支付价格
+			        			if(spliteGoods.getId()==goodsId){
+			        				T0 = Double.valueOf(spliteGoods.getPrice()) / 100 * Double.valueOf(spliteGoods.getCount()) 
+					        				- Double.valueOf(spliteGoods.getDiscount()) / 100;
+			        				if ("cash".equals(paymengList.get(j).get("currency"))) {
+			        					cash=Double.valueOf(paymengList.get(j).get("amount")) /100;
+			        				}
+			        				if ("coin".equals(paymengList.get(j).get("currency"))) {
+			    						coin = Double.valueOf(paymengList.get(j).get("amount")) / 100;
+			    					}
+			        			}
+					        }
+						}
+				        
+					}
+				}
+				Double S1 = cash / (cash + coin);
+				Double T1 = getDecimal(T0 * S1, 2);
+				Double T2 = getDecimal(T0 - T1, 2);
+				actOrderGoodsList.get(i).put("maxCash", T1.toString());
+				actOrderGoodsList.get(i).put("maxCoin", T2.toString());
+				totalCash+=T1;
+				totalCoin+=T2;
+    		}
+    	}
+		model.addAttribute("totalCash", totalCash);
+		model.addAttribute("totalCoin", totalCoin);
+		return actOrderGoodsList;
+		
+//		if (0 < actOrderGoodsList.size()) {
+//			for (int i = 0; i < actOrderGoodsList.size(); i++) {
+//				/**
+//				 * 单个商品的退款金额，计算拆分金额的方式改变  start >>>
+//				 * @modify_by macl@c-platform.com
+//				 */
+//				if(StringUtils.isEmpty(paymengList.get(i).get("SPLITE_INFO"))){
+//					actOrderGoodsList.get(i).put("maxCash", "数据异常");
+//					actOrderGoodsList.get(i).put("maxCoin", "数据异常");
+//					continue;
+//				}
+//				String jsonString = paymengList.get(i).get("SPLITE_INFO").toString();
+//		        jsonString = StringEscapeUtils.unescapeJavaScript(jsonString);
+//		        JSONObject jsonObject = JSONObject.fromObject(jsonString);
+//		        //转换规则
+//		        JsonConfig jsonConfig = new JsonConfig();
+//		        Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
+//		        classMap.put("spliteGoodsInfos", PaymentSpliteGoodsInfo.class);
+//		        jsonConfig.setClassMap(classMap);
+//		        jsonConfig.setRootClass(PaymentSpliteOrderInfo.class);
+//		        // 转换
+//		        PaymentSpliteOrderInfo splitOrderInfo = (PaymentSpliteOrderInfo) JSONObject.toBean(jsonObject, jsonConfig);
+//		        List<PaymentSpliteGoodsInfo> spliteGoodsInfo = splitOrderInfo.getSpliteGoodsInfos();
+//		        
+//		        /*
+//		        // 单个商品退款金额T0,单个商品退款现金T1,单个商品退款商城币T2
+// 				 Double T0 = Double.valueOf(actOrderGoodsList.get(i).get("pay_price")) / 100 * Double.valueOf(actOrderGoodsList.get(i).get("count"))
+//		           			- Double.valueOf(actOrderGoodsList.get(i).get("discount")) / 100;
+//		        */
+//		        Double T0 = Double.valueOf(spliteGoodsInfo.get(i).getPrice()) / 100 * Double.valueOf(spliteGoodsInfo.get(i).getCount()) 
+//		        				- Double.valueOf(spliteGoodsInfo.get(i).getDiscount()) / 100;
+//		        /**
+//				 * 单个商品的退款金额，计算拆分金额的方式改变 <<< end
+//				 */
+//		        
+//				
+//				// 该商品现金退款比例S1,商城币退款比例S2
+//				Double cash = 0d;
+//				Double coin = 0d;
+//				for (int j = 0; j < paymengList.size(); j++) {
+//					if ("cash".equals(paymengList.get(j).get("currency"))) {
+//						cash = Double.valueOf(paymengList.get(j).get("amount")) / 100;
+//					}
+//					if ("coin".equals(paymengList.get(j).get("currency"))) {
+//						coin = Double.valueOf(paymengList.get(j).get("amount")) / 100;
+//					}
+//				}
+//				Double S1 = cash / (cash + coin);
+//				Double T1 = getDecimal(T0 * S1, 2);
+//				Double T2 = getDecimal(T0 - T1, 2);
+//				actOrderGoodsList.get(i).put("maxCash", T1.toString());
+//				actOrderGoodsList.get(i).put("maxCoin", T2.toString());
+//			}
+//		}
+//		return actOrderGoodsList;
+	}
+
+	/**
+	 * 设置订单原价（含物流）
+	 * 
+	 * @param orderSum
+	 *            订单原价
+	 * @param paymengList
+	 *            订单支付信息
+	 * @return
+	 */
+	public Double setOrderAmount(Double orderSum, List<Map<String, String>> paymengList) {
+		if (0 < paymengList.size()) {
+			for (int i = 0; i < paymengList.size(); i++) {
+				orderSum += Double.valueOf(paymengList.get(i).get("amount")) / 100;
+			}
+		}
+		return orderSum;
+	}
+
+	/**
+	 * 设置订单物流
+	 * 
+	 * @param expressCost
+	 *            订单物流
+	 * @param orderId
+	 *            订单号
+	 * @return
+	 */
+	public Double setExpressCost(Double expressCost, Long orderId) {
+		Map<String, String> orderExpress = orderService.findOneOrderExpressByOrderId(orderId);
+		if (null == orderExpress) {
+			expressCost = 0d;
+		} else {
+			expressCost = Double.valueOf(orderExpress.get("express_cost")) / 100;
+		}
+		return expressCost;
+	}
+
+	/**
+	 * 获得该订单已成功退款金额
+	 * 
+	 * @param oldRefundAmount
+	 *            已成功退款金额
+	 * @param orderId
+	 *            订单号
+	 * @return
+	 */
+	public Double setOldRefundAmount(Double oldRefundAmount, Long orderId) {
+		List<OrderRefund> successOrderRefundList = getSuccessRefund(orderId);
+		if (0 < successOrderRefundList.size()) {
+			for (int i = 0; i < successOrderRefundList.size(); i++) {
+				oldRefundAmount += successOrderRefundList.get(i).getRefundFee() / 100;
+			}
+		}
+		return oldRefundAmount;
+	}
+
+	/**
+	 * 判断商品为实物类还是虚拟类 实物类：需要商户确认 虚拟类：不需要商户进行确认
+	 * 
+	 * @param orderRefund
+	 *            退款单实体类
+	 * @return
+	 */
+	public OrderRefund setStatus(OrderRefund orderRefund) {
+		List<Map<String, String>> actOrderGoodsList = orderService.findOrderGoodsListByOrderId(orderRefund.getOrderId());
+		// 商品类型0--实物 1--虚拟物
+		if (null != actOrderGoodsList && 0 < actOrderGoodsList.size()) {
+			for (int i = 0; i < actOrderGoodsList.size(); i++) {
+				ItemSale itemSale = itemManageService.findOneItemSale(Long.valueOf(actOrderGoodsList.get(i).get("goods_id")));
+				if (null != itemSale) {
+					if (0L == itemSale.getItemMode()) {
+						orderRefund.setStatus(OrderRefund.STATUS_1);
+						break;
+					} else if (1L == itemSale.getItemMode()) {
+						orderRefund.setStatus(OrderRefund.STATUS_2);
+						break;
+					} else {
+
+					}
+				}
+			}
+		}
+		return orderRefund;
+	}
+
+	/**
+	 * 四舍五入
+	 * 
+	 * @param num
+	 * @param n
+	 * @return
+	 */
+	public double getDecimal(double num, int n) {
+		if (Double.isNaN(num)) {
+			return 0;
+		}
+		BigDecimal bd = new BigDecimal(num);
+		num = bd.setScale(n, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return num;
+	}
+
+	/**
+	 * 商品退码
+	 * 
+	 * @param verifycode
+	 * @return
+	 * @throws Exception
+	 */
+	public RevokeRespInfo refundVerifyCode(Map<String, String> verifycode) throws Exception {
+		RevokeReqInfo request = new RevokeReqInfo();
+		request.setCode(verifycode.get("order_id"));
+		request.setCodeType(RevokeReqInfo.CodeType.OrderNo);
+		request.setfExtReqInfo(null);
+		request.setPlatform_id(verifycode.get("platform_id"));
+		request.setStoreId(verifycode.get("store_id"));
+
+		RevokeRespInfo response = verifyClient.revoke(request);
+		return response;
+	}
+
+	/**
+	 * 根据会员Id查询下单用户信息
+	 * 
+	 * @param userId
+	 *            会员ID
+	 * @return
+	 */
+	public Map<String, String> findMemberByUserId(long userId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_member t ");
+		sqlBuff.append(" where t.id = ? ");
+
+		try {
+			return dbHelper.getMap(sqlBuff.toString(), new Object[] { userId });
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 查询指定商品码
+	 * 
+	 * @param orderId
+	 *            商品码ID
+	 * @return
+	 */
+	public Map<String, String> findVerifyCodeByOrderId(String orderId) {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_verify_code_info t");
+		sqlBuff.append(" where t.order_id = ?");
+		sqlBuff.append(" order by t.item_order_id desc");
+		try {
+			return dbHelper.getMap(sqlBuff.toString(), new Object[] { orderId });
+		}
+		catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	// ******************************退款接口
+	// start***************************************************
+
+	private CommonRequest createCommonRequest(RefundRequest request, ActOrderInfo actOrderInfo, ActOrderPaymentInfo paymentInfo) throws Exception {
+		String payWay = request.getPayChannel();
+		String payChannel = "pay." + payWay + ".channel";
+
+		long userId = actOrderInfo.getUserId();
+		long shopId = actOrderInfo.getShopId();
+		long actOrderId = actOrderInfo.getId();
+
+		CommonRequest commonRequest = new CommonRequest();
+		// 填写退款请求中通用部分
+		{
+			commonRequest.setActOrderId(actOrderId);
+			commonRequest.setOperate(RequestOperate.Refund);
+			commonRequest.setPayChannel(payChannel);
+			commonRequest.setPaymentAmount((int) request.getAmount());
+			PaymentInfo info = new PaymentInfo();
+			info.setCurrency(paymentInfo.getCurrency());
+			info.setAmount((int) request.getAmount());
+			commonRequest.addPaymentInfo(info);
+			commonRequest.setPayMode(PayMode.Background);
+			commonRequest.setRemark(request.getReason());
+			commonRequest.setShopId(shopId);
+			commonRequest.setUserId(userId);
+			
+			List<PayOrderInfo> orderList = payService.getPayOrderInfosByActOrderId(actOrderId);
+			if(null == orderList ||
+					orderList.size()<=0){
+				throw new Exception("支付未完成，不能退款！");
+			}
+			
+			commonRequest.setPayOrderId(orderList.get(0).getPayOrderId());
+			commonRequest.setTime(TimeStamp.getTime(14));
+		}
+		//
+		return commonRequest;
+	}
+
+	public UnifyPayResponse refundSubmitUnify(RefundRequest request, ActOrderInfo actOrderInfo, ActOrderPaymentInfo paymentInfo) throws Exception {
+		//
+		CommonRequest commonRequest = createCommonRequest(request, actOrderInfo, paymentInfo);
+		//
+		if (StringUtils.isBlank(commonRequest.getPayChannel())) {
+			String text = "没有配置对应的支付渠道";
+			UnifyPayResponse response = new UnifyPayResponse();
+			response.setStatusCode(-1);
+			response.setStatusText(text);
+			return response;
+		}
+
+		// 创建统一退款请求
+		UnifyRefundRequest unifyRefundRequest = new UnifyRefundRequest();
+		// 设置退款方式和渠道
+		String payChannel = request.getPayChannel();
+		if ("cashRefund".equals(payChannel)) {
+			unifyRefundRequest.setUnifyRefundType(UnifyRefundType.CART_PAY_APPLY);
+			unifyRefundRequest.setPayChannel("1");
+		} else if ("coinRefund".equals(payChannel)) {
+			unifyRefundRequest.setUnifyRefundType(UnifyRefundType.CART_PAY_COIN);
+			unifyRefundRequest.setPayChannel("0");
+		}
+		// 填写商品信息
+		List<ProductionInfo> productionInfoList = new ArrayList<ProductionInfo>();
+		for (ActOrderGoodsInfo goodsInfo : actOrderInfo.getGoodsInfos()) {
+
+			ProductionInfo productionInfo = new ProductionInfo();
+			productionInfo.setMerchId(request.getMerchId());
+			productionInfo.setBusinesId(String.valueOf(actOrderInfo.getShopId()));
+			productionInfo.setProductionId(String.valueOf(goodsInfo.getGoodsId()));
+			productionInfo.setProductionType(request.getProductionType());
+			productionInfo.setPrice(String.valueOf(goodsInfo.getPayPrice()));
+			productionInfo.setQuantity(String.valueOf(goodsInfo.getCount()));
+			productionInfo.setSettlementPrice(request.getSettlementPrice());
+			productionInfo.setAssignedCity("025");
+			productionInfo.setDiscount(String.valueOf(goodsInfo.getDiscount()));
+			productionInfo.setTitle(request.getTitle());
+			productionInfo.setProductionDesc(goodsInfo.getGoodsDescription());
+			//
+			productionInfoList.add(productionInfo);
+		}
+		unifyRefundRequest.setProductionInfos(productionInfoList.toArray(new ProductionInfo[0]));
+		//
+		Map<String, String> member = findMemberByUserId(actOrderInfo.getUserId());
+		unifyRefundRequest.setMobile(member.get("terminal_id"));
+		unifyRefundRequest.setRefundReason(request.getReason());
+		// 拆分价格
+		splitMoney(commonRequest, unifyRefundRequest, actOrderInfo, paymentInfo);
+		// 发送
+		String responseText = payService.submit(commonRequest, unifyRefundRequest);
+		UnifyPayResponse payResponse = PayServiceClient.jsonToBean(responseText, UnifyPayResponse.class);
+		//
+		return payResponse;
+	}
+
+	private void splitMoney(//
+	        CommonRequest commonRequest, //
+	        UnifyRefundRequest unifyRefundRequest, //
+	        ActOrderInfo actOrderInfo, //
+	        ActOrderPaymentInfo paymentInfo) throws Exception {
+		// 计算分割比例
+		List<Integer> scales = new ArrayList<Integer>();
+		List<ActOrderPaymentInfo> paymentInfos = actOrderInfo.getPaymentInfos();
+		Collections.sort(paymentInfos, new Comparator<ActOrderPaymentInfo>() {
+
+			@Override
+			public int compare(ActOrderPaymentInfo o1, ActOrderPaymentInfo o2) {
+				Long v1 = o1.getId();
+				Long v2 = o2.getId();
+				return v1.compareTo(v2);
+			}
+		});
+		int index = 0;
+		for (int i = 0; i < paymentInfos.size(); i++) {
+			ActOrderPaymentInfo actOrderPaymentInfo = paymentInfos.get(i);
+			int amount = actOrderPaymentInfo.getAmount();
+			scales.add(amount);
+			if (actOrderPaymentInfo.getId() == paymentInfo.getId()) {
+				index = i;
+			}
+		}
+		// 开始分割金额
+		String vStr;
+		for (ProductionInfo productionInfo : unifyRefundRequest.getProductionInfos()) {
+			// 商品单价
+			vStr = productionInfo.getPrice();
+			vStr = splitMoney(vStr, scales, index);
+			productionInfo.setPrice(vStr);
+			// 商品折扣
+			vStr = productionInfo.getDiscount();
+			vStr = splitMoney(vStr, scales, index);
+			productionInfo.setDiscount(vStr);
+			// 商品结算单价
+			vStr = productionInfo.getSettlementPrice();
+			vStr = splitMoney(vStr, scales, index);
+			productionInfo.setSettlementPrice(vStr);
+		}
+	}
+
+	private int splitMoney(int value, List<Integer> scales, int index) throws Exception {
+		int remain = value;
+		int splitValue = -1;
+		for (int i = 0; i <= index; i++) {
+			int scale = scales.get(i);
+			int totalScale = 0;
+			for (int j = i; j < scales.size(); j++) {
+				totalScale += scales.get(j);
+			}
+			splitValue = (int) Math.round((double) remain * (double) scale / totalScale);
+			remain -= splitValue;
+		}
+		if (splitValue >= 0) {
+			return splitValue;
+		} else {
+			throw new Exception("支付金额计算异常");
+		}
+	}
+
+	private String splitMoney(String value, List<Integer> scales, int index) throws Exception {
+		int v = Integer.parseInt(value);
+		v = splitMoney(v, scales, index);
+		return String.valueOf(v);
+	}
+
+	// ******************************退款接口
+	// end***************************************************
+}

@@ -1,0 +1,288 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+<ht:head />
+<script type="text/javascript">
+	$().ready(function() {
+		//获取来源地址
+ 		var url = document.referrer;
+ 		$("#backUrl").val(url);
+		$(":radio[name='status']").click(function(){
+			if ($("#radio-1").attr("checked")) {
+				$("#para").show();
+			} else {
+				$("#para").hide();
+			}
+		});	
+
+		//购买区域
+		selectRegion("#areaLimitName", "areaLimitCode", "areaLimitName", 0, {
+			index : 2
+		});
+	});
+	
+	
+	 function change1(value){
+	 
+	   if(document.getElementById("checkbox-1").checked)
+	   {
+
+	  value=1;
+	    	
+	   }else 
+	   {
+	     
+	     value=0;
+	 
+	   }
+	 }
+	 
+	 
+	  function change2(value){
+	 
+	   if(document.getElementById("checkbox-2").checked)
+	   {
+	  value=1;
+	   }else
+	   {
+	   
+	value=0;
+	   }
+	 }
+	  function change3(value){
+	 
+	   if(document.getElementById("checkbox-3").checked)
+	   {
+	   value=1;
+	  
+	   }else
+	   {
+	   
+      value=0;
+             
+	  
+	   }
+	 }
+	 function changePayType(num){
+	 	  $("#payType1").hide();
+	 	  $("#payType2").hide();
+	 	  $("#payType"+num).show();
+	 }
+</script>
+</head>
+<body>
+	<div id="content">
+		<!-- forms -->
+		<div class="box">
+			<!-- box / title -->
+			<div>
+				<h5>
+					商品审核
+					<h5>
+			</div>
+			<!-- end box / title -->
+			<form id="fm"
+			class="required-validate"
+				action="${ctx}/item/item/audit/${id}?nowTime=${nowTime}"
+				 accept-charset="utf-8">
+				<input type="hidden" name="id" value="${itemSale.id }" />
+				<input type="hidden" id="backUrl" name="backUrl" />
+				<div class="form">
+					<div class="fields">
+					
+						<div class="field">
+							<div class="label label-radio">
+								<label>审核:</label>
+							</div>
+
+							<div class="radios">
+								<div class="radio">
+									<input type="radio" id="radio-1" name="status"
+										checked="checked" value="1" /><label for="radio-1">通过</label>
+									<input type="radio" id="radio-2" name="status" value="2" /><label
+										for="radio-2">拒绝</label>
+								</div>
+								<span class="error" id="advice-validate-one-required-radioex1"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						        
+					
+						<div id="para" >
+						
+						 <div class="field">
+			                    <div class="label label-radio">
+			                        <label>支付方式：</label>
+			                    </div>
+			                    <div class="radios">
+				                    <div class="radio">
+										<input type="radio" id="radio-3" name="payType" value="0" <c:if test="${itemSalePayment.payType == 0}" var="payTypeFg">checked="checked"</c:if> onclick="changePayType(1);"><label for="radio-3">单一支付类型</label>
+										<input type="radio" id="radio-4" name="payType" value="1" onclick="changePayType(2);" <c:if test="${!payTypeFg }">checked="checked"</c:if>><label for="radio-4">组合支付类型</label>
+										
+										<!--  <input type="checkbox" id="checkbox-4"  name="billIdGoods"  value="1" <c:if test="${itemSalePayment != null && itemSalePayment.billPay == 1}">checked="checked"</c:if> /><label for="checkbox-4">话费</label>-->
+									</div>
+								</div>
+			                    <div class="checkboxes" id="payType1"  <c:if test="${!payTypeFg }">style="display: none;"</c:if>/>
+			                        <div class="checkbox">
+			                            <input type="checkbox" id="checkbox-1" name="cashIdgoods"  value="1" onclick="change1(this.value)" <c:if test="${itemSale.cashIdgoods == 1 }">checked="checked"</c:if>/><label for="checkbox-1">现金</label>
+			                            <input type="checkbox" id="checkbox-2" name="coinIdgoods" value="1" onclick="change2(this.value)" <c:if test="${itemSale.coinIdgoods == 1 }">checked="checked"</c:if>/><label for="checkbox-2">商城币</label>
+			                        	<input type="checkbox" id="checkbox-3" name="scoreIdgoods"  value="1" onclick="change3(this.value)" <c:if test="${itemSale.scoreIdgoods == 1 }">checked="checked"</c:if>/><label for="checkbox-3">积分</label>
+			                        </div>
+			                    </div>
+			                    <div class="radios" id="payType2" <c:if test="${payTypeFg }">style="display: none;"</c:if>>
+				                    <div class="radio">
+										<input type="radio" id="groupPayType1" name="groupPayType" value="1" checked="checked"/><label for="groupPayType1">现金+商城币</label>
+										<input type="radio" id="groupPayType2" name="groupPayType" value="2" <c:if test="${itemSale.cashIdgoods == 1 && itemSale.scoreIdgoods == 1}">checked="checked"</c:if>/><label for="groupPayType2">现金+积分</label>
+										<!--  
+										支付比例：
+										<select name="cashPayRatio">
+										<option value="0">无</option>
+										</select>
+										<select name="otherPayRatio">
+										<option value="0">无</option>
+										</select>
+										&nbsp;&nbsp;<span style="color: red;">选择比例时，两数相加必须等于十</span>-->
+									</div>
+								</div>
+			                </div>
+						<div class="field">
+							<div class="label">
+								<label>是否使用话费支付:</label>
+							</div>
+							<div class="select">
+								<select id="billIdGoods" name="billIdGoods" style="width:50px">
+									<option value="0">否</option>
+									<option value="1" <c:if test="${itemSalePayment != null && itemSalePayment.billPay == 1}">selected="selected"</c:if>>是</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="field">
+							<div class="label">
+								<label>是否支持货到付款:</label>
+							</div>
+							<div class="select">
+								<select name="deliveryPay" style="width:50px">
+									<option value="0">否</option>
+									<option value="1" <c:if test="${itemSalePayment != null && itemSalePayment.deliveryPay == 1}">selected="selected"</c:if>>是</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="field">
+						<div class="field" id="userLimit">
+							<div class="label label-checkbox">
+								<label>会员级别限制:</label>
+							</div>
+							<div class="checkboxes">
+								<div class="checkbox">
+								  <c:forEach items="${pricetypeList }" var="item" varStatus="status">
+										<input type="checkbox" id="checkbox-${status.index + 4 }" name="userLimitCode"
+										value="${item.priceTypeCode }"
+										<c:if test="${fn:contains(itemSale.userLimitCode,item.priceTypeCode)}"> checked="checked" </c:if>
+										class="" /><label for="checkbox-${status.index + 4 }">${item.priceType }</label>
+								  </c:forEach>								
+								</div>
+							</div>
+						</div>
+
+
+						<div class="field" id="areaLimit"
+							<c:if test="${!fn:contains(itemSale.buyLimit,'1')}">  </c:if>>
+							<div class="label">
+								<label for="areaLimitName" class="">购买用户地市限制:</label>
+							</div>
+							<div class="input">
+								<input id="areaLimitName" name="areaLimitName" class=" "
+									readonly="readonly" type="text"
+									value="${itemSale.areaLimitName }" maxlength="100" /> <input
+									id="areaLimitCode" name="areaLimitCode" type="hidden"
+									value="${itemSale.areaLimitCode }" /> <span class="error"
+									id="advice-required-areaLimitName" style="display:none"></span>
+							</div>
+						</div>
+
+						<div class="field" id="numLimit"
+							<c:if test="${!fn:contains(itemSale.buyLimit,'2')}">  </c:if>>
+							<div class="label">
+								<label for="userPerBuyNum" class="">单个用户购买数量:</label>
+							</div>
+							<div class="input">
+							<input id="userPerBuyNum" name="userPerBuyNum"
+									class="  validate-pattern-/^[0-9]*[0-9][0-9]*$/" type="text"
+									value="${itemSale.userPerBuyNum }" maxlength="8" /> 
+									&nbsp;&nbsp;<span style="color: red;">0表示不限购</span>
+								<span class="error" id="advice-required-userPerBuyNum"
+									style="display:none"></span>
+								<span class="error" id="advice-validate-pattern-userPerBuyNum"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						<div class="field">
+							<div class="label label-radio">
+								<label class="req">选择费率:</label>
+							</div>
+							<div class="select">
+									<select id="feeType" name="feeType" class="required" style="width:250px">
+										<c:forEach items="${feeList }" var="item">
+											<option value="${item.id }" <c:if test="${itemSale.feeType == item.id }">selected</c:if>>
+											${item.name }(${item.clearType})
+											</option>
+										</c:forEach>
+									</select>
+									<c:if test="${feeList eq null  || fn:length(feeList) == 0}">
+										<span class="error">该商户费率不存或清算状态没有审核通过!</span>
+									</c:if>
+									<span class="error" id="advice-required-feeType"
+										style="display:none"></span>
+							</div>
+						</div>
+						
+					   <div class="field">
+	                   <div class="label label-radio">
+	                        <label for="itemMode" >前台是否显示：</label>
+	                    </div>
+	                    <div class="radios">
+	                        <div class="radio">
+	                        <input type="radio" id="radio-1" name="isView" class="validate-one-required" <c:if test="${itemSale.iseckill == 0 }">checked="checked" </c:if>  value="1"/><label for="radio-1">是</label>
+	                        <input type="radio" id="radio-2" name="isView" class="validate-one-required" <c:if test="${itemSale.iseckill == 1 || itemSale.iseckill == 2 || itemSale.iseckill == 3 || itemSale.iseckill == 4 }">checked="checked" </c:if>  value="0"/><label for="radio-1">否</label>
+	                        
+	                        </div>
+	                        <span class="error" id="advice-validate-one-required-itemMode" style="display:none"></span>
+	                         </div>
+	                   </div>
+	                   
+						</div>
+						</div>
+						
+						<div class="field">
+							<div class="label label-textarea">
+								<label for="advice">审核意见：</label>
+							</div>
+							<div class="input">
+								<textarea id="remark" name="remark" class="max-length-50"
+									rows="8" cols="50"></textarea>
+							</div>
+						</div>
+						
+						<div class="buttons">
+							<div class="highlight">
+								<input type="submit" name="submit.highlight" value="提交" />
+							</div>
+								 <input type="reset" name="reset" value="重置" />
+                    			<input type="button" class="common_btn" onclick="history.back();" value="返回" />
+							
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<!-- end forms -->
+		
+	</div>
+</body>
+</html>

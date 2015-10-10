@@ -1,0 +1,151 @@
+package com.cplatform.mall.back.websys.web;
+
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.dao.SysPropertyDao;
+import com.cplatform.mall.back.websys.entity.SysProperty;
+import com.cplatform.mall.back.websys.service.SysPropertyService;
+/**
+ * 
+ * 属性管理控制器. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午03:39:00
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Controller
+@RequestMapping(value = "/websys/property")
+public class SysPropertyController {
+	@Autowired
+	private LogUtils logUtils;
+	
+	@Autowired
+	private SysPropertyDao sysPropertyDao;
+	
+	@Autowired
+	private SysPropertyService sysPropertyService;
+    
+    /**
+     * 属性查询
+     * @param content    查询条件-内容
+     * @param type    查询条件-类型
+     * @param page    当前页
+     * @param model
+     * @return
+     * @throws SQLException
+     */
+    @RequestMapping(value="/query")
+    public String list(@RequestParam(required = false) String content, @RequestParam(required = false) Long type, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) throws SQLException {
+    	Page<SysProperty> propertyPage = sysPropertyService.findSysProperty(content, type, page);
+		model.addAttribute("sysProperty", propertyPage);
+		model.addAttribute("typeMap", SysProperty.getTypeMap());
+        return "websys/property/property_list";
+    }
+    
+    /**
+     * 跳转添加属性
+     * @param model
+     * @return
+     */
+    @RequestMapping(value = "/add", method = RequestMethod.GET)
+	public String add(Model model) {
+		SysProperty sysProperty = new SysProperty();
+		model.addAttribute("method", "add");
+		model.addAttribute("sysProperty", sysProperty);
+		model.addAttribute("typeMap", SysProperty.getTypeMap());
+		return "websys/property/property_add";
+	}
+    /**
+     * 添加属性
+     * @param sysProperty    属性实体类
+     * @param request
+     * @param result
+     * @return
+     */
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object createPost(@ModelAttribute("sysProperty") SysProperty sysProperty, HttpServletRequest request, BindingResult result) {
+    	try {
+			// 执行业务逻辑
+    		sysProperty = sysPropertyDao.save(sysProperty);
+
+			// 提示并跳转
+			return JsonRespWrapper.success("添加成功", "/websys/property/query");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+    }
+    
+    /**
+     * 跳转编辑属性
+     * @param id    待编辑属性ID
+     * @param model
+     * @return
+     */
+    @RequestMapping(value = "/edit", method = RequestMethod.GET)
+	public String edit(@RequestParam(required = false) Long id, Model model) {
+		SysProperty sp = sysPropertyDao.findOne(id);
+		model.addAttribute("method", "edit");
+		model.addAttribute("sysProperty", sp);
+		model.addAttribute("typeMap", SysProperty.getTypeMap());
+		return "websys/property/property_add";
+	}    
+    /**
+     * 编辑属性
+     * @param sysProperty    属性实体类
+     * @param request
+     * @param result
+     * @return
+     */
+    @RequestMapping(value = "/edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePost(@ModelAttribute("sysProperty") SysProperty sysProperty, HttpServletRequest request, BindingResult result) {
+    	try {
+			// 执行业务逻辑
+    		sysProperty = sysPropertyDao.save(sysProperty);
+
+			// 提示并跳转
+			return JsonRespWrapper.success("修改成功", "/websys/property/query");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+    }
+
+    /**
+     * 删除属性
+     * @param id    待删除属性ID
+     * @return
+     */
+    @RequestMapping(value = "delete/{id}")
+	@ResponseBody
+	public Object deleteProperty(@PathVariable Long id) {
+    	sysPropertyDao.delete(id);
+    	return JsonRespWrapper.successReload("删除成功！");
+	}
+}

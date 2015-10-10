@@ -1,0 +1,221 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.dao.SysRegionDao;
+import com.cplatform.mall.back.sys.dao.SysUnitDao;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysUnit;
+
+/**
+ * 单位管理服务类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-27 下午7:52:50
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class SysUnitService {
+
+	@Autowired
+	private SysUnitDao unitDao;
+
+	@Autowired
+	private SysRegionDao regonDao;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	/**
+	 * 增加或修改
+	 * 
+	 * @param unit
+	 * @return
+	 */
+	public SysUnit addOrUpdateUnit(SysUnit unit) {
+		return this.unitDao.save(unit);
+	}
+
+	/**
+	 * 根据id获取单位
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public SysUnit findUnitById(Long id) {
+		return this.unitDao.findById(id);
+	}
+
+	/**
+	 * 删除单位
+	 * 
+	 * @param id
+	 */
+	public void delUnit(Long id) {
+		this.unitDao.delete(id);
+	}
+
+	/**
+	 * 获取页面显示数据
+	 * 
+	 * @param sysUnit
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysUnit> findUnit(SysUnit sysUnit, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append("select t.*,r.region_name  ");
+		sql.append("  from t_sys_unit t left join t_sys_region r on t.area_code = r.region_code ").append(" where 1=1 ");
+
+		if (sysUnit != null) {
+			if (StringUtils.isNotEmpty(sysUnit.getName())) {
+				sql.append(" and t.name like ? ");
+				params.add("%" + sysUnit.getName() + "%");
+			}
+			if (sysUnit.getUnitType() != null) {
+				sql.append(" and t.unit_type = ? ");
+				params.add(sysUnit.getUnitType());
+			}
+
+		}
+		sql.append(" start with t.parent_unit_id = ? ");
+		sql.append("connect by t.parent_unit_id = prior t.id ");
+		params.add(sysUnit.getId());
+		sql.append(" order by t.id desc ");
+
+		return dbHelper.getPage(sql.toString(), SysUnit.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 根据parent_unit_id和unit_type获取单位列表
+	 * 
+	 * @param unitType
+	 * @param parentUnitId
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<SysUnit> getParentUnitList(Long unitType, Long parentUnitId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+
+		sql.setLength(0);
+		// sql.append("select * ");
+		// sql.append("  from t_sys_unit t ");
+		// sql.append(" where 1 = 1 and t.parent_unit_id =? ");
+		// sql.append(" start with t.parent_unit_id = ? ");
+		// sql.append("connect by prior t.parent_unit_id = t.id");
+
+		//
+		sql.append("select * ");
+		sql.append("  from t_sys_unit t where 1=1 ");
+		sql.append(" and t.flag=0 ");
+		sql.append(" and t.unit_type = ? ");
+		params.add(unitType);
+
+		sql.append(" start with t.parent_unit_id = ? ");
+		sql.append("connect by t.parent_unit_id = prior t.id ");
+		params.add(parentUnitId);
+		// params.add(parentUnitId);
+		return dbHelper.getBeanList(sql.toString(), SysUnit.class, params.toArray());
+	}
+
+	public List<SysUnit> getParentUnitListBytype(Long unitType) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+
+		sql.setLength(0);
+		//
+		sql.append("select * ");
+		sql.append("  from t_sys_unit t where 1=1 ");
+		sql.append(" and t.flag=0 ");
+		sql.append(" and t.unit_type = ? ");
+		params.add(unitType);
+		// params.add(parentUnitId);
+		return dbHelper.getBeanList(sql.toString(), SysUnit.class, params.toArray());
+	}
+
+	public List<SysUnit> getParentUnitListById(Long unitId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+
+		sql.setLength(0);
+		sql.append("select * ");
+		sql.append("  from t_sys_unit t where 1=1 ");
+		sql.append(" and t.flag=0 ");
+		sql.append(" and t.id = ? ");
+		params.add(unitId);
+		return dbHelper.getBeanList(sql.toString(), SysUnit.class, params.toArray());
+	}
+
+	/**
+	 * 根据unit_type获取单位列表
+	 * 
+	 * @param unitType
+	 * @return
+	 */
+	public List<SysUnit> findByUnitType(Long unitType) {
+		return unitDao.findByUnitType(unitType);
+	}
+
+	/**
+	 * 根据ParentUnitId获取单位列表
+	 * 
+	 * @param unitId
+	 * @return
+	 */
+	public List<SysUnit> findByParentUnitId(Long unitId) {
+		return unitDao.findByParentUnitId(unitId);
+	}
+
+	public SysRegion findSysRegonById(Long id) {
+		return this.regonDao.findById(id);
+	}
+
+	/**
+	 * 根据regonLevel获取区域列表
+	 * 
+	 * @param regonLevel
+	 * @return
+	 */
+	public List<SysRegion> findByRegonLevel(Long regonLevel) {
+		return regonDao.findByRegionLevel(regonLevel);
+	}
+
+	/**
+	 * 根据parentRegon获取区域列表
+	 * 
+	 * @param parentRegon
+	 * @return
+	 */
+	public List<SysRegion> findByParentRegon(String parentRegon) {
+		return this.regonDao.findByParentRegion(parentRegon);
+	}
+
+	/**
+	 * 根据regonCode获取区域
+	 * 
+	 * @param regonCode
+	 * @return
+	 */
+	public SysRegion findByRegonCode(String regonCode) {
+		return regonDao.findByRegionCode(regonCode);
+	}
+
+}

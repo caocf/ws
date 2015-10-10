@@ -1,0 +1,611 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.dao.MenuDao;
+import com.cplatform.mall.back.entity.SysMenu;
+import com.cplatform.mall.back.sys.dao.SysRoleDao;
+import com.cplatform.mall.back.sys.dao.SysRolePrivilegeDao;
+import com.cplatform.mall.back.sys.entity.SysRole;
+import com.cplatform.mall.back.sys.entity.SysRolePrivilege;
+
+/**
+ * 角色服务类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-27 下午8:00:58
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class SysRoleService {
+
+	private static Logger log = Logger.getLogger(SysRoleService.class);
+
+	@Autowired
+	private SysRoleDao roleDao;
+
+	@Autowired
+	private SysRolePrivilegeDao rolePrivilegeDao;
+
+	@Autowired
+	private MenuDao menuDao;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	// 系统固化的按钮
+	public static final String add_btn = "新增";
+
+	private static final String update_btn = "更新";
+	
+	
+	private static final String updateOrderStatus_btn = "更新订单状态";
+
+	public static final String mod_btn = "修改";
+
+	public static final String del_btn = "删除";
+
+	public static final String view_btn = "查看";
+
+	public static final String div_btn = "权限分配";
+
+	public static final String imp_btn = "导入";
+
+	public static final String out_btn = "导出";
+
+	public static final String audit_btn = "审核";
+
+	public static final String test_btn = "测试";
+
+	public static final String up_line_btn = "上线";
+
+	public static final String down_line_btn = "下线";
+
+	public static final String pause_btn = "暂停";
+
+	public static final String start_btn = "恢复";
+
+	public static final String cancel_btn = "取消";
+
+	public static final String send_btn = "发送";
+
+	public static final String seed_btn = "种子操作";
+
+	public static final String noShow_btn = "不显示";
+
+	public static final String show_btn = "显示";
+
+	public static final String load_btn = "游戏加载";
+
+	public static final String publish_btn = "发布";
+
+	public static final String sync_btn = "同步结算";
+
+	public static final String addshop_btn = "添加门店";
+
+	public static final String massTask_btn = "配置群发任务";
+
+	public static final String order_btn = "查看订单";
+
+	public static final String static_btn = "静态化";
+
+	public static final String itemStatic_btn = "商品静态化";
+
+	public static final String storeStatic_btn = "商户静态化";
+
+	public static final String export_btn = "导出数据";
+
+	public static final String preview_btn = "预览";
+
+	public static final String settle_btn = "关联协议";
+
+	public static final String img_btn = "管理图片";
+
+	public static final String agent_store_btn = "代理商户";
+
+	public static final String to_settle_store_btn = "转为结算商户";
+
+	public static final String settel_manage = "结算管理";
+
+	public static final String fee_manage = "费率管理";
+
+	public static final String view_sync_btn = "查询结算";
+
+	public static final String refund_add_btn = "增加退款单";
+
+	public static final String refund_refund_btn = "退款";
+
+	public static final String download_btn = "下载";
+
+	public static final String reply_btn = "回复";
+
+	public static final String active_account_btn = "激活账号";
+
+	public static final String freeze_account_btn = "冻结账号";
+
+	public static final String reset_pwd = "重置密码";
+
+	public static final String mod_pwd = "修改密码";
+
+	public static final String smsbuy_item_manage = "短信购商品管理";
+	
+	public static final String	make_card_btn = "制卡";
+	
+	public static final String start_print_btn = "开始印刷";
+	
+	public static final String done_print_btn = "印刷完成";
+	
+	
+	
+	
+	
+	/*以下以st开头的是礼品卡库存管理模块的权限按钮:start*/
+	public static final String st_ai_btn = "全部入库";
+	public static final String st_ao_btn = "全部出库";
+	public static final String st_bi_btn = "部分入库";
+	public static final String st_bo_btn = "部分出库";
+	public static final String st_i_btn = "入库";
+	public static final String st_o_btn = "出库";
+	public static final String st_imp_btn = "文件导入";
+	public static final String st_exp_btn = "导出";
+	public static final String st_view_btn = "查看流水";
+	/*礼品卡库存管理模块的权限按钮:end*/
+	
+	
+	public static final String linkItem_btn = "关联商品";
+	public static final String addOnLine_btn = "线上申请出库";
+	public static final String addLine_btn = "线下申请出库";
+	public static final String giftOut_btn = "出库";
+	public static final String giftActive_btn = "激活";
+	
+	public static final String send_audit_btn = "送审";
+	public static final String back_upload_btn = "回传文件";
+	
+	public static final String home_page_btn = "店铺首页";
+
+	private static Map<String, String> btnMapping = new HashMap<String, String>();
+	static {
+		btnMapping.put("add_btn", add_btn);
+		btnMapping.put("updateOrderStatus_btn", updateOrderStatus_btn);
+		btnMapping.put("update_btn", update_btn);
+		btnMapping.put("mod_btn", mod_btn);
+		btnMapping.put("del_btn", del_btn);
+		btnMapping.put("view_btn", view_btn);
+		btnMapping.put("div_btn", div_btn);
+		btnMapping.put("imp_btn", imp_btn);
+		btnMapping.put("out_btn", out_btn);
+		btnMapping.put("audit_btn", audit_btn);
+		btnMapping.put("test_btn", test_btn);
+		btnMapping.put("up_line_btn", up_line_btn);
+		btnMapping.put("down_line_btn", down_line_btn);
+		btnMapping.put("pause_btn", pause_btn);
+		btnMapping.put("start_btn", start_btn);
+		btnMapping.put("cancel_btn", cancel_btn);
+		btnMapping.put("send_btn", send_btn);
+		btnMapping.put("seed_btn", seed_btn);
+		btnMapping.put("load_btn", load_btn);
+		btnMapping.put("publish_btn", publish_btn);
+		btnMapping.put("sync_btn", sync_btn);
+		btnMapping.put("addshop_btn", addshop_btn);
+		btnMapping.put("static_btn", static_btn);
+		btnMapping.put("export_btn", export_btn);
+		btnMapping.put("preview_btn", preview_btn);
+		btnMapping.put("settle_btn", settle_btn);
+		btnMapping.put("img_btn", img_btn);
+		btnMapping.put("agent_store_btn", agent_store_btn);
+		btnMapping.put("to_settle_store_btn", to_settle_store_btn);
+		btnMapping.put("massTask_btn", massTask_btn);
+		btnMapping.put("settel_manage", settel_manage);
+		btnMapping.put("fee_manage", fee_manage);
+		btnMapping.put("view_sync_btn", view_sync_btn);
+		btnMapping.put("order_btn", order_btn);
+		btnMapping.put("refund_add_btn", refund_add_btn);
+		btnMapping.put("refund_refund_btn", refund_refund_btn);
+		btnMapping.put("download_btn", download_btn);
+		btnMapping.put("reply_btn", reply_btn);
+		btnMapping.put("active_account_btn", active_account_btn);
+		btnMapping.put("freeze_account_btn", freeze_account_btn);
+		btnMapping.put("reset_pwd", reset_pwd);
+		btnMapping.put("mod_pwd", mod_pwd);
+		btnMapping.put("itemStatic_btn", itemStatic_btn);
+		btnMapping.put("noShow_btn", noShow_btn);
+		btnMapping.put("show_btn", show_btn);
+		btnMapping.put("storeStatic_btn", storeStatic_btn);
+		btnMapping.put("smsbuy_item_manage", smsbuy_item_manage);
+		btnMapping.put("make_card_btn", make_card_btn);
+		btnMapping.put("start_print_btn", start_print_btn);
+		btnMapping.put("done_print_btn", done_print_btn);
+		
+		/*以下以st开头的是礼品卡库存管理模块的权限按钮:start*/
+		//st_ai_btn,st_ao_btn,st_bi_btn,st_bo_btn,st_i_btn,st_o_btn,st_imp_btn,st_view_btn    stock_model
+		btnMapping.put("st_ai_btn", st_ai_btn);
+		btnMapping.put("st_ao_btn", st_ao_btn);
+		btnMapping.put("st_bi_btn", st_bi_btn);
+		btnMapping.put("st_bo_btn", st_bo_btn);
+		btnMapping.put("st_i_btn", st_i_btn);
+		btnMapping.put("st_o_btn", st_o_btn);
+		btnMapping.put("st_imp_btn", st_imp_btn);
+		btnMapping.put("st_exp_btn", st_exp_btn);
+		btnMapping.put("st_view_btn", st_view_btn);
+		btnMapping.put("send_audit_btn", send_audit_btn);
+		btnMapping.put("back_upload_btn", back_upload_btn);
+		/*礼品卡库存管理模块的权限按钮:end*/
+		
+		btnMapping.put("linkItem_btn", linkItem_btn);
+		btnMapping.put("addOnLine_btn", addOnLine_btn);
+		btnMapping.put("addLine_btn", addLine_btn);
+		btnMapping.put("giftOut_btn", giftOut_btn);
+		btnMapping.put("giftActive_btn", giftActive_btn);
+		
+		btnMapping.put("home_page_btn", home_page_btn);
+	}
+
+	public SysRole findById(Long id) {
+		return roleDao.findById(id);
+	}
+
+	public SysRole addOrUpdateRole(SysRole role) {
+		return roleDao.save(role);
+	}
+
+	public SysRolePrivilege addOrUpdateRolePrivilege(SysRolePrivilege rolePrivilege) {
+		return rolePrivilegeDao.save(rolePrivilege);
+	}
+
+	public List<SysRolePrivilege> findByRoleId(Long roleId) {
+		return rolePrivilegeDao.findByRoleId(roleId);
+	}
+
+	public void delRole(Long id) {
+		roleDao.delete(id);
+	}
+
+	public void delRolePrivilege(Long id) {
+		rolePrivilegeDao.delete(id);
+	}
+
+	public List<SysRole> findByUpdateUserId(Long updateUserId) {
+		return roleDao.findByUpdateUserId(updateUserId);
+	}
+
+	/**
+	 * 获取页面数据
+	 * 
+	 * @param roleName
+	 * @param unitId
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysRole> findRegon(String roleName, Long unitId, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from t_sys_role t where 1=1");
+		List<Object> params = new ArrayList<Object>();
+		if (unitId != 0L) {
+			sql.append(" and t.UNIT_ID = ?");
+			params.add(unitId);
+		}
+		if (roleName != null && !"".equals(roleName)) {
+			sql.append(" and t.role_name like ?");
+			params.add("%" + roleName.trim() + "%");
+
+		}
+		sql.append(" order by id desc ");
+		return dbHelper.getPage(sql.toString(), SysRole.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 获取查看角色的html
+	 * 
+	 * @param roleId
+	 * @return
+	 * @throws SQLException
+	 */
+	public String getMenuPrivilegeForView(Long roleId) throws SQLException {
+		StringBuilder result = new StringBuilder();
+		String nbsp = "&nbsp;&nbsp;";
+		HashMap<String, String> nbspMap = new HashMap<String, String>();
+		List<SysMenu> menuListForRole = this.getSysMenuListByRoleId(roleId);
+		List<SysRolePrivilege> sysRolePrivilegelist = rolePrivilegeDao.findByRoleId(roleId);
+		HashMap<String, String> btnCodeMap = new HashMap<String, String>();
+		for (SysRolePrivilege vo : sysRolePrivilegelist) {
+			btnCodeMap.put(vo.getMenuCode(), vo.getMenuBtn());
+		}
+
+		// String seg = "";
+		if (menuListForRole != null && menuListForRole.size() > 0) {
+			for (SysMenu roleMenu : menuListForRole) {
+
+				if (nbspMap.get(roleMenu.getMenuPcode()) != null) {
+					nbsp = nbspMap.get(roleMenu.getMenuPcode()) + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					result.append(nbsp);
+				} else {
+					nbsp = "";
+				}
+				result.append(roleMenu.getMenuName());
+
+				if (roleMenu.isLeafYn()) {
+					result.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+					result.append(getViewPrivilegeBtnHtml(btnCodeMap.get(roleMenu.getMenuCode())));
+				}
+				result.append("<br>");
+				nbspMap.put(roleMenu.getMenuCode(), nbsp);
+
+			}
+		}
+
+		return result.toString();
+	}
+
+	/**
+	 * 获取编辑角色的html
+	 * 
+	 * @param isAdmin
+	 * @param userId
+	 * @param roleId
+	 * @return
+	 * @throws SQLException
+	 */
+	public String getMenuPrivilegeForEdit(boolean isAdmin, Long userId, Long roleId) throws SQLException {
+		String nbsp = "&nbsp;&nbsp;";
+		StringBuilder result = new StringBuilder();
+		HashMap<String, String> nbspMap = new HashMap<String, String>();
+		List<SysMenu> menuList = null;
+		if (isAdmin) {
+			menuList = menuDao.findAllSysMenu();
+		} else {
+			menuList = getSysMenuListByUserId(userId);
+		}
+		if (menuList == null) {
+			return "";
+		}
+		List<SysMenu> menuListForRole = this.getSysMenuListByRoleId(roleId);
+		// boolean isChecked = false;
+		for (SysMenu menu : menuList) {
+			// isChecked = false;
+			if (nbspMap.get(menu.getMenuPcode()) != null) {
+				nbsp = nbspMap.get(menu.getMenuPcode()) + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+				result.append(nbsp);
+			} else {
+				nbsp = "";
+			}
+
+			if (!menu.isLeafYn()) {
+				result.append("<img src='../../static/images/treenode02.gif'>");
+			} else {
+				result.append("<img src='../../static/images/treeitem02.gif'>");
+			}
+			String seg = "";
+			if (menuListForRole != null && menuListForRole.size() > 0) {
+				for (SysMenu roleMenu : menuListForRole) {
+					if (roleMenu.getMenuCode().equals(menu.getMenuCode())) {
+						seg = String.format("<input type=\"checkbox\" name=\"menuid\" checked onclick=\"setAll(this)\" "
+						        + "id=\"%s\" value=\"%s\" pcode=\"%s\" leaf=\"%s\" />%s ", menu.getMenuCode(), menu.getMenuCode(), menu
+						        .getMenuPcode(), menu.isLeafYn() ? "1" : "0", menu.getMenuName());
+						// isChecked = true;
+						break;
+					} else {
+
+						seg = String.format("<input type=\"checkbox\" name=\"menuid\" onclick=\"setAll(this)\" "
+						        + "id=\"%s\" value=\"%s\" pcode=\"%s\" leaf=\"%s\" />%s ", menu.getMenuCode(), menu.getMenuCode(), menu
+						        .getMenuPcode(), menu.isLeafYn() ? "1" : "0", menu.getMenuName());
+					}
+				}
+			} else {
+				seg = String.format("<input type=\"checkbox\" name=\"menuid\" onclick=\"setAll(this)\" "
+				        + "id=\"%s\" value=\"%s\" pcode=\"%s\" leaf=\"%s\" />%s ", menu.getMenuCode(), menu.getMenuCode(), menu.getMenuPcode(), menu
+				        .isLeafYn() ? "1" : "0", menu.getMenuName());
+			}
+
+			result.append(seg).append("\r\n");
+			if (menu.isLeafYn() && StringUtils.isNotEmpty(menu.getUrlBtns())) {
+				result.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+				result.append(getPrivilegeBtnHtml(menu.getUrlBtns(), menu.getMenuCode(), roleId));
+			}
+
+			result.append("<br>");
+			nbspMap.put(menu.getMenuCode(), nbsp);
+
+		}
+		return result.toString();
+	}
+
+	/**
+	 * 获取添加角色的html
+	 * 
+	 * @param isAdmin
+	 * @param userId
+	 * @return
+	 */
+	public String getMenuPrivilege(boolean isAdmin, Long userId) {
+		String nbsp = "&nbsp;&nbsp;";
+		StringBuilder result = new StringBuilder();
+		HashMap<String, String> nbspMap = new HashMap<String, String>();
+		List<SysMenu> menuList = null;
+		try {
+			if (isAdmin) {
+				menuList = menuDao.findAllSysMenu();
+			} else {
+				menuList = getSysMenuListByUserId(userId);
+			}
+			if (menuList == null) {
+				return "";
+			}
+			for (SysMenu menu : menuList) {
+				if (nbspMap.get(menu.getMenuPcode()) != null) {
+					nbsp = nbspMap.get(menu.getMenuPcode()) + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+					result.append(nbsp);
+				} else {
+					nbsp = "";
+				}
+
+				if (!menu.isLeafYn()) {
+					result.append("<img src='../../static/images/treenode02.gif'>");
+				} else {
+					result.append("<img src='../../static/images/treeitem02.gif'>");
+				}
+
+				String seg = String.format("<input type=\"checkbox\" name=\"menuid\" onclick=\"setAll(this)\" "
+				        + "id=\"%s\" value=\"%s\" pcode=\"%s\" leaf=\"%s\" />%s ", menu.getMenuCode(), menu.getMenuCode(), menu.getMenuPcode(), menu
+				        .isLeafYn() ? "1" : "0", menu.getMenuName());
+				result.append(seg).append("\r\n");
+				if (menu.isLeafYn() && StringUtils.isNotEmpty(menu.getUrlBtns())) {
+					result.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+					result.append(getPrivilegeBtnHtml(menu.getUrlBtns(), menu.getMenuCode(), 0L));
+				}
+
+				result.append("<br>");
+				nbspMap.put(menu.getMenuCode(), nbsp);
+			}
+		}
+		catch (Exception ex) {
+			log.error(ex.getMessage());
+		}
+		return result.toString();
+	}
+
+	/**
+	 * 根据菜单表中的按钮列表, 返回要显示的按钮html
+	 * 
+	 * @param urlBtns
+	 *            按钮列表
+	 * @param pcode
+	 *            所属菜单code
+	 * @return html格式字符串
+	 */
+	public String getPrivilegeBtnHtmlForView(String urlBtns, String pcode) {
+		StringBuilder result = new StringBuilder();
+		if (StringUtils.isEmpty(urlBtns))
+			return result.toString();
+
+		String[] btns = urlBtns.split(",");
+
+		for (String btn : btns) {
+
+			result.append("").append(btnMapping.get(btn)).append("&nbsp;&nbsp");
+
+		}
+		return result.toString();
+	}
+
+	private List<SysMenu> getSysMenuListByUserId(Long userId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("select * ");
+		sql.append("  from t_sys_menu t ");
+		sql.append(" where t.menu_code in ");
+		sql.append("       (select t1.menu_code ");
+		sql.append("          from t_sys_role_privilege t1 ");
+		sql.append("         where t1.role_id in (select t2.role_id ");
+		sql.append("                                from t_sys_user_role t2 ");
+		sql.append("                               where t2.user_id = ?))  order by menu_code asc");
+		List<Object> params = new ArrayList<Object>();
+		params.add(userId);
+		List<SysMenu> sysMenuList = null;
+		// try {
+		sysMenuList = dbHelper.getBeanList(sql.toString(), SysMenu.class, params.toArray());
+		// }
+		// catch (SQLException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		return sysMenuList;
+	}
+
+	private List<SysMenu> getSysMenuListByRoleId(Long roleId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.setLength(0);
+		sql.append("select * ");
+		sql.append("  from t_sys_menu t ");
+		sql.append(" where t.menu_code in ");
+		sql.append("       (select t1.menu_code ");
+		sql.append("          from t_sys_role_privilege t1 ");
+		sql.append("         where t1.role_id = ? ) order by menu_code asc");
+		List<Object> params = new ArrayList<Object>();
+		params.add(roleId);
+		List<SysMenu> sysMenuList = null;
+		// try {
+		sysMenuList = dbHelper.getBeanList(sql.toString(), SysMenu.class, params.toArray());
+		// }
+		// catch (SQLException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		return sysMenuList;
+	}
+
+	/**
+	 * 根据菜单表中的按钮列表,返回要显示的按钮html,显示角色权限页面用
+	 * 
+	 * @param urlBtns
+	 *            菜单按钮字符串
+	 * @return 前台页面显示的按钮组
+	 */
+	public String getViewPrivilegeBtnHtml(String urlBtns) {
+		StringBuilder result = new StringBuilder();
+		if (StringUtils.isNotEmpty(urlBtns)) {
+			String[] btns = urlBtns.split("#");
+			for (int i = 0; i < btns.length; i++) {
+				result.append("<font color='blue'>");
+				result.append(btnMapping.get(btns[i]));
+				result.append("&nbsp;&nbsp;</font>");
+			}
+		}
+		return result.toString();
+	}
+
+	/**
+	 * 根据菜单表中的按钮列表, 返回要显示的按钮html
+	 * 
+	 * @param urlBtns
+	 *            按钮列表
+	 * @param pcode
+	 *            所属菜单code
+	 * @return html格式字符串
+	 */
+	public String getPrivilegeBtnHtml(String urlBtns, String pcode, Long roleId) {
+		StringBuilder result = new StringBuilder();
+		if (StringUtils.isEmpty(urlBtns)) {
+			return result.toString();
+		}
+		List<SysRolePrivilege> sysRolePrivilegelist = rolePrivilegeDao.findByRoleId(roleId);
+		HashMap<String, String> btnCodeMap = new HashMap<String, String>();
+		for (SysRolePrivilege vo : sysRolePrivilegelist) {
+			btnCodeMap.put(vo.getMenuCode(), vo.getMenuBtn());
+		}
+		String[] btns = urlBtns.split(",");
+		String str = btnCodeMap.get(pcode);
+		for (String btn : btns) {
+			if (str != null && str.contains(btn)) {
+				result.append("<input type=checkbox name=b_").append(pcode).append(" checked  value=").append(btn)
+				        .append(" onclick='setParStatus(this)' pcode=");
+				result.append(pcode).append("><font color='blue'>").append(btnMapping.get(btn)).append("&nbsp;&nbsp;</font>");
+			} else {
+				result.append("<input type=checkbox name=b_").append(pcode).append("  value=").append(btn)
+				        .append(" onclick='setParStatus(this)' pcode=");
+				result.append(pcode).append("><font color='blue'>").append(btnMapping.get(btn)).append("&nbsp;&nbsp;</font>");
+			}
+
+		}
+		return result.toString();
+	}
+
+}

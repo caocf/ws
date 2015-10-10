@@ -1,0 +1,23 @@
+package com.cplatform.mall.back.utils.log;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.cplatform.mall.back.utils.LogUtils;
+
+@Aspect
+@Component
+public class LogAspect {
+
+	@Autowired
+	LogUtils logUtils;
+
+	@AfterReturning(value = "execution(public * com.cplatform.mall.back.*.service.*.*(..))", returning = "result")
+	public void doAfterReturning(JoinPoint join, Object result) {
+		System.out.println("test------" + join.getSignature().getName());
+		System.out.println(join.getTarget().getClass());
+	}
+}

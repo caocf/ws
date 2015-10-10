@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_channel_catalog_rcmd_conf

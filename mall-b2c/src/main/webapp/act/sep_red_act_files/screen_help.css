@@ -1,0 +1,48 @@
+/*new foot by 2012-07-11*/
+.nfoot
+{
+    width: 970px;
+    margin: 10px auto 0;
+    text-align: center;
+}
+
+.nsercice
+{
+    margin: 10px 0;
+}
+
+.nsercice a
+{
+    color: #555;
+    margin: 0 50px;
+}
+
+.friendship
+{
+    overflow: hidden;
+    margin: 20px auto 20px;
+}
+
+.friendship dt
+{
+    color: #BBBBBB;
+    float: left;
+    font-weight: bold;
+    text-align: right;
+}
+
+.friendship dd
+{
+    float: left;
+    width: 905px;
+    text-align: left;
+}
+
+.friendship dd a
+{
+    color: #BBBBBB;
+    display: inline-block;
+    font-family: ËÎÌו,sans-serif;
+    margin-right: 10px;
+    white-space: nowrap;
+}

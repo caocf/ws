@@ -1,0 +1,23 @@
+#Wed Apr 23 09:16:09 CST 2014
+eclipse.preferences.version=1
+encoding//src/main/java=UTF-8
+encoding//src/main/resources=UTF-8
+encoding//src/main/resources/application.properties=gbk
+encoding//src/main/resources/db.properties=UTF-8
+encoding//src/main/webapp/js/area.js=UTF-8
+encoding//src/main/webapp/js/cart-common.js=UTF-8
+encoding//src/main/webapp/js/cart.js=UTF-8
+encoding//src/main/webapp/js/comment.js=UTF-8
+encoding//src/main/webapp/js/confirm-order-address.js=UTF-8
+encoding//src/main/webapp/js/favorite.js=UTF-8
+encoding//src/main/webapp/js/foot.js=UTF-8
+encoding//src/main/webapp/js/global.js=UTF-8
+encoding//src/main/webapp/js/head.js=UTF-8
+encoding//src/main/webapp/js/js_address.js=UTF-8
+encoding//src/main/webapp/js/pagescroll.js=UTF-8
+encoding//src/main/webapp/js/product.js=UTF-8
+encoding//src/main/webapp/js/shop.js=UTF-8
+encoding//src/main/webapp/js/usercenter.js=UTF-8
+encoding//src/test/java=UTF-8
+encoding//src/test/resources=UTF-8
+encoding/<project>=UTF-8

@@ -1,0 +1,365 @@
+package com.cplatform.mall.back.sys.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.entity.SysUnit;
+import com.cplatform.mall.back.sys.entity.SysUser;
+import com.cplatform.mall.back.sys.service.SysUnitService;
+import com.cplatform.mall.back.sys.service.UserService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.util2.TimeStamp;
+import com.cplatform.util2.security.MD5;
+
+/**
+ * 单位管理控制类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-27 下午7:47:40
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping("/sys/unit")
+public class SysUnitController {
+
+	private final String MODULE_NAME = "单位管理";
+
+	@Autowired
+	private SysUnitService unitService;
+
+	@Autowired
+	private UserService userService;
+
+	@Autowired
+	private LogUtils logUtils;
+
+	/**
+	 * 获取单位列表
+	 * 
+	 * @param sysUnit
+	 * @param name
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String unitList(@ModelAttribute("sysUnit") SysUnit sysUnit,
+	        @RequestParam(value = "name", required = false, defaultValue = "") String name,
+	        @RequestParam(value = "page", required = false, defaultValue = "1") int page, HttpSession session, Model model) throws SQLException {
+
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		sysUnit.setId(sessionUser.getUnitId());
+		sysUnit.setName(name);
+		Page<SysUnit> pageUnit = this.unitService.findUnit(sysUnit, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageUnit);
+		model.addAttribute("unitTypeMap", SysUnit.unitTypeMap);
+
+		return "sys/unit/unit-list";
+	}
+
+	/**
+	 * 跳转到添加单位页面
+	 * 
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/unitAdd", method = RequestMethod.GET)
+	public String unitAdd(HttpSession session, Model model) {
+
+		SysUnit sysUnit = new SysUnit();
+		model.addAttribute("unit", sysUnit);
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		model.addAttribute("unitId", sessionUser.getUnitId());
+		model.addAttribute("unitType", sessionUser.getSysUnit().getUnitType());
+		List<SysRegion> regonList = this.unitService.findByRegonLevel(0L);
+		model.addAttribute("regonList", regonList);
+		return "sys/unit/unit-add";
+	}
+
+	/**
+	 * 保存单位
+	 * 
+	 * @param sysUnit
+	 * @param request
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/unitAdd", method = RequestMethod.POST)
+	@ResponseBody
+	public Object unitSave(SysUnit sysUnit, HttpServletRequest request, HttpSession session, Model model, BindingResult result) {
+
+		SysUser sysUser = new SysUser();
+	try {
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		sysUnit.setFlag(0L);
+		sysUnit.setUpdateUserId(sessionUser.getId());
+		sysUnit.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		String prov = request.getParameter("prov");
+		String city = request.getParameter("city");
+		if (sysUnit.getUnitType() == 1L) {
+			sysUnit.setAreaCode("0");
+		} else if (sysUnit.getUnitType() == 2L) {
+			if ("".equals(prov)) {
+				result.rejectValue("provId", null, "请选择地区。");
+				return JsonRespWrapper.error(result.getFieldErrors());
+			}
+			sysUnit.setAreaCode(prov);
+		} else {
+			if ("".equals(city)) {
+				result.rejectValue("provId", null, "请选择地区。");
+				return JsonRespWrapper.error(result.getFieldErrors());
+			}
+			sysUnit.setAreaCode(city);
+		}
+		sysUnit = this.unitService.addOrUpdateUnit(sysUnit);
+	
+		sysUser.setUserCode(sysUnit.getId() + "system");
+		sysUser.setUserPwd(MD5.digest2Str("123456"));
+		sysUser.setUserName(sysUnit.getName());
+		sysUser.setRemark(sysUnit.getRemark());
+		sysUser.setStatus(1);
+		String time = TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss);
+		sysUser.setValidTime(time.substring(0, 8));
+		sysUser.setCreateTime(time);
+		sysUser.setChangePwdTime(time);
+		sysUser.setUpdateTime(time);
+		sysUser.setUpdateUserId(sessionUser.getId());
+		sysUser.setUnitId(sysUnit.getId());
+		sysUser.setFlag(sysUnit.getUnitType().intValue());
+		
+		// model.addAttribute("user", sysUser);
+		this.userService.addOrUpdateSysUser(sysUser);
+		logUtils.logAdd("保存单位", "单位编号："+sysUnit.getId());
+	} catch (Exception e) {
+		// TODO: handle exception
+		logUtils.logAdd("保存单位", "单位编号："+sysUnit.getId());
+	}
+		return JsonRespWrapper.success("添加单位成功，系统为该单位已创建账户，密码为123456，请完善账户资料。", "/sys/user/userEdit?id=" + sysUser.getId());
+	}
+
+	/**
+	 * 跳转到修改单位页面
+	 * 
+	 * @param id
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/unitEdit", method = RequestMethod.GET)
+	public String unitEdit(@RequestParam(value = "id") Long id, HttpSession session, Model model) {
+		SysUnit sysUnit = this.unitService.findUnitById(id);
+		model.addAttribute("unit", sysUnit);
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		model.addAttribute("unitId", sessionUser.getUnitId());
+		model.addAttribute("unitType", sessionUser.getSysUnit().getUnitType());
+		List<SysRegion> regonList = this.unitService.findByRegonLevel(0L);
+		model.addAttribute("regonList", regonList);
+		if (sysUnit.getAreaCode() != null && !"0".equals(sysUnit.getAreaCode())) {
+			//SysRegion regon = this.unitService.findSysRegonById(Long.valueOf(sysUnit.getAreaCode()));
+			SysRegion regon = this.unitService.findSysRegonByRegionCode(sysUnit.getAreaCode());
+			if (regon != null) {
+				if (sysUnit.getUnitType() == 3) {
+					model.addAttribute("regonCode", regon.getParentRegion());
+				} else {
+					model.addAttribute("regonCode", regon.getRegionCode());
+				}
+			}
+		}
+
+		return "sys/unit/unit-edit";
+	}
+
+	/**
+	 * 修改单位
+	 * 
+	 * @param sysUnit
+	 * @param request
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	
+	@RequestMapping(value = "/unitEdit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object unitUpdate(SysUnit sysUnit, HttpServletRequest request, HttpSession session, Model model, BindingResult result) {
+
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		sysUnit.setFlag(0L);
+		sysUnit.setUpdateUserId(sessionUser.getId());
+		sysUnit.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		String prov = request.getParameter("prov");
+		String city = request.getParameter("city");
+		String parentUnitId = request.getParameter("parentUnitId");
+		if("".equals(parentUnitId)){
+			result.rejectValue("parentUnitId", null, "请选择单位。");
+			return JsonRespWrapper.error(result.getFieldErrors());
+		}
+		if (sysUnit.getUnitType() == 1L) {
+			sysUnit.setAreaCode("0");
+		} else if (sysUnit.getUnitType() == 2L) {
+			if ("".equals(prov)) {
+				result.rejectValue("provId", null, "请选择地区。");
+				return JsonRespWrapper.error(result.getFieldErrors());
+			}
+			sysUnit.setAreaCode(prov);
+		} else {
+			if ("".equals(city)) {
+				result.rejectValue("provId", null, "请选择地区。");
+				return JsonRespWrapper.error(result.getFieldErrors());
+			}
+			SysRegion sysRegion = this.unitService.findSysRegonById(Long.parseLong(city));
+			sysUnit.setAreaCode(sysRegion.getRegionCode());
+		}
+		logUtils.logModify("修改单位","修改成功！", sysUnit.getId());
+		this.unitService.addOrUpdateUnit(sysUnit);
+
+		return JsonRespWrapper.success("修改成功", "/sys/unit/list");
+	}
+
+	/**
+	 * 注销单位
+	 * 
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "/unitDel")
+	@ResponseBody
+	public Object unitDel(@RequestParam(value = "id") Long id) {
+		List<SysUnit> sysUnitList = this.unitService.findByParentUnitId(id);
+		if (sysUnitList != null && sysUnitList.size() > 0) {
+			return JsonRespWrapper.successAlert("请先删除子节点，然后在删除该节点");
+		}
+		// this.unitService.delUnit(id);
+		SysUnit sysUnit = this.unitService.findUnitById(id);
+		sysUnit.setFlag(9L);
+		logUtils.logDelete("删除单位","操作成功！", sysUnit.getId());
+		this.unitService.addOrUpdateUnit(sysUnit);
+		return JsonRespWrapper.success("删除成功", "/sys/unit/list");
+	}
+
+	/**
+	 * 跳转到查看单位页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/unitView")
+	public String unitView(@RequestParam(value = "id") Long id, Model model) {
+
+		SysUnit sysUnit = this.unitService.findUnitById(id);
+		model.addAttribute("unit", sysUnit);
+		return "sys/unit/unit-view";
+	}
+
+	/**
+	 * ajax方法，根据pPARENT_UNIT_ID获取单位列表
+	 * 
+	 * @param unitId
+	 * @param unitType
+	 * @param resopnse
+	 * @return
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/getPraentUnitList")
+	@ResponseBody
+	public Object getPraentUnitList(@RequestParam(value = "unitId") Long unitId, @RequestParam(value = "unitType") Long unitType,
+	        HttpServletResponse resopnse) throws IOException, SQLException {
+		List<SysUnit> sysPrentUnitList = null;
+		SysUnit sysUnit = this.unitService.findUnitById(unitId);
+		if (sysUnit.getUnitType() == 0L) {
+			sysPrentUnitList = this.unitService.getParentUnitListBytype(unitType - 1);
+		} else if (sysUnit.getUnitType() == 1L) {
+			if (unitType == 2L) {
+				sysPrentUnitList = this.unitService.getParentUnitListById(unitId);
+			} else {
+				sysPrentUnitList = this.unitService.getParentUnitList(unitType - 1, unitId);
+			}
+
+		} else {
+			sysPrentUnitList = this.unitService.getParentUnitListById(unitId);
+		}
+		// if (unitType == 1L) {
+		// sysPrentUnitList = this.unitService.getParentUnitList(0L, -1L);
+		// } else {
+		// SysUnit sysUnit = this.unitService.findUnitById(unitId);
+		// if(sysUnit.getUnitType()==(unitType - 1)){
+		// sysPrentUnitList = this.unitService.getParentUnitListById(unitId);
+		// }else{
+		// sysPrentUnitList = this.unitService.getParentUnitList(unitType - 1,
+		// unitId);
+		// }
+		// }
+
+		// StringBuilder result = new StringBuilder();
+		// if (sysPrentUnitList != null && sysPrentUnitList.size() > 0) {
+		// for (SysUnit sysUnit : sysPrentUnitList) {
+		// result.append(sysUnit.getId()).append(",").append(sysUnit.getName()).append("#");
+		// }
+		//
+		// }
+		// if (result.length() > 0) {
+		// result.deleteCharAt(result.length() - 1);
+		// }
+
+		// resopnse.getWriter().write(result.toString());
+		return sysPrentUnitList;
+
+	}
+
+	/**
+	 * ajax方法，根据PARENT_REGON获取区域列表
+	 * 
+	 * @param parentRegonId
+	 * @param resopnse
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "/getCityList")
+	@ResponseBody
+	public Object getCityList(@RequestParam(value = "parentRegonId") String parentRegonId, HttpServletResponse resopnse) throws IOException {
+		// StringBuilder result = new StringBuilder();
+		List<SysRegion> cityList = this.unitService.findByParentRegon(parentRegonId);
+		// if (cityList != null && cityList.size() > 0) {
+		// for (SysRegon regon : cityList) {
+		// result.append(regon.getRegonCode()).append(",").append(regon.getRegonName()).append("#");
+		// }
+		// result.deleteCharAt(result.length() - 1);
+		// }
+		// if (result.length() > 0) {
+		// result.deleteCharAt(result.length() - 1);
+		// }
+		// resopnse.getWriter().write(result.toString());
+		return cityList;
+	}
+}

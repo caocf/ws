@@ -1,0 +1,58 @@
+package com.cplatform.mall.back.item.web.validator;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
+import com.cplatform.mall.back.item.dao.HisunProductionLinkDao;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.store.dao.StoreFeeDao;
+import com.cplatform.mall.back.store.entity.StoreFee;
+import com.cplatform.mall.back.store.service.StoreFeeService;
+import com.cplatform.mall.back.utils.Constants;
+
+@Component
+public class ItemFeeValidator implements Validator {
+	@Autowired
+	private StoreFeeDao storeFeeDao;
+
+	@Autowired
+	private HisunProductionLinkDao hisunProductionLinkDao;
+
+	@Override
+	public boolean supports(Class<?> clazz) {
+		return ItemSale.class.equals(clazz);
+	}
+
+	@Override
+	public void validate(Object target, Errors errors) {
+		ItemSale itemSale = (ItemSale) target;
+		validateIsLinkSettle(itemSale, errors, "feeType");
+	}
+
+	/**
+	 * 如果商品的费率是按商品分类(C)结算的，则验证该商品是否关联商品协议.
+	 * 
+	 * @author macl@c-platform.com
+	 */
+	private void validateIsLinkSettle(ItemSale itemSale, Errors errors,
+			String id) {
+		StoreFee storeFee = storeFeeDao.findByProductionTypeAndStoreId(itemSale.getFeeType().toString(), itemSale.getStoreId());
+		if(StringUtils.isEmpty(storeFee.getClearType())){
+			errors.rejectValue(id, null, "数据异常：费率清算类别为空！");
+			return;
+		}
+		// 如果费率是按“商品分类结算”
+		if (Constants.STORE_FEE_CLEAR_TYPE_C.equals(storeFee.getClearType())) {
+
+			if (null == hisunProductionLinkDao.findByItemIdAndProductionType(
+					itemSale.getId(), itemSale.getFeeType().toString())) {
+				
+				errors.rejectValue(id, null, "该商品尚未关联商品协议！");
+				return;
+			}
+		}
+	}
+}

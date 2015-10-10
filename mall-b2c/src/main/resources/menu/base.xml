@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<body>
+	<menu menuId="10010" name="我的购物车" sort="10">
+	  <cmenu menuId="1001010" href="../cart/show.chtml" name="我的购物车" sort="10" parentId="10010" />
+	</menu>
+	<menu menuId="10020" name="订单中心" sort="20">
+		<cmenu menuId="1002010" href="orderManager.chtml" name="我的订单" sort="10" parentId="10020" />
+		<cmenu menuId="1002020" href="getMyTicket.chtml"  name="我的票务" sort="20" parentId="10020"/>
+		<cmenu menuId="1002030" href="getMyTravel.chtml"  name="我的旅行" sort="30"  parentId="10020"/> 
+		<cmenu menuId="1002040" href="refundList.chtml" name="我的退款" sort="40" parentId="10020"/>
+	</menu>
+	<menu menuId="10030" name="我的生活" sort="30">
+	    <cmenu menuId="1003010" type="union" href="6,http://i.12580life.com/userCenter/userCenter/myLife/shopHistory.jsp?common_target=6" name="消费过的商户" sort="10"  parentId="10030"/>
+		<cmenu menuId="1003020" type="union" href="7,http://i.12580life.com/userCenter/userCenter/myLife/myCoupon.jsp?common_target=11" name="我的优惠券" sort="20" parentId="10030"/>
+		<cmenu menuId="1003030" type="union" href="9,http://i.12580life.com/userCenter/userCenter/myLife/mealOrder.jsp?common_target=9" name="订餐点菜" sort="30" parentId="10030"/>
+	</menu>
+	<menu menuId="10040" name="我的账户" sort="40">
+		<cmenu menuId="1004010" type="union" href="http://i.12580life.com/userCenter/scoreGrade/myGold/goldIndex.jsp?account_target=6" name="我的金米" sort="10" parentId="10040" />
+		<cmenu menuId="1004020" href="cardGifts.chtml" name="我的礼金券" sort="20" parentId="10040" /> 
+		<cmenu menuId="1004030" href="addresses.chtml" name="收货地址" sort="30" parentId="10040" />
+		<cmenu menuId="1004040" href="info.chtml" name="账户管理" sort="40" parentId="10040" />
+		<cmenu menuId="1004050" href="favGoods.chtml" name="我的收藏" sort="50" parentId="10040" />
+	</menu>
+	<menu menuId="10050" name="社区中心" sort="50">
+		<cmenu menuId="1005010" href="consults.chtml" name="我的咨询" sort="10" parentId="10050" />
+		<cmenu menuId="1005020" href="comments.chtml" name="我的评价" sort="20" parentId="10050" />
+	</menu>
+</body>

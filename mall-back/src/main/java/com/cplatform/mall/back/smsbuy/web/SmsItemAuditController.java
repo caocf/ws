@@ -1,0 +1,127 @@
+package com.cplatform.mall.back.smsbuy.web;
+
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.smsbuy.entity.SmsbuyItemRouter;
+import com.cplatform.mall.back.smsbuy.service.SmsBuyActOnlineService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * 商品审核控制器. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-15 下午5:21:29
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: luyd@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "/smsbuy/item")
+public class SmsItemAuditController {
+
+	@Autowired
+	private SmsBuyActOnlineService smsBuyActOnlineService;
+	
+	@Autowired
+	private LogUtils logUtils;
+
+	/**
+	 * 商品审核列表
+	 * 
+	 * @param smsbuyItemRouter
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "auditList")
+	public String routerList(SmsbuyItemRouter smsbuyItemRouter, @RequestParam(value = "page", defaultValue = "1") Integer page, Model model)
+	        throws SQLException {
+		Page<SmsbuyItemRouter> pageList = smsBuyActOnlineService.listSmsBuySmsbuyItemRouter(smsbuyItemRouter, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageList);
+		model.addAttribute("itemStatus", smsbuyItemRouter.itemStatusMap);
+		return "/smsbuy/item/audit-list";
+	}
+
+	/**
+	 * 商品指令审核通过
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "auditItemRouter")
+	@ResponseBody
+	public Object auditItemRouter(@RequestParam(value = "id") String ids, Model model) {
+		String[] idarray = ids.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if (!"".equals(id)) {
+					smsBuyActOnlineService.updateItemRouter(Long.parseLong(id), "online");
+					logUtils.logAudit("商品指令审核", "审核通过，指令编号："+id);
+				}
+			}
+		}
+		return JsonRespWrapper.successReload("审核通过,5分钟后生效！");
+	}
+
+	/**
+	 * 商品指令审核驳回
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "rebutItemRouter")
+	@ResponseBody
+	public Object rebutItemRouter(@RequestParam(value = "id") String ids, Model model) {
+		String msg = "";
+		String[] idarray = ids.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if (!"".equals(id)) {
+					msg += smsBuyActOnlineService.updateItemRouter(Long.parseLong(id), "rebutAudit");
+					logUtils.logAudit("商品指令审核", "审核驳回，指令编号："+id);
+				}
+			}
+		}
+		return JsonRespWrapper.successReload(msg);
+	}
+
+	/**
+	 * 商品指令下线
+	 * 
+	 * @param actId
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "downItemRouter")
+	@ResponseBody
+	public Object downItemRouter(@RequestParam(value = "id") String ids, Model model) {
+		String[] idarray = ids.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if (!"".equals(id)) {
+					// 下线将其修改为待审核
+					smsBuyActOnlineService.updateItemRouter(Long.parseLong(id), "audit");
+					logUtils.logOther("商品指令下线", "下线成功，指令编号："+id);
+				}
+			}
+		}
+		return JsonRespWrapper.successReload("下线成功！");
+	}
+
+}

@@ -1,0 +1,630 @@
+package com.cplatform.mall.back.batch.entity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Transient;
+
+import org.codehaus.jackson.annotate.JsonProperty;
+
+/**
+ * Title. <br>
+ * Description.
+ * <p/>
+ * Copyright: Copyright (c) 13-5-20 下午8:15
+ * <p/>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p/>
+ * Author: nicky
+ * <p/>
+ * Version: 1.0
+ * <p/>
+ */
+@javax.persistence.Table(name = "T_BATCH_TASK")
+@Entity
+public class BatchTask {
+
+	public static Map<Long, String> statusMap = null;
+
+	static {
+		statusMap = new HashMap<Long, String>();
+		statusMap.put(0l, "待审核");
+		statusMap.put(1l, "审核通过");
+		statusMap.put(2l, "审核不通过");
+		statusMap.put(3l, "暂停");
+		statusMap.put(4l, "发送中");
+		statusMap.put(5l, "发送完毕");
+		statusMap.put(6l, "发送失败");
+		statusMap.put(7l, "预处理中");
+		statusMap.put(8l, "预处理完成，等待发送");
+		statusMap.put(9l, "取消");
+	}
+
+	private Long id;
+
+	private Long actId;
+
+	private String advice;
+
+	private String areaCode;
+
+	private Long auditorId;
+
+	private String auditTime;
+
+	private Long blackCnt;
+
+	private String blackListFile;
+
+	private String content;
+
+	private String createTime;
+
+	private Long creatorId;
+
+	private Long customTag;
+
+	private String execStartTime;
+
+	private String execStopTime;
+
+	private Long failCnt;
+
+	private Long fee;
+
+	private Long feeType;
+
+	private Long infoId;
+
+	private Long isReport;
+
+	private String mobileListFile;
+
+	private String noticeTerminalId;
+
+	private Long priority;
+
+	private String respondTimeout;
+
+	private String serviceDoc;
+
+	private String serviceId;
+
+	private String sleepTime;
+
+	private String smil;
+
+	private String spCode;
+
+	private Long speed;
+
+	private String startTime;
+
+	private Long status;
+
+	private String stopTime;
+
+	private Long submitCnt;
+
+	private Long submitLocalflag;
+
+	private Long successCnt;
+
+	private String taskName;
+
+	private Long taskType;
+
+	private String title;
+
+	private Long traceRespond;
+
+	private String unitId;
+
+	private String whiteListFile;
+
+	@SequenceGenerator(name = "seq_comm", sequenceName = "SEQ_SMS_BATCH_TASK")
+	@Id
+	@GeneratedValue(generator = "seq_comm")
+	@JsonProperty
+	public Long getId() {
+		return id;
+	}
+
+	@javax.persistence.Column(name = "ACT_ID")
+	@Basic
+	public Long getActId() {
+		return actId;
+	}
+
+	@javax.persistence.Column(name = "ADVICE")
+	@Basic
+	public String getAdvice() {
+		return advice;
+	}
+
+	@javax.persistence.Column(name = "AREA_CODE")
+	@Basic
+	public String getAreaCode() {
+		return areaCode;
+	}
+
+	@javax.persistence.Column(name = "AUDITOR_ID")
+	@Basic
+	public Long getAuditorId() {
+		return auditorId;
+	}
+
+	@javax.persistence.Column(name = "AUDIT_TIME")
+	@Basic
+	public String getAuditTime() {
+		return auditTime;
+	}
+
+	@javax.persistence.Column(name = "BLACK_CNT")
+	@Basic
+	public Long getBlackCnt() {
+		return blackCnt;
+	}
+
+	@javax.persistence.Column(name = "BLACK_LIST_FILE")
+	@Basic
+	public String getBlackListFile() {
+		return blackListFile;
+	}
+
+	@javax.persistence.Column(name = "CONTENT")
+	@Basic
+	public String getContent() {
+		return content;
+	}
+
+	@javax.persistence.Column(name = "CREATE_TIME")
+	@Basic
+	public String getCreateTime() {
+		return createTime;
+	}
+
+	@javax.persistence.Column(name = "CREATOR_ID")
+	@Basic
+	public Long getCreatorId() {
+		return creatorId;
+	}
+
+	@javax.persistence.Column(name = "CUSTOM_TAG")
+	@Basic
+	public Long getCustomTag() {
+		return customTag;
+	}
+
+	@javax.persistence.Column(name = "EXEC_START_TIME")
+	@Basic
+	public String getExecStartTime() {
+		return execStartTime;
+	}
+
+	@javax.persistence.Column(name = "EXEC_STOP_TIME")
+	@Basic
+	public String getExecStopTime() {
+		return execStopTime;
+	}
+
+	@javax.persistence.Column(name = "FAIL_CNT")
+	@Basic
+	public Long getFailCnt() {
+		return failCnt;
+	}
+
+	@javax.persistence.Column(name = "FEE")
+	@Basic
+	public Long getFee() {
+		return fee;
+	}
+
+	@javax.persistence.Column(name = "FEE_TYPE")
+	@Basic
+	public Long getFeeType() {
+		return feeType;
+	}
+
+	@javax.persistence.Column(name = "INFO_ID")
+	@Basic
+	public Long getInfoId() {
+		return infoId;
+	}
+
+	@javax.persistence.Column(name = "MOBILE_LIST_FILE")
+	@Basic
+	public String getMobileListFile() {
+		return mobileListFile;
+	}
+
+	@javax.persistence.Column(name = "NOTICE_TERMINAL_ID")
+	@Basic
+	public String getNoticeTerminalId() {
+		return noticeTerminalId;
+	}
+
+	@javax.persistence.Column(name = "PRIORITY")
+	@Basic
+	public Long getPriority() {
+		return priority;
+	}
+
+	@javax.persistence.Column(name = "RESPOND_TIMEOUT")
+	@Basic
+	public String getRespondTimeout() {
+		return respondTimeout;
+	}
+
+	@javax.persistence.Column(name = "SERVICE_DOC")
+	@Basic
+	public String getServiceDoc() {
+		return serviceDoc;
+	}
+
+	@javax.persistence.Column(name = "SERVICE_ID")
+	@Basic
+	public String getServiceId() {
+		return serviceId;
+	}
+
+	@javax.persistence.Column(name = "SLEEP_TIME")
+	@Basic
+	public String getSleepTime() {
+		return sleepTime;
+	}
+
+	@javax.persistence.Column(name = "SMIL")
+	@Basic
+	public String getSmil() {
+		return smil;
+	}
+
+	@javax.persistence.Column(name = "SP_CODE")
+	@Basic
+	public String getSpCode() {
+		return spCode;
+	}
+
+	@javax.persistence.Column(name = "SPEED")
+	@Basic
+	public Long getSpeed() {
+		return speed;
+	}
+
+	@javax.persistence.Column(name = "START_TIME")
+	@Basic
+	public String getStartTime() {
+		return startTime;
+	}
+
+	@javax.persistence.Column(name = "STATUS")
+	@Basic
+	public Long getStatus() {
+		return status;
+	}
+
+	@javax.persistence.Column(name = "STOP_TIME")
+	@Basic
+	public String getStopTime() {
+		return stopTime;
+	}
+
+	@javax.persistence.Column(name = "SUBMIT_CNT")
+	@Basic
+	public Long getSubmitCnt() {
+		return submitCnt;
+	}
+
+	@javax.persistence.Column(name = "SUBMIT_LOCALFLAG")
+	@Basic
+	public Long getSubmitLocalflag() {
+		return submitLocalflag;
+	}
+
+	@javax.persistence.Column(name = "SUCCESS_CNT")
+	@Basic
+	public Long getSuccessCnt() {
+		return successCnt;
+	}
+
+	@javax.persistence.Column(name = "TASK_NAME")
+	@Basic
+	public String getTaskName() {
+		return taskName;
+	}
+
+	@javax.persistence.Column(name = "TASK_TYPE")
+	@Basic
+	public Long getTaskType() {
+		return taskType;
+	}
+
+	@javax.persistence.Column(name = "TITLE")
+	@Basic
+	public String getTitle() {
+		return title;
+	}
+
+	@javax.persistence.Column(name = "TRACE_RESPOND")
+	@Basic
+	public Long getTraceRespond() {
+		return traceRespond;
+	}
+
+	@javax.persistence.Column(name = "UNIT_ID")
+	@Basic
+	public String getUnitId() {
+		return unitId;
+	}
+
+	@javax.persistence.Column(name = "WHITE_LIST_FILE")
+	@Basic
+	public String getWhiteListFile() {
+		return whiteListFile;
+	}
+
+	@javax.persistence.Column(name = "IS_REPORT")
+	@Basic
+	public Long getIsReport() {
+		return isReport;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setActId(Long actId) {
+		this.actId = actId;
+	}
+
+	public void setAdvice(String advice) {
+		this.advice = advice;
+	}
+
+	public void setAreaCode(String areaCode) {
+		this.areaCode = areaCode;
+	}
+
+	public void setAuditorId(Long auditorId) {
+		this.auditorId = auditorId;
+	}
+
+	public void setAuditTime(String auditTime) {
+		this.auditTime = auditTime;
+	}
+
+	public void setBlackCnt(Long blackCnt) {
+		this.blackCnt = blackCnt;
+	}
+
+	public void setBlackListFile(String blackListFile) {
+		this.blackListFile = blackListFile;
+	}
+
+	public void setContent(String content) {
+		this.content = content;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+	public void setCreatorId(Long creatorId) {
+		this.creatorId = creatorId;
+	}
+
+	public void setCustomTag(Long customTag) {
+		this.customTag = customTag;
+	}
+
+	public void setExecStartTime(String execStartTime) {
+		this.execStartTime = execStartTime;
+	}
+
+	public void setExecStopTime(String execStopTime) {
+		this.execStopTime = execStopTime;
+	}
+
+	public void setFailCnt(Long failCnt) {
+		this.failCnt = failCnt;
+	}
+
+	public void setFee(Long fee) {
+		this.fee = fee;
+	}
+
+	public void setFeeType(Long feeType) {
+		this.feeType = feeType;
+	}
+
+	public void setInfoId(Long infoId) {
+		this.infoId = infoId;
+	}
+
+	public void setMobileListFile(String mobileListFile) {
+		this.mobileListFile = mobileListFile;
+	}
+
+	public void setNoticeTerminalId(String noticeTerminalId) {
+		this.noticeTerminalId = noticeTerminalId;
+	}
+
+	public void setPriority(Long priority) {
+		this.priority = priority;
+	}
+
+	public void setRespondTimeout(String respondTimeout) {
+		this.respondTimeout = respondTimeout;
+	}
+
+	public void setServiceDoc(String serviceDoc) {
+		this.serviceDoc = serviceDoc;
+	}
+
+	public void setServiceId(String serviceId) {
+		this.serviceId = serviceId;
+	}
+
+	public void setSleepTime(String sleepTime) {
+		this.sleepTime = sleepTime;
+	}
+
+	public void setSmil(String smil) {
+		this.smil = smil;
+	}
+
+	public void setSpCode(String spCode) {
+		this.spCode = spCode;
+	}
+
+	public void setSpeed(Long speed) {
+		this.speed = speed;
+	}
+
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
+
+	public void setStatus(Long status) {
+		this.status = status;
+	}
+
+	public void setStopTime(String stopTime) {
+		this.stopTime = stopTime;
+	}
+
+	public void setSubmitCnt(Long submitCnt) {
+		this.submitCnt = submitCnt;
+	}
+
+	public void setSubmitLocalflag(Long submitLocalflag) {
+		this.submitLocalflag = submitLocalflag;
+	}
+
+	public void setSuccessCnt(Long successCnt) {
+		this.successCnt = successCnt;
+	}
+
+	public void setTaskName(String taskName) {
+		this.taskName = taskName;
+	}
+
+	public void setTaskType(Long taskType) {
+		this.taskType = taskType;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public void setTraceRespond(Long traceRespond) {
+		this.traceRespond = traceRespond;
+	}
+
+	public void setUnitId(String unitId) {
+		this.unitId = unitId;
+	}
+
+	public void setWhiteListFile(String whiteListFile) {
+		this.whiteListFile = whiteListFile;
+	}
+
+	public void setIsReport(Long isReport) {
+		this.isReport = isReport;
+	}
+
+	private String userName;
+
+	private String service;
+
+	private String terminalid;
+
+	private String blackid;
+
+	private String whiteid;
+
+	private String srcFrom;
+
+	private String isNewTerminalId;
+
+	@Transient
+	public String getUserName() {
+		return userName;
+	}
+
+	@Transient
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	@Transient
+	public String getService() {
+		return service;
+	}
+
+	@Transient
+	public void setService(String service) {
+		this.service = service;
+	}
+
+	@Transient
+	public String getTerminalid() {
+		return terminalid;
+	}
+
+	@Transient
+	public void setTerminalid(String terminalid) {
+		this.terminalid = terminalid;
+	}
+
+	@Transient
+	public String getBlackid() {
+		return blackid;
+	}
+
+	@Transient
+	public void setBlackid(String blackid) {
+		this.blackid = blackid;
+	}
+
+	@Transient
+	public String getWhiteid() {
+		return whiteid;
+	}
+
+	@Transient
+	public void setWhiteid(String whiteid) {
+		this.whiteid = whiteid;
+	}
+
+	@Transient
+	public String getSrcFrom() {
+		return srcFrom;
+	}
+
+	@Transient
+	public void setSrcFrom(String srcFrom) {
+		this.srcFrom = srcFrom;
+	}
+
+	@Transient
+	public String getIsNewTerminalId() {
+		return isNewTerminalId;
+	}
+
+	@Transient
+	public void setIsNewTerminalId(String isNewTerminalId) {
+		this.isNewTerminalId = isNewTerminalId;
+	}
+
+	@Transient
+	public String getStatusName() {
+		return statusMap.get(this.status);
+	}
+}

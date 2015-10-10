@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting>
+	<!-- 
+		#currentUnitId# 当前登录用户单位编号
+		#chidrenUnitId#  当前登录用户子单位编号
+		#regions# 管理的区域
+	 -->
+	 <rule module="user" unitType="2"  description="用户列表-省单位"  operate="and">
+		(unit_id = #currentUnitId# or  unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	<rule module="user" unitType="3"  description="用户列表-市单位"  operate="and">
+		(unit_id = #currentUnitId# or  unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	 <rule module="shopUser" unitType="2"  description="商户账号-省单位"  operate="and">
+		area_code in (#regions#)
+	</rule>
+	
+	<rule module="shopUser" unitType="3"  description="商户账号-市单位"  operate="and">
+		area_code in (#regions#)
+	</rule>
+	
+	 <rule module="shopComment" unitType="2"  description="门店评论-省单位"  operate="and">
+		t2.area_code in (#regions#)
+	</rule>
+	
+	<rule module="shopComment" unitType="3"  description="门店评论-市单位"  operate="and">
+		t2.area_code in (#regions#)
+	</rule>
+	
+	 <rule module="member" unitType="2"  description="会员管理-省单位"  operate="and">
+		m.area_code in (#regions#)
+	</rule>
+	
+	<rule module="member" unitType="3"  description="会员管理-市单位"  operate="and">
+		m.area_code in (#regions#)
+	</rule>
+	
+	<rule module="floor" unitType="2"  description="楼层管理-省单位"  operate="and">
+		cf.region_code in (#regions#)
+	</rule>
+	
+	<rule module="floor" unitType="3"  description="楼层管理-市单位"  operate="and">
+		cf.region_code in (#regions#)
+	</rule>
+	
+	<rule module="channelType" unitType="2"  description="频道分类管理-省单位"  operate="and">
+		ct.region_code in (#regions#)
+	</rule>
+	
+	<rule module="channelType" unitType="3"  description="频道分类管理-市单位"  operate="and">
+		ct.region_code in (#regions#)
+	</rule>
+	
+	<rule module="ChannelCatalogConfig" unitType="2"  description="频道楼层分类管理-省单位"  operate="and">
+		cc.region_code in (#regions#)
+	</rule>
+	
+	<rule module="ChannelCatalogConfig" unitType="3"  description="频道楼层分类管理-市单位"  operate="and">
+		cc.region_code in (#regions#)
+	</rule>
+	
+	<rule module="ChannelPic" unitType="2"  description="频道图片管理-省单位"  operate="and">
+		t.region_code in (#regions#)
+	</rule>
+	
+	<rule module="ChannelPic" unitType="3"  description="频道图片管理-市单位"  operate="and">
+		t.region_code in (#regions#)
+	</rule>
+	
+	<rule module="itemComment" unitType="2"  description="商户评论管理-省单位"  operate="and">
+		isal.REGION_CODE in (#regions#)
+	</rule>
+	
+	<rule module="itemComment" unitType="3"  description="商户评论管理-市单位"  operate="and">
+		isal.REGION_CODE in (#regions#)
+	</rule>
+	
+	<rule module="batch_task" unitType="2"  description="群发列表-省单位"  operate="and">
+		(task.unit_id = #currentUnitId# or  task.unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	<rule module="batch_task" unitType="3"  description="群发列表-市单位"  operate="and">
+		(task.unit_id = #currentUnitId# or  task.unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	<!-- 商户 渠道商列表 -->
+   <rule module="store" unitType="2"  description="商户列表-省单位"  operate="and">
+		store.area_code in (#regions#)
+	</rule>
+	<!-- 商户 渠道商列表 -->
+   <rule module="store" unitType="3"  description="商户列表-市单位"  operate="and">
+		store.area_code in (#regions#)
+	</rule>
+	<!-- 门店列表 -->
+   <rule module="shop" unitType="2"  description="门店列表-省单位"  operate="and">
+		shop.area_code in (#regions#)
+	</rule>
+		<!-- 门店列表 -->
+   <rule module="shop" unitType="3"  description="门店列表-市单位"  operate="and">
+		shop.area_code in (#regions#) 
+	</rule>
+	
+	
+		<!-- 广告列表 -->
+   <rule module="sysad" unitType="2"  description="门店列表-省单位"  operate="and">
+		sysad.REGION_CODE in (#regions#)
+	</rule>
+		<!-- 广告列表 -->
+   <rule module="sysad" unitType="3"  description="门店列表-市单位"  operate="and">
+		sysad.REGION_CODE in (#regions#) 
+	</rule>
+	
+	
+		<!-- 商品列表 -->
+   <rule module="item" unitType="2"  description="商品列表-省单位"  operate="and">
+		st.area_code in (#regions#)
+	</rule>
+	<!-- 商品列表 -->
+   <rule module="item" unitType="3"  description="商品列表-市单位"  operate="and">
+		st.area_code in (#regions#)
+	</rule>
+	
+	<rule module="contsrc" unitType="2"  description="内容源-省单位"  operate="and">
+		(area_code in (#regions#))
+	</rule>
+	
+	<rule module="contsrc" unitType="3"  description="内容源-市单位"  operate="and">
+		( area_code in (#regions#))
+	</rule>
+	
+	<rule module="mmscontent" unitType="2"  description="彩信内容列表-省单位"  operate="and">
+		(unit_id = #currentUnitId# or  unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	<rule module="mmscontent" unitType="3"  description="彩信内容列表-市单位"  operate="and">
+		(unit_id = #currentUnitId# or  unit_id in (#chidrenUnitId#))
+	</rule>
+	<rule module="smscontent" unitType="2"  description="短信内容列表-省单位"  operate="and">
+		(cont.unit_id = #currentUnitId# or  cont.unit_id in (#chidrenUnitId#))
+	</rule>
+	
+	<rule module="smscontent" unitType="3"  description="短信内容列表-市单位"  operate="and">
+		(cont.unit_id = #currentUnitId# or  cont.unit_id in (#chidrenUnitId#))
+	</rule>
+	<rule module="smsbuy" unitType="2"  description="短信购-省单位"  operate="and">
+		act_area in (#regions#)
+	</rule>
+	
+	<rule module="smsbuy" unitType="3"  description="短信购-市单位"  operate="and">
+		act_area in (#regions#)
+	</rule>
+	
+	<rule module="gift_required" unitType="2"  description="礼品卡需求-省单位"  operate="and">
+		giftRequired.region_code in (#regions#)
+	</rule>
+	<rule module="gift_required" unitType="3"  description="礼品卡需求-市单位"  operate="and">
+		giftRequired.region_code in (#regions#)
+	</rule>
+	
+	
+</setting>

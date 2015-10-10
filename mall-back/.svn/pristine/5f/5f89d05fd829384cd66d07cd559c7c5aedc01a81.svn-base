@@ -1,0 +1,52 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+	<head>
+	    <ht:head/>
+	</head>
+	<body>
+	<div id="content">
+			<div class="box">
+			    <div class="title">
+			        <h5>商品协议关联商品列表</h5>
+			    </div>
+			 </div>
+   </div>	
+<div class="container">
+    <div class="mainbox">
+        <c:if test="${not empty itemLinks}">
+        <table class="datalist fixwidth">
+            <tr>
+            	<th nowrap="nowrap" width="70">编号</th>
+            	<th nowrap="nowrap" width="250">商品名称</th>
+            	<th nowrap="nowrap" width="70">商品编号</th>
+            	<th nowrap="nowrap" width="100">商品清算状态</th>
+                <th nowrap="nowrap" width="">操作</th>
+            </tr>
+            <c:forEach items="${itemLinks}" var="item">
+            <tr>
+            	<td  nowrap="nowrap">${item.id}</td>
+            	<td class="ellipsis">${item.itemName}</td>
+            	<td class="ellipsis">${item.itemId}</td>
+                <td >${item.itemGyStatusName}</td>
+                <td nowrap="nowrap">
+                	<ct:display model="production_settle_list" btn="del_btn">
+                		<a href="#this" onclick="deleteItem('deleteLink?linkId=${item.id}');">删除</a>
+                	</ct:display>
+                </td>
+            </tr>
+            </c:forEach>
+        </table>
+        </c:if>
+        <c:if test="${empty itemLinks}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+         <input type="button" class="common_btn" onclick="${queryBackFun}" value="返回" />
+    </div>
+</div>	
+
+	</body>
+</html>

@@ -1,0 +1,173 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.websys.dao.SysAdDao;
+import com.cplatform.mall.back.websys.dao.SysAdPositionDao;
+import com.cplatform.mall.back.websys.entity.SysAd;
+import com.cplatform.mall.back.websys.entity.SysAdPosition;
+
+/**
+ * 广告相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-28 上午11:09:53
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class SysAdService {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private SysAdPositionDao sysAdPositionDao;
+
+	@Autowired
+	private SysAdDao sysAdDao;
+
+	@Autowired
+	AppConfig appConfig;
+
+	@Autowired
+	BsFileService bsFileService;
+
+	/**
+	 * 广告查询
+	 * 
+	 * @param sysAd
+	 *            广告实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysAd> findSysAd(SysAd ad, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select ad.*, position.name positionName from t_sys_ad ad, t_sys_ad_position position where 1=1 ");
+		sql.append("   and ad.position_id = position.id ");
+		List params = new ArrayList();
+		if (null != ad) {
+			if (StringUtils.isNotEmpty(ad.getAdName())) {
+				sql.append(" and ad.ad_name like ? ");
+				params.add("%" + ad.getAdName() + "%");
+			}
+			if (StringUtils.isNotEmpty(ad.getPositionName())) {
+				sql.append(" and position.name like ? ");
+				params.add("%" + ad.getPositionName() + "%");
+			}
+			if (null != ad.getAdType()) {
+				sql.append(" and ad.ad_type = ? ");
+				params.add(ad.getAdType());
+			}
+			if (null != ad.getAdFlag()) {
+				sql.append(" and ad.ad_flag = ? ");
+				params.add(ad.getAdFlag());
+			}
+			if (null != ad.getStatus()) {
+				sql.append(" and ad.status = ? ");
+				params.add(ad.getStatus());
+			}
+			if (StringUtils.isNotBlank(ad.getStartTimeBegin())) {
+				String startTime = ad.getStartTimeBegin() + "000000";
+				sql.append("and ad.start_time > ? ");
+				params.add(startTime);
+			}
+			if (StringUtils.isNotBlank(ad.getStartTimeEnd())) {
+				String endTime = ad.getStartTimeEnd() + "235959";
+				sql.append("and ad.start_time < ? ");
+				params.add(endTime);
+			}
+			if (StringUtils.isNotBlank(ad.getValidTimeBegin())) {
+				String startTime = ad.getValidTimeBegin() + "000000";
+				sql.append("and ad.valid_time > ? ");
+				params.add(startTime);
+			}
+			if (StringUtils.isNotBlank(ad.getValidTimeEnd())) {
+				String endTime = ad.getValidTimeEnd() + "235959";
+				sql.append("and ad.valid_time < ? ");
+				params.add(endTime);
+			}
+			if (StringUtils.isNotEmpty(ad.getLinkman())) {
+				sql.append(" and ad.linkman like ? ");
+				params.add("%" + ad.getLinkman() + "%");
+			}
+		}
+		sql.append(" order by ad.id desc ");
+		return dbHelper.getPage(sql.toString(), SysAd.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 广告位置查询
+	 * 
+	 * @param sysAdPosition
+	 *            广告位置实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysAdPosition> findSysAdPosition(SysAdPosition adPosition, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select * from t_sys_ad_position where 1=1 ");
+		List params = new ArrayList();
+		if (null != adPosition) {
+			if (StringUtils.isNotEmpty(adPosition.getName())) {
+				sql.append(" and name like ? ");
+				params.add("%" + adPosition.getName() + "%");
+			}
+			if (StringUtils.isNotEmpty(adPosition.getCode())) {
+				sql.append(" and code like ? ");
+				params.add("%" + adPosition.getCode() + "%");
+			}
+			if (null != adPosition.getType()) {
+				sql.append(" and type = ? ");
+				params.add(adPosition.getType());
+			}
+		}
+		sql.append(" order by id desc ");
+		return dbHelper.getPage(sql.toString(), SysAdPosition.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	@Transactional
+	public void saveAdPosition(SysAdPosition sysAdPosition, MultipartFile uploadFile) throws Exception {
+//		if (uploadFile != null && !uploadFile.isEmpty()) {
+//			PathInfo pathInfo = bsFileService.dealModuleFile(uploadFile, BsFileService.MODULE_AD);
+////			sysAdPosition.setTemplateFile(pathInfo.getRealPath());
+//		}
+		sysAdPosition = sysAdPositionDao.save(sysAdPosition);
+
+	}
+
+	@Transactional
+	public void saveAd(SysAd sysAd, MultipartFile uploadFile) throws Exception {
+		PathInfo pathInfo = null;
+		if (uploadFile != null && !uploadFile.isEmpty()) {
+			pathInfo = bsFileService.dealModuleFile(uploadFile, BsFileService.MODULE_AD);
+			sysAd.setContent(pathInfo.getRealWebPath(""));
+		}
+		sysAd = sysAdDao.save(sysAd);
+	}
+
+}

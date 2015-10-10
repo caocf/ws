@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_sys_item_tag_id

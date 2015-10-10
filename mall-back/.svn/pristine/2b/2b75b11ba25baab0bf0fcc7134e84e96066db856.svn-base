@@ -1,0 +1,322 @@
+package com.cplatform.mall.back.lottery.web;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.lottery.entity.LotteryActive;
+import com.cplatform.mall.back.lottery.entity.LotteryActiveConf;
+import com.cplatform.mall.back.lottery.entity.LotteryTarget;
+import com.cplatform.mall.back.lottery.service.LotteryActiveConfService;
+import com.cplatform.mall.back.lottery.service.LotteryActiveService;
+import com.cplatform.mall.back.lottery.service.LotteryTargetService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * @Title	抽奖活动控制层
+ * @Description
+ * @Copyright: Copyright (c) 2013-7-22
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/lottery/active")
+public class LotteryActiveController {
+	@Autowired
+	private LotteryActiveService lotteryActiveService;
+	@Autowired
+	private LotteryActiveConfService lotteryActiveConfService;
+	@Autowired
+	private BsFileService bsFileService;
+	@Autowired
+	private LotteryTargetService lotteryTargetService;
+	@Autowired
+	private AppConfig appConfig;
+	
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+	    
+	@Autowired
+        private	LogUtils  logUtils;
+	
+	
+	
+	/**
+	 * 列表显示
+	 * @param lotteryActive
+	 * @param page
+	 * @param model
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String activeList(LotteryActive lotteryActive, @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+		Model model,HttpSession session) throws SQLException {
+		Page<LotteryActive> activeList = lotteryActiveService.listLotteryActive(lotteryActive, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", activeList);
+		model.addAttribute("statusMap", LotteryActive.statusMap);
+		return "/lottery/active/active-list";
+	}
+	/**
+	 * 添加页面
+	 * @param model
+	 * @param session
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value = "/add",method=RequestMethod.GET)
+	public String showAdd(Model model,HttpSession session) throws Exception {
+		LotteryActive lotteryActive=new LotteryActive();
+		model.addAttribute("active", lotteryActive);
+		return "/lottery/active/active-add";
+	}
+	
+	/**
+	 * 保存
+	 * @param lotteryActive
+	 * @param model
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/add",method=RequestMethod.POST)
+	@ResponseBody
+	public Object save(String prizeNum,MultipartFile bgImg,MultipartFile pointerImg,MultipartFile hitImg,HttpServletRequest request,MultipartFile uploadfile,
+			LotteryActive lotteryActive,Model model,HttpSession session) throws SQLException {
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		lotteryActive.setCreateMemberId(sessionUser.getId());
+		lotteryActive.setStartTime(lotteryActive.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		lotteryActive.setStopTime(lotteryActive.getStopTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") );
+		lotteryActive.setStatus(0L);
+		lotteryActive.setCreateTime(TimeStamp.getTime(14));
+		//如果活动用户文件是空文件，提醒用户
+		if(uploadfile!=null &&uploadfile.isEmpty() && StringUtils.isNotEmpty(uploadfile.getOriginalFilename())){
+			return JsonRespWrapper.successAlert("上传文件是空文件，请重新上传！");
+		}else{
+			//如果活动用户文件不是空文件，保存文件内容到数据库
+			if(uploadfile!=null){
+				try {
+					lotteryActiveService.excellUpload(prizeNum,bgImg,pointerImg,hitImg,request,uploadfile,lotteryActive);
+//						return JsonRespWrapper.successAlert("上传出错，请检查文件内容格式！");
+					logUtils.logAdd("活动管理", "添加活动，活动id:"+lotteryActive.getId());
+					
+				} catch (Exception e) {
+					logUtils.logAdd("活动管理", "添加活动失败，活动id:"+lotteryActive.getId()+e.getMessage());
+					log.error("添加抽奖活动错误："+e.getMessage());
+					return JsonRespWrapper.error(e.toString());
+				}
+			}else{
+				//没有上传活动用户文件，直接保存其他页面信息
+				try {
+					lotteryActiveService.excellUpload(prizeNum,bgImg,pointerImg,hitImg,request,null,lotteryActive);
+				} catch (Exception e) {
+					logUtils.logAdd("活动管理", "添加抽奖活动错误"+e.getMessage());
+					log.error("添加抽奖活动错误："+e.getMessage());
+					return JsonRespWrapper.error(e.toString());
+				}
+			}
+			logUtils.logAdd("活动管理", "添加活动，活动id:"+lotteryActive.getId());
+			return JsonRespWrapper.success("操作成功", "/lottery/active/list");
+		}
+		
+	}
+	
+	/**
+	 * 下载excell
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @throws Exception 
+	 */
+	@RequestMapping(value = "/down")
+	public void down(Long activeId,HttpServletRequest request,  HttpServletResponse response,Model model) throws Exception {
+		lotteryActiveService.download(activeId, request, response);
+		logUtils.logOther("活动管理", "下载活动用户,活动id："+activeId);
+	}
+	
+	/**
+	 * 审核活动页面
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/auditPage")
+	public String auditPage(Long id,Model model) throws SQLException {
+		LotteryActive lotteryActive=lotteryActiveService.findById(id);
+		model.addAttribute("active", lotteryActive);
+		return "/lottery/active/active-audit";
+	}
+	
+	/**
+	 * 审核活动
+	 * @param id
+	 * @param model
+	 * @param status
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/audit")
+	@ResponseBody
+	public Object audit(Long id,Model model,Long status) throws SQLException {
+		LotteryActive lotteryActive=lotteryActiveService.findById(id);
+		if(null!=status){
+			lotteryActive.setStatus(status);
+		}
+		lotteryActiveService.save(lotteryActive);
+		logUtils.logAudit("活动管理", "审核活动，活动id："+id);
+		return JsonRespWrapper.success("操作成功", "/lottery/active/list");
+	}
+	
+	/**
+	 * 编辑页面
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws Exception 
+	 */
+	@RequestMapping(value = "/edit",method=RequestMethod.GET)
+	public String showEdit(Long id,Model model) throws Exception {
+		LotteryActive lotteryActive=lotteryActiveService.findById(id);
+		List<LotteryActiveConf> activeConfs=lotteryActiveConfService.findByActiveId(id);
+		String prizeNum=null;
+		String bgImgPath=null;
+		String pointerImgPath=null;
+		String hitImgPath=null;
+		//获取抽奖模板相关属性
+		for(LotteryActiveConf conf:activeConfs){
+			//奖区数量
+			if(conf.getKey().equalsIgnoreCase("prizeNum")){
+				prizeNum=conf.getValue();
+			}
+			//背景大图
+			if(conf.getKey().equalsIgnoreCase("bgImg")){
+				bgImgPath=appConfig.getUploadLotteryPath()+conf.getValue();
+				System.out.println("[背景大图]------"+bgImgPath);
+			}
+			//指针图
+			if(conf.getKey().equalsIgnoreCase("pointerImg")){
+				pointerImgPath=appConfig.getUploadLotteryPath()+conf.getValue();
+				System.out.println("[指针图]------"+pointerImgPath);
+			}
+			//中奖提示图
+			if(conf.getKey().equalsIgnoreCase("hitImg")){
+				hitImgPath=appConfig.getUploadLotteryPath()+conf.getValue();
+				System.out.println("[中奖提示图]------"+hitImgPath);
+			}
+		}
+		ArrayList<LotteryTarget> lotteryTargets=(ArrayList<LotteryTarget>) lotteryTargetService.findByActiveId(id);
+		model.addAttribute("lotteryTargets", lotteryTargets);
+		model.addAttribute("active", lotteryActive);
+		model.addAttribute("prizeNum", prizeNum);
+		model.addAttribute("bgImgPath", bgImgPath);
+		model.addAttribute("pointerImgPath", pointerImgPath);
+		model.addAttribute("hitImgPath", hitImgPath);
+		return "/lottery/active/active-edit";
+	}
+	
+	
+	
+	/**
+	 * 编辑
+	 * @param uploadfile
+	 * @param lotteryActive
+	 * @param model
+	 * @param session
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/edit",method=RequestMethod.POST)
+	@ResponseBody
+	public Object update(String prizeNum,MultipartFile bgImg,MultipartFile pointerImg,MultipartFile hitImg,
+			HttpServletRequest request,MultipartFile uploadfile,LotteryActive lotteryActive,Model model,HttpSession session) throws SQLException {
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		lotteryActive.setCreateMemberId(sessionUser.getId());
+		lotteryActive.setStartTime(lotteryActive.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") );
+		lotteryActive.setStopTime(lotteryActive.getStopTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", "") );
+		
+		if(uploadfile!=null &&uploadfile.isEmpty() && StringUtils.isNotEmpty(uploadfile.getOriginalFilename())){
+			return JsonRespWrapper.successAlert("上传文件是空文件，请重新上传！");
+		}else{
+			//上传文件不是空文件，保存文件内容到数据库
+			if(uploadfile!=null && StringUtils.isNotEmpty(uploadfile.getOriginalFilename())){
+				try {
+					lotteryActiveService.excellUpload(prizeNum,bgImg,pointerImg,hitImg,request,uploadfile,lotteryActive);
+//						return JsonRespWrapper.successAlert("上传出错，请检查文件内容格式！");
+					logUtils.logModify("活动管理", "修改抽奖活动，活动id："+lotteryActive.getId());
+				} catch (Exception e) {
+					e.printStackTrace();
+					logUtils.logModify("活动管理", "修改抽奖活动失败，活动id："+lotteryActive.getId());					
+					log.error("修改抽奖活动错误："+e.getMessage());
+					return JsonRespWrapper.successAlert(e.toString());
+				}
+			}else{
+				//没有上传文件，直接保存活动信息
+				try {
+					lotteryActiveService.excellUpload(prizeNum,bgImg,pointerImg,hitImg,request,null,lotteryActive);
+					logUtils.logOther("活动管理", "修改抽奖活动，活动id："+lotteryActive.getId());
+				} catch (Exception e) {
+					logUtils.logOther("活动管理", "修改抽奖活动异常，活动id："+lotteryActive.getId());		
+					log.error("修改抽奖活动错误："+e.getMessage());
+				}
+			}
+			return JsonRespWrapper.success("操作成功", "/lottery/active/list");
+		}
+	}
+	
+	/**
+	 * 删除
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/delete")
+	@ResponseBody
+	public Object delete(Long id ,Model model) throws SQLException {
+		lotteryActiveService.delete(id);
+		logUtils.logDelete("活动管理", "删除活动，活动id："+id);
+		return JsonRespWrapper.success("操作成功", "/lottery/active/list");
+	}
+	
+	/**
+	 * 查看页面
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/view")
+	public String view(Long id,Model model) throws SQLException {
+		LotteryActive lotteryActive=lotteryActiveService.findById(id);
+        ArrayList<LotteryTarget> lotteryTargets=(ArrayList<LotteryTarget>) lotteryTargetService.findByActiveId(id);
+		model.addAttribute("active", lotteryActive);
+		model.addAttribute("lotteryTargets", lotteryTargets);
+		return "/lottery/active/active-view";
+	}
+	
+}

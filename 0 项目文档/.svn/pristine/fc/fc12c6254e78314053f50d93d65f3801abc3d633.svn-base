@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_segment_code ON "LIFE".t_sys_segment(segment_code);

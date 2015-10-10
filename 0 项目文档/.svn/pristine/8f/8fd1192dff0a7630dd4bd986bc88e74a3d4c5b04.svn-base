@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "LIFE".idx_t_market_order ON "LIFE".t_market_order(goods_no);

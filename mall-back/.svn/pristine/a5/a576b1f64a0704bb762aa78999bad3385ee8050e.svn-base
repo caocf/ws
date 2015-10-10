@@ -1,0 +1,372 @@
+package com.cplatform.mall.back.giftcard.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONObject;
+import net.sf.json.JsonConfig;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.giftcard.dao.GiftApplyOutDao;
+import com.cplatform.mall.back.giftcard.dao.GiftApplyOutExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardStorageDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardStorageExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftRequiredDao;
+import com.cplatform.mall.back.giftcard.entity.GiftApplyOut;
+import com.cplatform.mall.back.giftcard.entity.GiftApplyOutExt;
+import com.cplatform.mall.back.giftcard.entity.GiftCard;
+import com.cplatform.mall.back.giftcard.entity.GiftCardStorage;
+import com.cplatform.mall.back.giftcard.entity.GiftCardStorageExt;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.order.service.OrderService;
+import com.cplatform.order.ActOrderExpressInfo;
+import com.cplatform.order.ActOrderGoodsInfo;
+import com.cplatform.order.ActOrderInfo;
+import com.cplatform.order.ActOrderPaymentInfo;
+import com.cplatform.order.PaymentSpliteGoodsInfo;
+import com.cplatform.order.PaymentSpliteOrderInfo;
+/**
+ * 
+ * @author mudeng
+ * 礼品出库申请Service
+ *
+ */
+@Service
+public class GiftApplyOutService {
+
+	@Autowired
+	DbHelper dbHelper;
+
+	
+	@Autowired
+	GiftRequiredDao giftRequiredDao;
+	
+	@Autowired
+	GiftCardStorageDao giftCardStorageDao;
+	
+	@Autowired
+	GiftCardStorageExtDao giftCardStorageExtDao;
+	
+	@Autowired
+	GiftCardDao giftCardDao;
+
+	@Autowired
+	GiftApplyOutDao giftApplyOutDao;
+	
+	@Autowired
+	GiftApplyOutExtDao giftApplyOutExtDao;
+	
+	@Autowired
+	private OrderService orderService;
+	
+	@Autowired
+	GiftStockService stockService;
+	
+	public Page<GiftApplyOut> findGiftApplyOutPage(GiftApplyOut giftApplyOut, int pageNo, int pageSize) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,u.user_name applyUserName from t_gift_apply_out t");
+		sql.append(" left join t_sys_user u on u.id = t.apply_user ");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftApplyOut != null) {
+			if (giftApplyOut.getId() != null) {
+				sql.append(" and t.id  = ? ");
+				paramsList.add(giftApplyOut.getId());
+			}
+			if (giftApplyOut.getType() != null) {
+				sql.append(" and t.type  = ? ");
+				paramsList.add(giftApplyOut.getType());
+			}
+			if (giftApplyOut.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftApplyOut.getStatus());
+			}
+			if (giftApplyOut.getPayStatus() != null) {
+				sql.append(" and t.pay_status  = ? ");
+				paramsList.add(giftApplyOut.getPayStatus());
+			}
+
+		}
+//		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));
+
+		return dbHelper.getPage(sql.toString(), GiftApplyOut.class, pageNo, pageSize, paramsList.toArray());
+	}
+	
+	public GiftApplyOut findGiftApplyOut(GiftApplyOut giftApplyOut) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,u.user_name applyUserName from t_gift_apply_out t");
+		sql.append(" left join t_sys_user u on u.id = t.apply_user ");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftApplyOut != null) {
+			if (giftApplyOut.getId() != null) {
+				sql.append(" and t.id  = ? ");
+				paramsList.add(giftApplyOut.getId());
+			}
+			if (giftApplyOut.getType() != null) {
+				sql.append(" and t.type  = ? ");
+				paramsList.add(giftApplyOut.getType());
+			}
+			if (giftApplyOut.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftApplyOut.getStatus());
+			}
+			if (giftApplyOut.getPayStatus() != null) {
+				sql.append(" and t.pay_status  = ? ");
+				paramsList.add(giftApplyOut.getPayStatus());
+			}
+			
+		}
+		return dbHelper.getBean(sql.toString(), GiftApplyOut.class,paramsList.toArray());
+	}
+	
+	public List<GiftApplyOutExt> findExtList(Long applyId) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,s.stocks stocks from t_gift_apply_out_ext t");
+		sql.append(" left join t_gift_card_storage s on s.batch_no = t.batch_no ");
+		sql.append("  where 1=1 ");
+		List<Object> paramsList = new ArrayList<Object>();
+			if (applyId != null) {
+				sql.append(" and t.apply_id  = ? ");
+				paramsList.add(applyId);
+			}
+		return dbHelper.getBeanList(sql.toString(), GiftApplyOutExt.class,paramsList.toArray());
+	}
+	
+	public Page<GiftApplyOut> findAuditGiftApplyOutPage(GiftApplyOut giftApplyOut, int pageNo, int pageSize) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,u.user_name applyUserName from t_gift_apply_out t");
+		sql.append(" left join t_sys_user u on u.id = t.apply_user ");
+		sql.append("  where 1=1 ");
+		sql.append("  and ( t.status = 0 or t.status = 2 ) ");
+		sql.append("  and t.pay_status = 2 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftApplyOut != null) {
+			if (giftApplyOut.getId() != null) {
+				sql.append(" and t.id  = ? ");
+				paramsList.add(giftApplyOut.getId());
+			}
+			if (giftApplyOut.getType() != null) {
+				sql.append(" and t.type  = ? ");
+				paramsList.add(giftApplyOut.getType());
+			}
+			if (giftApplyOut.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftApplyOut.getStatus());
+			}
+			if (giftApplyOut.getPayStatus() != null) {
+				sql.append(" and t.pay_status  = ? ");
+				paramsList.add(giftApplyOut.getPayStatus());
+			}
+			
+		}
+//		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));
+		
+		return dbHelper.getPage(sql.toString(), GiftApplyOut.class, pageNo, pageSize, paramsList.toArray());
+	}
+	public Page<GiftApplyOut> findAuditGiftApplyOutPage2(GiftApplyOut giftApplyOut, int pageNo, int pageSize) throws Exception {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t.*,u.user_name applyUserName from t_gift_apply_out t");
+		sql.append(" left join t_sys_user u on u.id = t.apply_user ");
+		sql.append("  where 1=1 ");
+		sql.append("  and ( t.status = 0 or t.status = 2 ) ");
+		sql.append("  and t.pay_status = 0 ");
+		List<Object> paramsList = new ArrayList<Object>();
+		if (giftApplyOut != null) {
+			if (giftApplyOut.getId() != null) {
+				sql.append(" and t.id  = ? ");
+				paramsList.add(giftApplyOut.getId());
+			}
+			if (giftApplyOut.getType() != null) {
+				sql.append(" and t.type  = ? ");
+				paramsList.add(giftApplyOut.getType());
+			}
+			if (giftApplyOut.getStatus() != null) {
+				sql.append(" and t.status  = ? ");
+				paramsList.add(giftApplyOut.getStatus());
+			}
+			if (giftApplyOut.getPayStatus() != null) {
+				sql.append(" and t.pay_status  = ? ");
+				paramsList.add(giftApplyOut.getPayStatus());
+			}
+		}
+//		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_GIFT_REQUIRED));
+		
+		return dbHelper.getPage(sql.toString(), GiftApplyOut.class, pageNo, pageSize, paramsList.toArray());
+	}
+	@Transactional
+	public GiftApplyOut addOnLine(GiftApplyOut giftApplyOut,HttpServletRequest request) throws Exception{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		ActOrderInfo order = orderService.getActOrderInfoById(giftApplyOut.getOrderId());
+		ActOrderExpressInfo actOrderExpressInfo = order.getExpressInfo();
+		List<ActOrderGoodsInfo> goodInfos = order.getGoodsInfos();
+		List<ActOrderPaymentInfo> listActOrderPaymentInfo = order.getPaymentInfos();
+		giftApplyOut.setApplyUser(sessionUser.getId());
+		giftApplyOut.setApplyTime(TimeUtil.now());
+		giftApplyOut.setPayStatus(order.getPayStatus());
+		Long orderSum = 0L;
+		for(ActOrderPaymentInfo actOrderPaymentInfo:listActOrderPaymentInfo){
+			String jsonString = actOrderPaymentInfo.getSpliteInfo().toString();
+			if(StringUtils.isNotEmpty(jsonString)){
+				jsonString = StringEscapeUtils.unescapeJavaScript(jsonString);
+		        JSONObject jsonObject = JSONObject.fromObject(jsonString);
+		        //转换规则
+		        JsonConfig jsonConfig = new JsonConfig();
+		        Map<String, Class<?>> classMap = new HashMap<String, Class<?>>();
+		        classMap.put("spliteGoodsInfos", PaymentSpliteGoodsInfo.class);
+		        jsonConfig.setClassMap(classMap);
+		        jsonConfig.setRootClass(PaymentSpliteOrderInfo.class);
+		        PaymentSpliteOrderInfo splitOrderInfo = (PaymentSpliteOrderInfo) JSONObject.toBean(jsonObject, jsonConfig);
+			        orderSum += splitOrderInfo.getSumValue();
+		        }
+			}
+		giftApplyOut.setPayment(Double.parseDouble(orderSum+""));
+		if(StringUtils.isNotEmpty(actOrderExpressInfo.getReceiverName())){
+			giftApplyOut.setContactName(actOrderExpressInfo.getReceiverName());
+		}
+		if(StringUtils.isNotEmpty(actOrderExpressInfo.getAddress())){
+			giftApplyOut.setAddress(actOrderExpressInfo.getAddress());
+		}
+		if(StringUtils.isNotEmpty(actOrderExpressInfo.getCellphoneNumber())){
+			giftApplyOut.setCellphoneNumber(actOrderExpressInfo.getCellphoneNumber());
+		}
+		if(StringUtils.isNotEmpty(actOrderExpressInfo.getZipCode())){
+			giftApplyOut.setZipCode(actOrderExpressInfo.getZipCode());
+		}
+		giftApplyOut.setAccountedTime(order.getPayTime());
+		giftApplyOut.setStatus(0L);
+		giftApplyOutDao.save(giftApplyOut);
+		for(ActOrderGoodsInfo actOrderGoodsInfo:goodInfos){
+			GiftRequired giftRequired = new GiftRequired();
+			giftRequired.setSaleId(actOrderGoodsInfo.getGoodsId());
+			List<GiftRequired> listGiftRequired = stockService.giftRequiredList(giftRequired);
+			if(listGiftRequired.size()>0){
+				giftRequired = listGiftRequired.get(0);
+			}
+		GiftApplyOutExt giftApplyOutExt = new GiftApplyOutExt(giftApplyOut.getId(),giftRequired.getBatchNo(),actOrderGoodsInfo.getCount(),giftRequired.getModelNo(),actOrderGoodsInfo.getPayPrice(),actOrderGoodsInfo.getRemark());
+		giftApplyOutExtDao.save(giftApplyOutExt);
+		}
+		return giftApplyOut;
+	}
+	@Transactional
+	public GiftApplyOut addLine(GiftApplyOut giftApplyOut,HttpServletRequest request) throws Exception{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		String[] batchNos = request.getParameterValues("batchNoValue");
+		String[] nums = request.getParameterValues("numValue");
+		giftApplyOut.setApplyUser(sessionUser.getId());
+		giftApplyOut.setApplyTime(TimeUtil.now());
+		giftApplyOut.setStatus(0L);
+		if(giftApplyOut.getAccountedCode()!=null&&giftApplyOut.getPayment()!=null){
+			if(giftApplyOut.getPayment()>0L){
+				giftApplyOut.setPayStatus(2);
+				giftApplyOut.setAccountedTime(TimeUtil.now());
+				giftApplyOut.setPayment(giftApplyOut.getPayment()*100);
+			}else{
+				giftApplyOut.setPayStatus(0);
+			}
+		}else{
+			giftApplyOut.setPayStatus(0);
+		}
+		giftApplyOutDao.save(giftApplyOut);
+		for(int i=0;i<batchNos.length;i++){
+			GiftRequired giftRequired = new GiftRequired();
+			giftRequired.setBatchNo(Long.valueOf(batchNos[i]));
+			List<GiftRequired> listGiftRequired = stockService.giftRequiredList(giftRequired);
+			if(listGiftRequired.size()>0){
+				giftRequired = listGiftRequired.get(0);
+			}
+			GiftApplyOutExt giftApplyOutExt = new GiftApplyOutExt(giftApplyOut.getId(),giftRequired.getBatchNo(),Integer.valueOf(nums[i]),giftRequired.getModelNo(),0,null);
+			giftApplyOutExtDao.save(giftApplyOutExt);
+		}
+		return giftApplyOut;
+	}
+	
+	@Transactional
+	public GiftApplyOut editorOnLine(GiftApplyOut giftApplyOut,HttpServletRequest request) throws Exception{
+		GiftApplyOut giftApplyOutTemp = giftApplyOutDao.findOne(giftApplyOut.getId());
+		giftApplyOutTemp.setReceiveName(giftApplyOut.getReceiveName());
+		giftApplyOutTemp.setRemark(giftApplyOut.getRemark());
+		giftApplyOutTemp.setStatus(0L);
+		giftApplyOutTemp.setAuditUser(null);
+		giftApplyOutTemp.setAuditTime(null);
+		giftApplyOutTemp.setAuditAdvice(null);
+		giftApplyOutDao.save(giftApplyOutTemp);
+		return giftApplyOut;
+	}
+	
+	@Transactional
+	public GiftApplyOut editorLine(GiftApplyOut giftApplyOut,HttpServletRequest request) throws Exception{
+		String[] batchNos = request.getParameterValues("batchNoValue");
+		String[] nums = request.getParameterValues("numValue");
+		GiftApplyOut giftApplyOutTemp = giftApplyOutDao.findOne(giftApplyOut.getId());
+		giftApplyOut.setApplyUser(giftApplyOutTemp.getApplyUser());
+		giftApplyOut.setApplyTime(giftApplyOutTemp.getApplyTime());
+		giftApplyOut.setStatus(0L);
+		giftApplyOut.setAuditUser(null);
+		giftApplyOut.setAuditTime(null);
+		giftApplyOut.setAuditAdvice(null);
+		if(giftApplyOut.getAccountedCode()!=null&&giftApplyOut.getPayment()!=null){
+			if(giftApplyOut.getPayment()>0L){
+				giftApplyOut.setPayStatus(2);
+				giftApplyOut.setAccountedTime(TimeUtil.now());
+				giftApplyOut.setPayment(giftApplyOut.getPayment()*100);
+			}else{
+				giftApplyOut.setPayStatus(0);
+				giftApplyOut.setAccountedTime(null);
+				giftApplyOut.setPayment(null);
+			}
+		}else{
+			giftApplyOut.setPayStatus(0);
+			giftApplyOut.setAccountedTime(null);
+			giftApplyOut.setPayment(null);
+		}
+		giftApplyOutDao.save(giftApplyOut);
+		giftApplyOutExtDao.delGiftApplyOutExt(giftApplyOut.getId());
+		for(int i=0;i<batchNos.length;i++){
+			GiftRequired giftRequired = new GiftRequired();
+			giftRequired.setBatchNo(Long.valueOf(batchNos[i]));
+			List<GiftRequired> listGiftRequired = stockService.giftRequiredList(giftRequired);
+			if(listGiftRequired.size()>0){
+				giftRequired = listGiftRequired.get(0);
+			}
+			GiftApplyOutExt giftApplyOutExt = new GiftApplyOutExt(giftApplyOut.getId(),giftRequired.getBatchNo(),Integer.valueOf(nums[i]),giftRequired.getModelNo(),0,null);
+			giftApplyOutExtDao.save(giftApplyOutExt);
+		}
+		return giftApplyOut;
+	}
+
+	@Transactional
+	public String stockOutBySum(HttpServletRequest request,int cardSum,String batchNo,Long applyId) throws Exception{
+		List<GiftCard> listGiftCard = stockService.findGiftCardList(Long.valueOf(batchNo));
+		if(cardSum>listGiftCard.size()){
+			cardSum = listGiftCard.size();
+		}
+		int scount = cardSum;
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		for(int i=0;i<cardSum;i++){
+			GiftCard giftCard = listGiftCard.get(i);
+				GiftCardStorageExt giftCardStorageExt = new GiftCardStorageExt();
+				stockService.setData(giftCard,giftCardStorageExt,sessionUser,"0");
+				giftCardStorageExt.setApplyId(applyId);
+				giftCardStorageExtDao.save(giftCardStorageExt);
+				giftCardDao.save(giftCard);
+		}
+		GiftCardStorage giftCardStorage = stockService.getGiftCardStorage(Long.valueOf(batchNo),scount,"0");
+		giftCardStorageDao.save(giftCardStorage);
+		return "操作成功";
+	}
+}

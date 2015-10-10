@@ -1,0 +1,301 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <ht:head/>
+    <script type="text/javascript">    	
+    $().ready(function() {
+			//获取来源地址
+	 		var url = document.referrer;
+	 		$("#backUrl").val(url);
+		});
+    
+    
+    
+    
+    function showDiv(){
+		with (fm) {
+			//连锁则显示总店与否选择
+			if(isUpload[0].checked) {
+				uploadTemplateFile.style.display="block";
+			} else if(isUpload[1].checked){
+				uploadTemplateFile.style.display="none";
+			}
+		}
+	}
+    </script>
+</head>
+<body>
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5><c:if test="${method == 'add'}">添加广告</c:if><c:if test="${method == 'edit'}">修改广告</c:if></h5>
+    </div>
+    <!-- end box / title -->
+    <form:form method="post" id="fm" commandName="sysAd" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate" enctype="multipart/form-data">
+          <input type="hidden" id="backUrl" name="backUrl" />
+        <c:if test="${empty sysAdPositionList}">
+        <form:hidden path="positionId" />
+        </c:if>
+        <c:if test="${method == 'edit'}">
+        <form:hidden path="status" />
+        <form:hidden path="createUser" />
+        <form:hidden path="createTime" />
+        <form:hidden path="clickCnt" />
+        <form:hidden path="viewCnt" />
+        <input type="hidden" id="oldContent" name="oldContent" value="${sysAd.content}" />
+        </c:if>
+        <div class="form">
+            <div class="fields">
+            	<c:if test="${method == 'add'}">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">自动生成</div>
+                </div>
+                </c:if>
+                <c:if test="${method == 'edit'}">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">${sysAd.id}</div>
+                </div>
+                <c:if test="${not empty sysAd.positionName}">
+                <div class="field">
+                    <div class="label noinput">广告位置：</div>
+                    <div class="input">${sysAd.positionName}</div>
+                </div>
+                </c:if>
+                </c:if>
+                <c:if test="${not empty sysAdPositionList}">	
+                <div class="field">
+                    <div class="label">
+                        <label for="positionId" class="req">广告位置:</label>
+                    </div>
+                    <div class="select">
+                        <select id="positionId" name="positionId" class="required validate-selection">
+                            <option value="">--请选择--</option>
+                            <c:forEach items="${sysAdPositionList}" var="item">
+                        	    <option value="${item.id}" <c:if test="${sysAd.positionId == item.id}">selected="selected"</c:if>>${item.name}</option>
+                        	</c:forEach>
+                        </select>
+                        <span class="error" id="advice-required-positionId" style="display:none"></span>
+                        <span class="error" id="advice-validate-selection-positionId" style="display:none"></span>
+                    </div>
+                </div>
+                </c:if>
+                <div class="field">
+                    <div class="label">
+                        <label for="adName" class="req">名称：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="adName" cssClass="small required min-length-0 max-length-50" maxlength="50" />
+                    	<span class="error" id="advice-required-adName" style="display:none"></span>
+                        <span class="error" id="advice-min-length-adName" style="display:none"></span>
+                        <span class="error" id="advice-max-length-adName" style="display:none"></span>
+                        <span class="error" id="advice-server-adName" style="display:none"></span>
+                    </div>
+                </div>   
+                <div class="field">
+                    <div class="label">
+                        <label for="adType" class="req">类型:</label>
+                    </div>
+                    <div class="select">
+                        <select id="adType" name="adType" class="required">
+                        	<option value="1" <c:if test="${sysAd.adType == '1'}">selected="selected"</c:if>>图片</option>
+                        	<option value="2" <c:if test="${sysAd.adType == '2'}">selected="selected"</c:if>>文字</option>
+                        	<option value="3" <c:if test="${sysAd.adType == '3'}">selected="selected"</c:if>>flash</option>
+                        </select>
+                        <span class="error" id="advice-required-type" style="display:none"></span>
+                        <span class="error" id="advice-server-type" style="display:none"></span>
+                    </div>
+                	</div>            
+                <div class="field">
+                    <div class="label">
+                        <label for="adFlag" class="req">类别:</label>
+                    </div>
+                    <div class="select">
+                        <select id="adFlag" name="adFlag" class="required">
+                        	<option value="0" <c:if test="${sysAd.adFlag == '0'}">selected="selected"</c:if>>内部广告</option>
+                        	<option value="1" <c:if test="${sysAd.adFlag == '1'}">selected="selected"</c:if>>外部广告</option>
+                        </select>
+                        <span class="error" id="advice-required-adFlag" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="link" class="req">链接：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="link" cssClass="small required validate-url min-length-0 max-length-200" maxlength="200" />
+                   		<span class="error" id="advice-required-link" style="display:none"></span>
+                   		<span class="error" id="advice-validate-url-link" style="display:none"></span>
+                   		<span class="error" id="advice-min-length-link" style="display:none"></span>
+                   		<span class="error" id="advice-max-length-link" style="display:none"></span>
+                        <span class="error" id="advice-server-link" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="linkman" class="req">负责人：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                        <form:input path="linkman" cssClass="small required min-length-0 max-length-50" maxlength="50" />
+                    	<span class="error" id="advice-required-linkman" style="display:none"></span>
+                   		<span class="error" id="advice-min-length-linkman" style="display:none"></span>
+                   		<span class="error" id="advice-max-length-linkman" style="display:none"></span>
+                        <span class="error" id="advice-server-linkman" style="display:none"></span>
+                    </div>
+                </div>
+                <div id="filefalse" <c:if test="${empty sysAd.adType}">style="display: none"</c:if> <c:if test="${sysAd.adType == '1'}">style="display: none"</c:if>>
+                <div class="field">
+                    <div class="label label-textarea">
+                        <label for="content" class="req">内容：</label>
+                    </div>
+                    <div class="input">
+                        <textarea name="content" cols="50" rows="8" class="required max-length-100" >${sysAd.content}</textarea>
+                        <span class="error" id="advice-required-content" style="display:none"></span>
+                   		<span class="error" id="advice-max-length-content" style="display:none"></span>
+                        <span class="error" id="advice-server-content" style="display:none"></span>
+                    </div>
+                </div>
+                </div>                
+                <div id="filetrue" <c:if test="${empty sysAd.adType}">style="display: none"</c:if> <c:if test="${sysAd.adType == '2'}">style="display: none"</c:if> <c:if test="${sysAd.adType == '3'}">style="display: none"</c:if>>
+                <c:if test="${method == 'edit'}">
+                <c:if test="${sysAd.adType == '1'}">
+                <div class="field">
+                    <div class="label">
+                        <label for="download">图片文件：</label>
+                    </div>
+                    <div class="input">
+                    	<a href="${ctx}/websys/ad/ad_downfile/${sysAd.id}">下载图片文件</a>
+                    </div>
+                </div>
+                </c:if>                
+                <div class="field">
+					<div class="label label-radio">
+						<label for="isUpload">上传新图片:</label>
+					</div>
+					<div class="radios">
+						<div class="radio">
+							<input type="radio" id="isUpload1" name="isUpload" value="1" onclick="javascript:showDiv();" /><label for="isUpload1">是</label>
+							<input type="radio" id="isUpload0" name="isUpload" value="0" checked="checked" onclick="javascript:showDiv();" /><label for="isUpload0">否</label>
+						</div>
+					</div>
+				</div>
+				</c:if>
+                <div id="uploadTemplateFile" <c:if test="${method == 'edit'}">style="display: none"</c:if> class="field">
+                    <div class="label">
+                        <label for="uploadFile" class="req">图片文件:</label>
+                    </div>
+                    <div class="input input-file">
+                        <input type="file" id="file1" name="uploadFile" size="40" <c:if test="${sysAd.adType != '1'}">class="validate-file-bmp-dib-gif-jpg-jpeg-jpe-jfif-png-tif-tiff"</c:if> />
+                        <span class="error" id="advice-validate-file-file1" style="display:none"></span>
+                    </div>
+                </div>
+                </div>                
+                <div class="field">
+                    <div class="label">
+                        <label for="startTime" class="req">开始时间:</label>
+                    </div>
+                    <div class="input">
+                        <input type="text" id="startTime" name="startTime" value="<ct:time source="${sysAd.startTime }" tfmt="yyyy-MM-dd"/>" class="date required" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd',maxDate:'#F{$dp.$D(\'validTime\')||\'2020-10-01\'}'})" readonly/>
+                    	<span class="error" id="advice-required-startTime" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="validTime" class="req">有效时间:</label>
+                    </div>
+                    <div class="input">
+                        <input type="text" id="validTime" name="validTime" value="<ct:time source="${sysAd.validTime }" tfmt="yyyy-MM-dd"/>" class="date required" onfocus="WdatePicker({dateFmt:'yyyy-MM-dd',minDate:'#F{$dp.$D(\'startTime\')}',maxDate:'2020-10-01'})" readonly/>
+                    	<span class="error" id="advice-required-validTime" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight" value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                    <a href="javascript:history.go(-1)" class="btnAnchor">返回</a>
+                </div>
+            </div>
+        </div>
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+<script type="text/javascript">
+$().ready(function() {
+		$("#filefalse").hide();
+		$("#filetrue").hide();
+        var adType = $("#adType").val();
+					if(null != adType){
+						if(1 == adType){
+							$("#filetrue").show();
+						}else if(2 == adType){
+							$("#filefalse").show();
+						}else if(3 == adType){
+							$("#filefalse").show();
+						}else{}					    
+				    }
+	
+});
+$().ready(function() {
+	$("#adType").change(function(){
+		$("#filefalse").hide();
+		$("#filetrue").hide();
+        var adType = $("#adType").val();
+					if(null != adType){
+						if(1 == adType){
+							$("#filetrue").show();
+						}else if(2 == adType){
+							$("#filefalse").show();
+						}else if(3 == adType){
+							$("#filefalse").show();
+						}else{}					    
+				    }
+			});
+	
+});
+	//$("#positionId").change(function(){
+	//	$("#adTypeAppendName").remove();
+	//	$("#adTypeDiv").hide();
+	//	$("#filefalse").hide();
+	//	$("#filetrue").hide();
+	  //  var positionId = $("#positionId").val();
+	//	$.ajax({
+		//	   type: "POST",
+			//   url: "getPositionType.do",
+			  // cache : false, 
+			   //dataType : "json",
+			   //data: {
+			   	//	id:positionId
+			   		//},
+//			   success: function(json){
+	//				if(null != json){
+		//				if(1 == json.type){
+			//				$("#adTypeInput").append("<font id='adTypeAppendName'>图片</font>");
+				//			$("#adTypeDiv").show();
+					//		$("#filetrue").show();
+						//	$("#adType").val(json.type);
+						//}else if(2 == json.type){
+						//	$("#adTypeInput").append("<font id='adTypeAppendName'>文字</font>");
+						//	$("#adTypeDiv").show();
+						//	$("#filefalse").show();
+						//	$("#adType").val(json.type);
+						//}else if(3 == json.type){
+						//	$("#adTypeInput").append("<font id='adTypeAppendName'>脚本</font>");
+						//	$("#adTypeDiv").show();
+							//$("#filefalse").show();
+							//$("#adType").val(json.type);				
+					//	}else{}					    
+				    //}
+				    //}
+			   //	});	
+		
+			//});
+</script>
+</body>
+</html>

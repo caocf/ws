@@ -1,0 +1,370 @@
+package com.cplatform.mall.back.giftcard.web;
+
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import net.sf.json.JSONArray;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.giftcard.dao.GiftApplyOutDao;
+import com.cplatform.mall.back.giftcard.dao.GiftApplyOutExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardStorageExtDao;
+import com.cplatform.mall.back.giftcard.dao.GiftCardTaskExtDao;
+import com.cplatform.mall.back.giftcard.entity.GiftApplyOut;
+import com.cplatform.mall.back.giftcard.entity.GiftApplyOutExt;
+import com.cplatform.mall.back.giftcard.entity.GiftCard;
+import com.cplatform.mall.back.giftcard.entity.GiftCardStorageExt;
+import com.cplatform.mall.back.giftcard.entity.GiftCardTask;
+import com.cplatform.mall.back.giftcard.entity.GiftCardTaskExt;
+import com.cplatform.mall.back.giftcard.service.GiftApplyOutService;
+import com.cplatform.mall.back.giftcard.service.GiftStockService;
+import com.cplatform.mall.back.giftcard.service.GiftTaskService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.GiftCardSyncInterface;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.google.common.collect.Maps;
+
+/**
+ * 
+ * @author mudeng
+ * 礼品出库申请Controller
+ *
+ */
+@Controller
+@RequestMapping("/giftcard/apply")
+public class GiftApplyOutController {
+
+	@Autowired
+	GiftApplyOutService service;
+	
+	@Autowired
+	GiftApplyOutDao giftApplyOutDao;
+	
+	@Autowired
+	GiftApplyOutExtDao giftApplyOutExtDao;
+
+	@Autowired
+	GiftCardStorageExtDao giftCardStorageExtDao;
+	
+	@Autowired
+	GiftCardTaskExtDao gGiftCardTaskExtDao;
+	
+	@Autowired
+	GiftCardDao giftCardDao;
+	
+	@Autowired
+	GiftCardSyncInterface giftCardSyncInterface;
+	
+	@Autowired
+	GiftStockService stockService;
+	
+	@Autowired
+	GiftTaskService giftTaskService;
+	
+	
+
+	/**
+	 * 
+	 * @param giftRequired
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 * 展示成品卡批次列表
+	 */
+	@RequestMapping(value = { "/list", "/", "" })
+	public String list(GiftApplyOut giftApplyOut, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) {
+		try {
+			model.addAttribute("pageData", service.findGiftApplyOutPage(giftApplyOut, page, Page.DEFAULT_PAGESIZE));
+			model.addAttribute("typeMap", giftApplyOut.typeMap);
+			model.addAttribute("statusMap", giftApplyOut.statusMap);
+			model.addAttribute("payStatusMap", giftApplyOut.payStatusMap);
+		} catch (Exception e) {
+//			e.printStackTrace();
+		}
+		return "/giftcard/apply/applyList";
+	}
+	@RequestMapping(value = { "/auditList/1" })
+	public String auditList(GiftApplyOut giftApplyOut, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) {
+		try {
+			model.addAttribute("pageData", service.findAuditGiftApplyOutPage(giftApplyOut, page, Page.DEFAULT_PAGESIZE));
+			model.addAttribute("typeMap", giftApplyOut.typeMap);
+			model.addAttribute("statusMap", giftApplyOut.statusMap);
+			model.addAttribute("payStatusMap", giftApplyOut.payStatusMap);
+		} catch (Exception e) {
+//			e.printStackTrace();
+		}
+		return "/giftcard/apply/auditList";
+	}
+	@RequestMapping(value = { "/auditList/2" })
+	public String auditList2(GiftApplyOut giftApplyOut, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model) {
+		try {
+			model.addAttribute("pageData", service.findAuditGiftApplyOutPage2(giftApplyOut, page, Page.DEFAULT_PAGESIZE));
+			model.addAttribute("typeMap", giftApplyOut.typeMap);
+			model.addAttribute("statusMap", giftApplyOut.statusMap);
+			model.addAttribute("payStatusMap", giftApplyOut.payStatusMap);
+		} catch (Exception e) {
+//			e.printStackTrace();
+		}
+		return "/giftcard/apply/auditList2";
+	}
+	/**
+	 * 线上预申请出库
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "preAddOnLine")
+	public String preAddOnLine(Model model) {
+		GiftCardTask giftCardTask = new GiftCardTask();
+		model.addAttribute("data", giftCardTask);
+		model.addAttribute("method", "add");
+		return "redirect:/order/refund/list?giftFlag=4";//forward
+	}
+	@RequestMapping(value = "jumpAddOnLine")
+	public String jumpAddOnLine(@RequestParam(value = "orderId") Long orderId,Model model) {
+		GiftApplyOut giftApplyOut =  new GiftApplyOut();
+		model.addAttribute("info", giftApplyOut);
+		model.addAttribute("type", "onLine");
+		model.addAttribute("orderId", orderId);
+		return "/giftcard/apply/applyAdd";
+	}
+	
+	/**
+	 * 线下预申请出库
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "preAddLine")
+	public String preAddLine(Model model) {
+		GiftApplyOut giftApplyOut =  new GiftApplyOut();
+		model.addAttribute("info", giftApplyOut);
+		model.addAttribute("type", "line");
+		model.addAttribute("orderId", "");
+		return "/giftcard/apply/applyAdd";
+	}
+	
+	@RequestMapping(value = "addOnLine")
+	@ResponseBody
+	public Object addOnLine(@ModelAttribute("giftApplyOut") GiftApplyOut giftApplyOut, HttpServletRequest request,
+	        HttpSession session) {
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("添加成功", backUrl);
+	}
+	@RequestMapping(value = "add")
+	@ResponseBody
+	public Object add(@ModelAttribute("giftApplyOut") GiftApplyOut giftApplyOut, HttpServletRequest request,
+			HttpSession session) throws Exception {
+		if(giftApplyOut.getType()==0L){
+			service.addOnLine(giftApplyOut,request);
+		}else{
+			service.addLine(giftApplyOut,request);
+		}
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("添加成功", backUrl);
+	}
+	@RequestMapping(value = "addLine")
+	@ResponseBody
+	public Object addLine(@ModelAttribute("giftApplyOut") GiftApplyOut giftApplyOut, HttpServletRequest request,
+			HttpSession session) {
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("添加成功", backUrl);
+	}
+	@RequestMapping(value = "preAudit")
+	public String preAudit(@RequestParam(value = "id") Long id, HttpSession session, Model model){
+		try {
+			GiftApplyOut giftApplyOut = giftApplyOutDao.findOne(id);
+			model.addAttribute("info", giftApplyOut);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "/giftcard/apply/applyAudit";
+	}
+	
+	@RequestMapping(value = "audit")
+	@ResponseBody
+	public Object audit(@ModelAttribute("giftApplyOut") GiftApplyOut giftApplyOut, HttpServletRequest request) throws Exception
+	{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		if(giftApplyOut.getStatus()==1L){
+			List<GiftApplyOutExt> listGiftApplyOutExt = service.findExtList(giftApplyOut.getId());
+			for(GiftApplyOutExt giftApplyOutExt:listGiftApplyOutExt){
+				if(giftApplyOutExt.getNum()>giftApplyOutExt.getStocks().intValue()){
+					return JsonRespWrapper.successAlert("审核失败，批次号为"+giftApplyOutExt.getBatchNo()+"的礼品卡库存不足，请确认！");
+				}
+			}
+		}
+		GiftApplyOut giftApplyOutTemp = giftApplyOutDao.findOne(giftApplyOut.getId());
+		giftApplyOutTemp.setStatus(giftApplyOut.getStatus());
+		giftApplyOutTemp.setAuditAdvice(giftApplyOut.getAuditAdvice());
+		giftApplyOutTemp.setAuditTime(TimeUtil.now());
+		giftApplyOutTemp.setAuditUser(sessionUser.getId());
+		giftApplyOutDao.save(giftApplyOutTemp);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("审核成功", backUrl);
+	}
+	
+	@RequestMapping(value = "view")
+	public String view(@RequestParam(value = "id") Long id, HttpSession session, Model model){
+		try {
+			GiftApplyOut giftApplyOut = new GiftApplyOut();
+			giftApplyOut.setId(id);
+			giftApplyOut = service.findGiftApplyOut(giftApplyOut);
+			List<GiftApplyOutExt> listGiftApplyOutExt = giftApplyOutExtDao.findGiftApplyOutExtListByApplyId(id);
+			model.addAttribute("info", giftApplyOut);
+			model.addAttribute("extInfoList", listGiftApplyOutExt);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "/giftcard/apply/applyView";
+	}
+	@RequestMapping(value = "viewActive")
+	public String viewActive(GiftCardTaskExt giftCardTaskExt,@RequestParam(value = "id") Long id, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model, HttpServletRequest request) {
+		try {
+			if(giftCardTaskExt.getApplyId()==null){
+				giftCardTaskExt.setApplyId(id);
+			}
+			model.addAttribute("pageData", giftTaskService.findGiftTaskExt(giftCardTaskExt, page, Page.DEFAULT_PAGESIZE));
+			model.addAttribute("applyId", id);
+		} catch (Exception e) {
+		}
+		return "/giftcard/apply/activeList";
+	}
+	@RequestMapping(value = "viewOut")
+	public String viewOut(GiftCardStorageExt giftCardStorageExt,@RequestParam(value = "id") Long id, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model, HttpServletRequest request){
+		try {
+			if(giftCardStorageExt.getApplyId()==null){
+				giftCardStorageExt.setApplyId(id);
+			}
+			model.addAttribute("pageData", stockService.findGiftExtPage(giftCardStorageExt, page, Page.DEFAULT_PAGESIZE));
+			model.addAttribute("applyId", id);
+		} catch (Exception e) {
+		}
+		return "/giftcard/apply/outList";
+	}
+	
+	@RequestMapping(value = "preEditor")
+	public String preEditor(@RequestParam(value = "id") Long id, HttpSession session, Model model){
+		try {
+			GiftApplyOut giftApplyOut = giftApplyOutDao.findOne(id);
+			List<GiftApplyOutExt> listGiftApplyOutExt = service.findExtList(id);
+			JSONArray json = JSONArray.fromObject(listGiftApplyOutExt); 
+			model.addAttribute("info", giftApplyOut);
+			model.addAttribute("extJson", json);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "/giftcard/apply/applyEditor";
+	}
+	
+	@RequestMapping(value = "editor")
+	@ResponseBody
+	public Object editor(@ModelAttribute("giftApplyOut") GiftApplyOut giftApplyOut, HttpServletRequest request) throws Exception
+	{
+		if(giftApplyOut.getType()==0L){
+			service.editorOnLine(giftApplyOut,request);
+		}else{
+			service.editorLine(giftApplyOut,request);
+		}
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("修改成功", backUrl);
+	}
+	
+	@RequestMapping(value = "del")
+	@ResponseBody
+	public Object del(@RequestParam(value = "id") Long id, HttpSession session, Model model, HttpServletRequest request) throws Exception
+	{
+		GiftApplyOut giftApplyOut = giftApplyOutDao.findOne(id);
+		giftApplyOut.setStatus(3L);
+		giftApplyOutDao.save(giftApplyOut);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("删除成功", backUrl);
+	}
+	
+	@RequestMapping(value = "checkOrder")
+	@ResponseBody
+	public Object checkOrder(@RequestParam(value = "id") Long id, HttpSession session, Model model, HttpServletRequest request)
+	{
+		HashMap<String, Object> map = Maps.newHashMap();
+		try {
+			List<GiftApplyOut> giftApplyOutList = giftApplyOutDao.findGiftApplyOutByOrderId(id);
+			for(GiftApplyOut giftApplyOut:giftApplyOutList){
+				if(giftApplyOut.getStatus()!=3L){
+					map.put("success", false);
+					map.put("message", "该订单已存在申请信息，请确认！");
+					return map;
+				}
+			}
+			map.put("success", true);
+			return map;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			map.put("success", "error");
+			map.put("message", "程序异常，请联系管理员！");
+			return map;
+		}
+	}
+	@RequestMapping(value = "stockOut")
+	@ResponseBody
+	public Object stockOut(@RequestParam(value = "id") Long id, HttpSession session, Model model, HttpServletRequest request) throws Exception
+	{
+		GiftApplyOut giftApplyOut = giftApplyOutDao.findOne(id);
+		List<GiftApplyOutExt> listGiftApplyOutExt = service.findExtList(id);
+		for(GiftApplyOutExt giftApplyOutExt:listGiftApplyOutExt){
+			if(giftApplyOutExt.getNum()>giftApplyOutExt.getStocks().intValue()){
+				return JsonRespWrapper.successAlert("出库失败，批次号为"+giftApplyOutExt.getBatchNo()+"的礼品卡库存不足，请确认！");
+			}else{
+				service.stockOutBySum(request, giftApplyOutExt.getNum(), giftApplyOutExt.getBatchNo().toString(), giftApplyOutExt.getApplyId());
+			}
+		}
+		giftApplyOut.setStatus(4L);
+		giftApplyOutDao.save(giftApplyOut);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("出库成功", backUrl);
+	}
+	
+	@RequestMapping(value = "activeCard")
+	@ResponseBody
+	public Object activeCard(@RequestParam(value = "id") Long id, HttpSession session, Model model, HttpServletRequest request) throws Exception
+	{
+		GiftApplyOut giftApplyOut = giftApplyOutDao.findOne(id);
+		List<GiftCardStorageExt> giftCardStorageExtList =  giftCardStorageExtDao.findGiftCardStorageExtListByApplyId(giftApplyOut.getId());
+		 for(GiftCardStorageExt giftCardStorageExt:giftCardStorageExtList){
+			 String returnMsg = giftCardSyncInterface.activeCard(giftCardStorageExt.getSerialNo());
+			 GiftCard giftCard = giftCardDao.findOne(giftCardStorageExt.getSerialNo());
+			 GiftCardTaskExt giftCardTaskExt = new GiftCardTaskExt();
+			 giftCardTaskExt.setTaskId(-1000L);
+			 giftCardTaskExt.setSerialNo(giftCardStorageExt.getSerialNo());
+			 giftCardTaskExt.setApplyId(giftApplyOut.getId());
+
+			 if("0".equals(returnMsg)){
+				 giftCardTaskExt.setStatus(2L);
+			 }else{
+				 giftCardTaskExt.setStatus(1L);
+				 giftCard.setStatus(1L);
+			 }
+			 giftCardTaskExt.setActTime(TimeUtil.now());
+			 gGiftCardTaskExtDao.save(giftCardTaskExt);
+			 giftCardDao.save(giftCard);
+		 }
+		giftApplyOut.setStatus(5L);
+		giftApplyOutDao.save(giftApplyOut);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("激活成功", backUrl);
+	}
+	
+}

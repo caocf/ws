@@ -1,0 +1,346 @@
+package com.cplatform.mall.back.sys.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.model.SyncGYResponseBean;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.entity.SysFee;
+import com.cplatform.mall.back.sys.service.SysFeeService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.SyncInterface;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 费率管理控制类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-28 下午6:11:13
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "sys/sysfee")
+public class SysFeeController {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private SysFeeService feeService;
+
+	@Autowired
+	private SyncInterface syncInterface;
+
+	@Autowired
+	private StoreService storeService;
+
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+
+	/**
+	 * 费率列表
+	 * 
+	 * @param itemOrg
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/feelist")
+	public String feelist(SysFee sysFee, @RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model)
+	        throws SQLException {
+
+		Page<SysFee> pageData = feeService.listfee(sysFee, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("syncGyFiagMap", SysFee.syncGyFlagMap);
+		model.addAttribute("validMap", SysFee.validMap);
+		model.addAttribute("pageData", pageData);
+		return "/sys/sysfee/sysfee-list";
+
+	}
+
+	/**
+	 * 进入费率添加页面（
+	 * 
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/sysfeeAdd", method = RequestMethod.GET)
+	public String sysfeeAdd(@RequestParam(value = "id") Long id, HttpServletRequest request, Model model) throws IOException, Exception {
+
+		if (null != id) {
+			SysFee sysFee = feeService.findById(id);
+			Store store = storeService.findStoreById(sysFee.getStoreId());
+			if (store != null) {
+				sysFee.setStoreName(store.getName());
+			}
+			model.addAttribute("fee", sysFee);
+			model.addAttribute("method", "edit");
+			model.addAttribute("syncGyFiagMap", sysFee.getSyncGyFlagName());
+			model.addAttribute("validMap", sysFee.getValidName());
+		} else {
+			SysFee fee = new SysFee();
+
+			model.addAttribute("method", "add");
+			model.addAttribute("fee", fee);
+
+		}
+		return "/sys/sysfee/fee-add";
+	}
+
+	/**
+	 * 添加费率
+	 * 
+	 * @param role
+	 * @param menu_privilege
+	 * @param session
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/sysfeeAdd", method = RequestMethod.POST)
+	@ResponseBody
+	public Object roleSave(SysFee sysFee, HttpSession session, HttpServletRequest request, Model model) {
+		String msg = "";
+
+		try {
+			if (sysFee.getId() == null) {
+				msg = "添加成功";
+				sysFee.setSyncGyFlag(0L);
+			} else {
+				SysFee old = this.feeService.findById(sysFee.getId());
+
+				// 修改后同步状态为“未同步” start>>>
+				// @modify_by macl@c-platform.com
+				// sysFee.setSyncGyFlag(old.getSyncGyFlag());
+				// sysFee.setSyncGyTime(old.getSyncGyTime());
+				sysFee.setSyncGyFlag(0L);
+				sysFee.setSyncGyTime(null);
+				// 修改后同步状态为“未同步” <<<end
+
+				msg = "修改成功";
+			}
+			SysFee fee = feeService.saveUpdateBrand(sysFee);
+			logUtils.logAdd("费率分类管理", "添加费率，费率编号：" + fee.getId());
+		}
+		catch (Exception e) {
+			log.error(e.getMessage());
+			logUtils.logOther("信息异常：", e.toString());
+		}
+		// return JsonRespWrapper.success(msg, "/sys/sysfee/feelist");
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success(msg, backUrl);
+	}
+
+	/**
+	 * 编辑费率
+	 * 
+	 * @param shop
+	 *            门店实体类
+	 * @param fileRequest
+	 *            批量文件上传
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/edit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object updatePost(@ModelAttribute("fee") SysFee fee, HttpServletRequest request) {
+
+		try {
+			SysFee sysfee = feeService.saveUpdateBrand(fee);
+			logUtils.logModify("费率分类管理", "修改费率，费率编号：" + fee.getId());
+		}
+		catch (Exception e) {
+			log.error(e.getMessage());
+			logUtils.logOther("信息异常：", e.toString());
+		}
+
+		return JsonRespWrapper.success("修改成功", "/sys/sysfee/feelist");
+
+	}
+
+	@RequestMapping(value = "/feeDel/{id}")
+	@ResponseBody
+	public Object feeDel(@PathVariable Long id, Model model) {
+		SysFee sysFee = feeService.findById(id);
+		if (3L == sysFee.getSyncGyFlag()) {
+			return JsonRespWrapper.successAlert("当前费率信息已经审核通过，不能被删除");
+		}
+
+		if (0L != sysFee.getSyncGyFlag()) {
+			return JsonRespWrapper.successAlert("当前费率信息已经同步过清结算系统，不能被删除");
+		}
+		feeService.deleteSettle(id);
+		logUtils.logDelete("费率分类管理", "删除费率，费率编号：" + id);
+		return JsonRespWrapper.success("操作成功", "/sys/sysfee/feelist");
+	}
+
+	/**
+	 * 费率查看
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/sysfeeView/{id}")
+	public String sysfeeView(@PathVariable(value = "id") Long id, Model model) {
+		SysFee vo = this.feeService.findById(id);
+		Store store = storeService.findStoreById(vo.getStoreId());
+		if (store != null) {
+			vo.setStoreName(store.getName());
+		}
+		model.addAttribute("sysFee", vo);
+		return "/sys/sysfee/fee-view";
+
+	}
+
+	/**
+	 * 屏蔽该方法 逻辑上没有大问题，现在启用下面的方法解决。
+	 */
+	/***
+	 * @RequestMapping(value = "/sync")
+	 * @ResponseBody public Object sync(@RequestParam(value = "ids") String ids,
+	 *               Model model) throws Exception { String msg = "操作完成。";
+	 *               SyncGYResponseBean bean = null; String[] idarray =
+	 *               ids.split(","); if (idarray != null) { for (String id :
+	 *               idarray) { if ("".equals(id)) { continue; } SysFee vo =
+	 *               this.feeService.findById(Long.valueOf(id)); if (null != vo)
+	 *               { // if (vo.getSyncGyFlag() != 0L) { // bean =
+	 *               syncInterface.syncUpdateGoodsType(vo); // } else {
+	 *               //这边修改了费率同步状态就为0了，不会执行到同步修改高阳 // bean =
+	 *               syncInterface.syncAddGoodsType(vo); // }
+	 *               if(vo.getSyncGyFlag() == 0L){ bean =
+	 *               syncInterface.syncAddGoodsType(vo); }else{ bean =
+	 *               syncInterface.syncUpdateGoodsType(vo); } } if (bean !=
+	 *               null) { if (bean.isSyncSuccess()) { vo.setSyncGyFlag(1L);
+	 *               vo
+	 *               .setSyncGyTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss)
+	 *               ); msg += vo.getId() + ":" + bean.getMsg() + "。";
+	 *               feeService.saveUpdateBrand(vo); }
+	 *               if("URM27899".equals(bean.getCode())){ bean =
+	 *               syncInterface.syncUpdateGoodsType(vo); if (bean != null) {
+	 *               if (bean.isSyncSuccess()) { vo.setSyncGyFlag(1L);
+	 *               vo.setSyncGyTime
+	 *               (TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss)); msg +=
+	 *               vo.getId() + ":" + bean.getMsg() + "。";
+	 *               feeService.saveUpdateBrand(vo); } } } } else { msg +=
+	 *               vo.getId() + "同步失败。"; } } } return
+	 *               JsonRespWrapper.success(msg, "/sys/sysfee/feelist"); }
+	 ***/
+
+	/**
+	 * 费率分类同步 增加了try...catch 费率分类采用先新增接口后修改接口的办法
+	 * 
+	 * @param ids
+	 * @param model
+	 * @return
+	 * @author liujun 2013-09-04
+	 */
+	@RequestMapping(value = "/sync")
+	@ResponseBody
+	public Object sync(@RequestParam(value = "ids") String ids, Model model, HttpServletRequest request) throws Exception {
+
+		String msg = "操作完成。";
+		String message = "";
+		SyncGYResponseBean bean = null;
+		// 获取当前的登录用户
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		try {
+			String[] idarray = ids.split(",");
+			if (idarray != null) {
+				for (String id : idarray) {
+					if ("".equals(id)) {
+						continue;
+					}
+					SysFee vo = this.feeService.findById(Long.valueOf(id));
+					if (null != vo) {
+						bean = syncInterface.syncAddGoodsType(vo);
+						if (bean != null) {
+							if (bean.isSyncSuccess()) {
+								vo.setSyncGyFlag(1L);
+								vo.setSyncGyTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+								message = vo.getId() + ":" + bean.getMsg() + "。";
+								msg += message;
+								feeService.saveUpdateBrand(vo);
+							} else {
+								bean = syncInterface.syncUpdateGoodsType(vo);
+								if (bean != null) {
+									if (bean.isSyncSuccess()) {
+										vo.setSyncGyFlag(1L);
+										vo.setSyncGyTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+										message = vo.getId() + ":" + bean.getMsg() + "。";
+										msg += message;
+										feeService.saveUpdateBrand(vo);
+									} else {
+										message = vo.getId() + "同步失败。";
+										msg += message;
+									}
+								}
+							}
+						} else {
+							message = vo.getId() + "同步失败。";
+							msg += message;
+						}
+
+					}
+					logUtils.logOther("费率分类管理", "批量同步：" + message, sessionUser.getId());
+				}
+			}
+			// logUtils.logOther("费率分类管理", "费率同步");
+		}
+		catch (Exception e) {
+			log.error(e.getMessage());
+			return JsonRespWrapper.error(e.getMessage());
+		}
+
+		return JsonRespWrapper.success(msg, "/sys/sysfee/feelist");
+
+	}
+
+	/**
+	 * 选择商户（在用）
+	 * 
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "selectStore")
+	public String selectStoreId(Store store, @RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model)
+	        throws SQLException {
+		store.setStatus(Store.STATUS_AUDIT_PASS);// 状态为审核通过
+		store.setIsValid(1L);
+		Page<Store> storeList = storeService.listStore(store, page, 10, "", "");
+
+		model.addAttribute("pageData", storeList);
+
+		return "/store/store/select-store";
+	}
+}

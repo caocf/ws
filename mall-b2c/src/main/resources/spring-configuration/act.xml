@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"
+	default-lazy-init="true">
+
+	<description>App Configuration</description>
+
+
+    <bean id="actOrderClient" class="com.cplatform.order.ActOrderServiceClient">
+        <property name="serverAddress" value="${order_server.address}" />
+        <property name="retryTimes" value="${order_server.retry_times}" />
+        <property name="timeout" value="${order_server.timeout}" />
+        <property name="retryInterval" value="${order_server.retry_interval}" />
+    </bean>
+
+
+    <bean id="actBusinessClient" class="com.cplatform.act.ActServiceClientImpl">
+        <property name="serverAddress" value="${act_server.address}" />
+        <property name="retryTimes" value="${act_server.retry_times}" />
+        <property name="timeout" value="${act_server.timeout}" />
+        <property name="retryInterval" value="${act_server.retry_interval}" />
+    </bean>
+
+    <bean id="payServiceClient" class="com.cplatform.pay.PayServiceClient">
+        <property name="serverAddress" value="${pay_gateway.address}" />
+        <property name="retryTimes" value="${pay_gateway.retry_times}" />
+        <property name="timeout" value="${pay_gateway.timeout}" />
+        <property name="retryInterval" value="${pay_gateway.retry_interval}" />
+    </bean>
+    
+	 <bean class="com.cplatform.verifycode.CodeServiceClient">
+		<property name="serverAddress" value="http://127.0.0.1:19001" />
+        <property name="retryTimes" value="5" />
+        <property name="timeout" value="10000" />
+        <property name="retryInterval" value="1000" />
+	</bean>
+	
+    <!-- Memcached配置 -->
+    <bean name="memcachedClient"
+  	class="net.rubyeye.xmemcached.utils.XMemcachedClientFactoryBean"
+	  destroy-method="shutdown" lazy-init="false">
+	  <property name="servers" value="192.168.1.16:11201" />
+	  <property name="commandFactory">
+		<bean class="net.rubyeye.xmemcached.command.BinaryCommandFactory" />
+	</property>
+</bean>
+
+</beans>

@@ -1,0 +1,127 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <ht:head/>
+</head>
+<body>
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5><c:if test="${method == 'add'}">添加广告位置</c:if><c:if test="${method == 'edit'}">修改广告位置</c:if></h5>
+    </div>
+    <!-- end box / title -->
+     <form id="fm" class="required-validate" <c:if test="${method == 'add'}">action="position_add"</c:if><c:if test="${method == 'edit'}">action="position_edit"</c:if> method="post" accept-charset="utf-8" enctype="multipart/form-data">
+        <c:if test="${method == 'edit'}">
+        <input type="hidden" id="id" name="id" value="${sysAdPosition.id}" />
+        </c:if>
+        <div class="form">
+            <div class="fields">
+            	<c:if test="${method == 'add'}">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">自动生成</div>
+                </div>
+                </c:if>
+                <c:if test="${method == 'edit'}">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">${sysAdPosition.id}</div>
+                </div>
+                </c:if>	
+                <div class="field">
+                    <div class="label">
+                        <label for="name" class="req">名称：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                    	<input type="text" name="name" id="name" value="${sysAdPosition.name}" class="small required min-length-0 max-length-50" maxlength="50" />
+                    	<span class="error" id="advice-required-name" style="display:none"></span>
+                        <span class="error" id="advice-min-length-name" style="display:none"></span>
+                        <span class="error" id="advice-max-length-name" style="display:none"></span>
+                        <span class="error" id="advice-server-name" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="width" class="req">宽：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                    	<input type="text" name="width" id="width" value="${sysAdPosition.width}" class="small required validate-number min-length-0 max-length-9" maxlength="9" />
+                    	<span class="error" id="advice-required-width" style="display:none"></span>
+                        <span class="error" id="advice-validate-number-width" style="display:none"></span>
+                        <span class="error" id="advice-min-length-width" style="display:none"></span>
+                        <span class="error" id="advice-max-length-width" style="display:none"></span>
+                        <span class="error" id="advice-server-width" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="height" class="req">高：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                    	<input type="text" name="height" id="height" value="${sysAdPosition.height}" class="small required validate-number min-length-0 max-length-9" maxlength="9" />
+                    	<span class="error" id="advice-required-height" style="display:none"></span>
+                        <span class="error" id="advice-validate-number-height" style="display:none"></span>
+                        <span class="error" id="advice-min-length-height" style="display:none"></span>
+                        <span class="error" id="advice-max-length-height" style="display:none"></span>
+                        <span class="error" id="advice-server-height" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="templateFile" class="req">位置:</label>
+                    </div>                    
+                    <div class="input input-file">
+                        <select id="templateFile" name="position" class="required">
+                        	<option value="1" <c:if test="${sysAdPosition.position == 'home'}">selected="selected"</c:if>>home</option>
+                        	<option value="2" <c:if test="${sysAdPosition.position == 'serach'}">selected="selected"</c:if>>serach</option>
+                        	<option value="3" <c:if test="${sysAdPosition.position == 'item'}">selected="selected"</c:if>>item</option>
+                        </select>
+                        <span class="error" id="advice-required-type" style="display:none"></span>
+                        <span class="error" id="advice-server-type" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="code" class="req">位置识别码：</label>
+                    </div>
+                    <div class="input"><!-- small medium large -->
+                    	<input type="text" name="code" id="code" value="${sysAdPosition.code}" class="small required min-length-0 max-length-50" maxlength="50" />
+                    	<span class="error" id="advice-required-code" style="display:none"></span>
+                        <span class="error" id="advice-min-length-code" style="display:none"></span>
+                        <span class="error" id="advice-max-length-code" style="display:none"></span>	
+                        <span class="error" id="advice-server-code" style="display:none"></span>
+                    </div>
+                </div>
+                
+        				<div class="field" >
+							<div class="label">
+								<label for="num" class="req">广告数量:</label>
+							</div>
+							<div class="input">
+								<input type="text" name="num" id="num" value="${sysAdPosition.num}" class="small required validate-number min-length-0 max-length-2" maxlength="2" />
+		                    	<span class="error" id="advice-required-num" style="display:none"></span>
+		                        <span class="error" id="advice-validate-number-num" style="display:none"></span>
+		                        <span class="error" id="advice-min-length-num" style="display:none"></span>
+		                        <span class="error" id="advice-max-length-num" style="display:none"></span>
+		                        <span class="error" id="advice-server-num" style="display:none"></span>
+							</div>
+						</div>
+                <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight" value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                    <input type="button" class="common_btn" onclick="history.back();" value="返回" />
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- end forms -->
+</div>
+</body>
+</html>

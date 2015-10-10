@@ -1,0 +1,200 @@
+package com.cplatform.mall.back.order.entity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Transient;
+
+public class SmsbuyOrder {
+
+	private String terminalId;
+
+	private String createTime;
+
+	private String actType;
+
+	// private String goodSubject;
+	// private String shopName;
+	private String address;
+
+	private Long orderId;
+
+	private Long payStatus;
+
+	/** 查询用创建开始时间 **/
+	private String beginTime;
+
+	/** 查询用创建结束时间 **/
+	private String endTime;
+
+	// 是否添加
+	private String isAdd;
+
+	// 发货状态
+	private Long sendStatus;
+
+	public Long getSendStatus() {
+		return sendStatus;
+	}
+
+	public void setSendStatus(Long sendStatus) {
+		this.sendStatus = sendStatus;
+	}
+
+	/** 发货状态map */
+	private static Map<Long, String> sendStatusMap = new HashMap<Long, String>();
+	static {
+		sendStatusMap.put(0l, "未发货");
+		sendStatusMap.put(1l, "已发货");
+		sendStatusMap.put(2l, "已收货");
+	}
+
+	@Transient
+	public static Map<Long, String> getSendStatusMap() {
+		return sendStatusMap;
+	}
+
+	@Transient
+	public String getSendStatusName() {
+		return sendStatusMap.get(sendStatus);
+	}
+
+	public String getIsAdd() {
+		return isAdd;
+	}
+
+	public void setIsAdd(String isAdd) {
+		this.isAdd = isAdd;
+	}
+
+	// 添加地址状态
+	public static Map<String, String> isAddAddress = null;
+	static {
+		isAddAddress = new HashMap<String, String>();
+		isAddAddress.put("1", "已添加");
+		isAddAddress.put("0", "未添加");
+	}
+
+	@Transient
+	public static Map<String, String> getIsAddAddress() {
+		return isAddAddress;
+	}
+
+	public Long getOrderId() {
+		return orderId;
+	}
+
+	public void setOrderId(Long orderId) {
+		this.orderId = orderId;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getTerminalId() {
+		return terminalId;
+	}
+
+	public void setTerminalId(String terminalId) {
+		this.terminalId = terminalId;
+	}
+
+	public String getCreateTime() {
+		return createTime;
+	}
+
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
+	}
+
+	public String getActType() {
+		return actType;
+	}
+
+	public void setActType(String actType) {
+		this.actType = actType;
+	}
+
+	// public String getGoodSubject() {
+	// return goodSubject;
+	// }
+	// public void setGoodSubject(String goodSubject) {
+	// this.goodSubject = goodSubject;
+	// }
+	// public String getShopName() {
+	// return shopName;
+	// }
+	// public void setShopName(String shopName) {
+	// this.shopName = shopName;
+	// }
+
+	@Transient
+	public String getBeginTime() {
+		return beginTime;
+	}
+
+	public Long getPayStatus() {
+		return payStatus;
+	}
+
+	public void setPayStatus(Long payStatus) {
+		this.payStatus = payStatus;
+	}
+
+	@Transient
+	public void setBeginTime(String beginTime) {
+		this.beginTime = beginTime;
+	}
+
+	@Transient
+	public String getEndTime() {
+		return endTime;
+	}
+
+	@Transient
+	public void setEndTime(String endTime) {
+		this.endTime = endTime;
+	}
+
+	/** 业务类型map */
+	private static Map<String, String> actTypeMap = null;
+	static {
+		actTypeMap = new HashMap<String, String>();
+		actTypeMap.put("20", "短信购");
+		actTypeMap.put("40", "普通购买");
+	}
+
+	@Transient
+	public static Map<String, String> getActTypeMap() {
+		return actTypeMap;
+	}
+
+	@Transient
+	public String getActTypeName() {
+		return actTypeMap.get(this.getActType());
+	}
+
+	/** 业务类型map */
+	public static Map<Long, String> payStatusMap = null;
+	static {
+		payStatusMap = new HashMap<Long, String>();
+		payStatusMap.put(0L, "未支付");
+		payStatusMap.put(1L, "支付中");
+		payStatusMap.put(2L, "已支付");
+	}
+
+	@Transient
+	public static Map<Long, String> getPayStatusMap() {
+		return payStatusMap;
+	}
+
+	@Transient
+	public String getPayStatusName() {
+		return payStatusMap.get(this.getPayStatus());
+	}
+}

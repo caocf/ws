@@ -1,0 +1,106 @@
+package com.cplatform.mall.back.order.web;
+
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.web.ItemManageController;
+import com.cplatform.mall.back.order.entity.SmsAddress;
+import com.cplatform.mall.back.order.entity.SmsbuyOrder;
+import com.cplatform.mall.back.order.service.SmsbuyOrderService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.order.ActOrderExpressInfo;
+
+/**
+ * 短信购订单控制器
+ */
+
+@Controller
+@RequestMapping(value = "/order/smsbuy")
+public class SmsbuyOrderController {
+
+	private static final Logger log = Logger.getLogger(ItemManageController.class);
+	@Autowired
+	private LogUtils logUtils;
+	@Autowired
+	private SmsbuyOrderService service;
+
+	/**
+	 * 列表页面
+	 */
+	@RequestMapping(value = "/list")
+	public String list(SmsbuyOrder smsbuyOrder, @RequestParam(value = "page", required = false, defaultValue = "1") int page, Model model)
+	        throws SQLException {
+		Page<SmsbuyOrder> pageData = service.findSmsbuyOrderList(smsbuyOrder, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("isAddAddress", SmsbuyOrder.isAddAddress);
+		model.addAttribute("payStatusMap", SmsbuyOrder.payStatusMap);
+		return "order/smsbuy-order-list";
+	}
+
+	/**
+	 * 展示页面
+	 */
+	@RequestMapping(value = "/view")
+	public String view(@RequestParam(value = "orderId") long orderId, Model model) throws SQLException {
+		ActOrderExpressInfo info = service.findByOrderId(orderId);
+		model.addAttribute("info", info);
+		model.addAttribute("orderId", orderId);
+		return "order/smsbuy-order-view";
+	}
+
+	/**
+	 * 进入增加页面
+	 */
+	@RequestMapping(value = "/viewAdd")
+	public String viewAdd(@RequestParam(value = "id") String terminalId, @RequestParam(value = "createTime") String createTime,
+	        @RequestParam(value = "orderId") long orderId, Model model) throws SQLException {
+		model.addAttribute("terminalId", terminalId);
+		model.addAttribute("createTime", createTime);
+		List<SmsAddress> addresses = service.findSmsAddressessByterminalId(terminalId);
+		model.addAttribute("totalCount", addresses.size());
+		model.addAttribute("addresses", addresses);
+		model.addAttribute("orderId", orderId);
+		ActOrderExpressInfo info = service.findByOrderId(orderId);
+		model.addAttribute("info", info);
+		return "order/smsbuy-order-add";
+	}
+
+	/**
+	 * 增加和修改
+	 */
+	@RequestMapping(value = "/add")
+	@ResponseBody
+	public Object add(ActOrderExpressInfo express, @RequestParam(value = "orderId") long orderId,
+	        @RequestParam(value = "terminalId") String terminalId) {
+		try {
+			System.out.println(express.getActOrderId());
+			SmsAddress smsAddress = new SmsAddress();
+			smsAddress.setTerminalId(terminalId);
+			smsAddress.setAddress(express.getAddress() + " " + express.getReceiverName() + " " + express.getCellphoneNumber());
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+			smsAddress.setUpdateTime(sdf.format(new Date()));
+			express.setActOrderId(orderId);
+			// service.save(express);
+			// 修改地址时同时插入到t_smsbuy_user_address表中一条记录
+			service.saveActOrderAndSmsAddress(express, smsAddress);
+//			logUtils.logAdd("短信购订单", "添加或修改收货地址");
+		}
+		catch (SQLException e) {
+			log.error(e.getMessage());
+			return JsonRespWrapper.success("操作失败", "/order/smsbuy/list");
+		}
+		return JsonRespWrapper.success("操作成功", "/order/smsbuy/list");
+	}
+}

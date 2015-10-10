@@ -1,0 +1,325 @@
+package com.cplatform.mall.back.smsbuy.entity;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import org.springframework.web.bind.annotation.ResponseBody;
+
+/**
+ * 短信购商品指令配置实体类. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-16 下午3:22:12
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: wuyn@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Entity
+@Table(name = "T_SMSBUY_ITEM_ROUTER")
+public class SmsbuyItemRouter {
+
+	private Long id;
+
+	private Long actId;
+
+	private String actName;
+
+	private String itemId;
+
+	private String itemName;
+
+	private String rootSpcode;
+
+	private String spCode;
+
+	private Integer cmdOptType;
+
+	private String command;
+
+	private Integer payType;
+
+	private Double itemPrice;
+
+	private Integer isSession;
+	
+	private Long priority;
+
+	/**
+	 * 获取 actName
+	 * 
+	 * @return actName
+	 */
+	@Transient
+	public String getActName() {
+		return actName;
+	}
+
+	/**
+	 * 设置 actName
+	 * 
+	 * @param actName
+	 */
+	public void setActName(String actName) {
+		this.actName = actName;
+	}
+
+	/**
+	 * 获取 rootSpcode
+	 * 
+	 * @return rootSpcode
+	 */
+	@Transient
+	public String getRootSpcode() {
+		return rootSpcode;
+	}
+
+	/**
+	 * 设置 rootSpcode
+	 * 
+	 * @param rootSpcode
+	 */
+	public void setRootSpcode(String rootSpcode) {
+		this.rootSpcode = rootSpcode;
+	}
+
+	/**
+	 * 获取 cmdOptTypeName
+	 * 
+	 * @return cmdOptTypeName
+	 */
+	@Transient
+	public String getCmdOptTypeName() {
+		return cmdOptTypeMap.get(cmdOptType);
+	}
+
+	public static Map<Integer, String> cmdOptTypeMap = new HashMap<Integer, String>();
+	static {
+		cmdOptTypeMap.put(1, "入口指令");
+		cmdOptTypeMap.put(2, "其它指令");
+	}
+
+	@Transient
+	public String getPayTypeName() {
+		return payTypeMap.get(payType);
+	}
+
+	public static Map<Integer, String> payTypeMap = new HashMap<Integer, String>();
+	static {
+		payTypeMap.put(1, "积分");
+		payTypeMap.put(2, "商城币");
+	}
+
+	/**
+	 * 获取 id
+	 * 
+	 * @return id
+	 */
+	@SequenceGenerator(name = "seq_smsbuyAct", sequenceName = "SEQ_SMSBUY_ITEM")
+	@Id
+	@GeneratedValue(generator = "seq_smsbuyAct")
+	@ResponseBody
+	public Long getId() {
+		return id;
+	}
+
+	/**
+	 * 设置 id
+	 * 
+	 * @param id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	/**
+	 * 获取 actId
+	 * 
+	 * @return actId
+	 */
+	@Column(name = "ACT_ID")
+	public Long getActId() {
+		return actId;
+	}
+
+	/**
+	 * 设置 actId
+	 * 
+	 * @param actId
+	 */
+	public void setActId(Long actId) {
+		this.actId = actId;
+	}
+
+	/**
+	 * 获取 itemId
+	 * 
+	 * @return itemId
+	 */
+	@Column(name = "ITEM_ID")
+	public String getItemId() {
+		return itemId;
+	}
+
+	/**
+	 * 设置 itemId
+	 * 
+	 * @param itemId
+	 */
+	public void setItemId(String itemId) {
+		this.itemId = itemId;
+	}
+
+	/**
+	 * 获取 itemName
+	 * 
+	 * @return itemName
+	 */
+	@Column(name = "ITEM_NAME")
+	public String getItemName() {
+		return itemName;
+	}
+
+	/**
+	 * 设置 itemName
+	 * 
+	 * @param itemName
+	 */
+	public void setItemName(String itemName) {
+		this.itemName = itemName;
+	}
+
+	/**
+	 * 获取 spCode
+	 * 
+	 * @return spCode
+	 */
+	@Column(name = "SP_CODE")
+	public String getSpCode() {
+		return spCode;
+	}
+
+	/**
+	 * 设置 spCode
+	 * 
+	 * @param spCode
+	 */
+	public void setSpCode(String spCode) {
+		this.spCode = spCode;
+	}
+
+	/**
+	 * 获取 cmdOptType
+	 * 
+	 * @return cmdOptType
+	 */
+	@Column(name = "CMD_OPT_TYPE")
+	public Integer getCmdOptType() {
+		return cmdOptType;
+	}
+
+	/**
+	 * 设置 cmdOptType
+	 * 
+	 * @param cmdOptType
+	 */
+	public void setCmdOptType(Integer cmdOptType) {
+		this.cmdOptType = cmdOptType;
+	}
+
+	/**
+	 * 获取 command
+	 * 
+	 * @return command
+	 */
+	@Column(name = "COMMAND")
+	public String getCommand() {
+		return command;
+	}
+
+	/**
+	 * 设置 command
+	 * 
+	 * @param command
+	 */
+	public void setCommand(String command) {
+		this.command = command;
+	}
+
+	/**
+	 * 获取 payType
+	 * 
+	 * @return payType
+	 */
+	@Column(name = "PAY_TYPE")
+	public Integer getPayType() {
+		return payType;
+	}
+
+	/**
+	 * 设置 payType
+	 * 
+	 * @param payType
+	 */
+	public void setPayType(Integer payType) {
+		this.payType = payType;
+	}
+
+	/**
+	 * 获取 itemPrice
+	 * 
+	 * @return itemPrice
+	 */
+	@Column(name = "ITEM_PRICE")
+	public Double getItemPrice() {
+		return itemPrice;
+	}
+
+	/**
+	 * 设置 itemPrice
+	 * 
+	 * @param itemPrice
+	 */
+	public void setItemPrice(Double itemPrice) {
+		this.itemPrice = itemPrice;
+	}
+
+	/**
+	 * 获取 isSession
+	 * 
+	 * @return isSession
+	 */
+	@Column(name = "IS_SESSION")
+	public Integer getIsSession() {
+		return isSession;
+	}
+
+	/**
+	 * 设置 isSession
+	 * 
+	 * @param isSession
+	 */
+	public void setIsSession(Integer isSession) {
+		this.isSession = isSession;
+	}
+	
+	@Column(name = "PRIORITY")
+	public Long getPriority() {
+		return priority;
+	}
+
+	public void setPriority(Long priority) {
+		this.priority = priority;
+	}
+}

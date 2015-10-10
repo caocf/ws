@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_item_sale_area_link_1 ON "LIFE".t_item_sale_area_link(sale_id);

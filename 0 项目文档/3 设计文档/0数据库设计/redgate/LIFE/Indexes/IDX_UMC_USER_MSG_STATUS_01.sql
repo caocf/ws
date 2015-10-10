@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_umc_user_msg_status_01 ON "LIFE".t_umc_user_msg_status(msg_id);

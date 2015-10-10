@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_act_order_history ON "LIFE".t_act_order_history(act_order_id);

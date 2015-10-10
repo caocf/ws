@@ -1,0 +1,159 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <ht:head/>
+    
+     <script type="text/javascript">
+    		$(document).ready(function(){
+    		   $("#itemName").click(function(){
+		    		   selectSinggleGood($("#itemId").val(),function(itemId,itemName){
+		    					$id('itemId').value =itemId;
+		    					$id('itemName').value =itemName;
+		    					
+		    					$id('itemName').focus();//?
+    							$id('itemName').blur();//?
+		    			});
+	    		});
+    			
+    			$("#addItemRouter").click(function(){
+    				$("#fm").submit();
+    			});
+    		});	
+    		
+    </script>
+    
+</head>
+<body>
+<br />
+<div id="search-menu">
+      <ul>
+         <ct:display model="store_list" btn="add_btn">
+         <ht:menu-btn text="活动配置" url="/smsbuy/act/preEditAct?actId=${actId}" type="add"/>
+         <ht:menu-btn text="商品指令配置" type="add"/>
+        </ct:display>
+    </ul>
+    <br style="clear: left" />
+</div>
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>短信购商品指令配置</h5>
+    </div>
+    <!-- end box / title -->
+    <form:form method="post" id="fm" action="addItemRouter" commandName="smsbuyItemRouter"  htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate">
+        <div class="form">
+        <form:hidden path="actId"/>
+        <form:hidden path="id"/>
+            <div class="fields">
+            	   <div class="field">
+							<div class="label">
+								<label for="itemName"  class="req">选择商品：</label>
+							</div>
+							<div class="input">
+								<form:input path="itemName" cssClass="small required"
+									maxlength="100" readonly="true" />
+								<form:hidden path="itemId" />
+								<span class="error" id="advice-required-itemName"
+									style="display:none"></span>
+							</div>
+						</div>
+						
+						 <div class="field">
+							
+							<table class="datalist fixwidth">
+								<tr>
+									<td nowrap="nowrap" width="230">特服号：
+										<select name="rootSpcode">
+		                    			<c:forEach items="${sysSpcodeList }" var="item">
+		                        			<option value="${item.spcode }" <c:if test="${param.spcode == item.spcode}">selected="selected"</c:if>>${item.spcode }</option>
+		                        		</c:forEach>
+		                    			</select>
+		                    			<form:input path="spCode" cssClass="small required" maxlength="9"  style="width:55px"/>
+		                    		</td>
+		                    		<td nowrap="nowrap" width="200">指令内容：
+		                    			<form:input path="command" cssClass="small required" maxlength="50"   style="width:120px"/>
+		                    		</td>
+		                    		<td nowrap="nowrap" width="200">商品支付方式：
+		                    			<c:forEach items="${payTypeMap}" var="item" varStatus="index">
+                           	 			<input type="radio" id="radio1-${index.count }" name="payType" <c:if test="${item.key==smsbuyItemRouter.payType }">checked="checked"</c:if> <c:if test="${item.value=='商城币'}">checked="checked"</c:if> value="${item.key}"/><label for="radio1-${index.count }">${item.value }</label>
+                            			</c:forEach>
+		                    		</td>
+		                    		<td nowrap="nowrap" width="180">商品购买价格：
+		                    		<form:input path="itemPrice" cssClass="validate-number" maxlength="9" style="width:55px"/>
+		                    		</td>
+		                    		<td nowrap="nowrap" width="150">优先级：
+		                    		<form:input path="priority" cssClass=" required validate-pattern-/^\\d+$/"
+									maxlength="5" style="width:55px"/> 
+									<span class="error" id="advice-required-priority"
+										style="display:none"></span>
+									<span class="error" id="advice-validate-pattern-priority"
+									style="display:none"></span>
+		                    		</td>
+		                    		<td nowrap="nowrap"><button type="button" class="common_btn" style="background:#87CEFA;" id="addItemRouter">增加指令</button></td>
+                    			</tr>
+                    		</table></span>
+						</div>
+   			</div>
+        </div>
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+
+<div class="container">
+    <br/>
+    <h3>商品指令列表</h3>
+
+    <div class="mainbox">
+        <c:if test="${not empty pageData}">
+
+        <table class="datalist fixwidth">
+            <tr>
+                <th nowrap="nowrap" width="150">归属活动</th>
+                <th nowrap="nowrap"width="200">商品名称</th>
+                <th nowrap="nowrap"width="100">特服号</th>
+                <th nowrap="nowrap"width="100">指令内容</th>
+                <th nowrap="nowrap"width="100">商品支付方式</th>
+                <th nowrap="nowrap"width="100">商品购买价格</th>
+                <th nowrap="nowrap">优先级</th>
+                <th nowrap="nowrap"width="100">操作</th>
+            </tr>
+
+            <c:forEach items="${pageData.data}" var="item">
+            <tr>
+                <td nowrap="nowrap">${item.actName}</td>
+                <td nowrap="nowrap" class="ellipsis">${item.itemName}</td>
+                <td nowrap="nowrap" class="ellipsis">${item.spCode}</td>
+                <td nowrap="nowrap" class="ellipsis">${item.command}</td>
+                <td nowrap="nowrap">${item.payTypeName}</td>
+                <td nowrap="nowrap">${item.itemPrice/100}</td>
+                <td nowrap="nowrap">${item.priority}</td>
+                <td nowrap="nowrap">
+                <ct:display model="smsbuy_act_router_list" btn="view_btn">
+                <a href="./viewRouter?id=${item.id}">查看</a>
+                </ct:display>
+                 <ct:display model="smsbuy_act_router_list" btn="del_btn">
+                <a href="#" onclick="deleteItem('./deleteRouter.do?id=${item.id}');">删除</a>
+                </ct:display>
+                </td>
+            </tr>
+            </c:forEach>
+        </table>
+
+        <ht:page pageData="${pageData}" />
+
+        </c:if>
+        <c:if test="${empty pageData}">
+        <div class="note">
+            <p class="i">目前没有商品指令相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,413 @@
+package com.cplatform.mall.back.locallife.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.locallife.dao.PageModuleDao;
+import com.cplatform.mall.back.locallife.dao.PageModuleDataDao;
+import com.cplatform.mall.back.locallife.entity.ModuleDataTemplet;
+import com.cplatform.mall.back.locallife.entity.PageModule;
+import com.cplatform.mall.back.locallife.entity.PageModuleData;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.websys.entity.SysTemplateInfo;
+import com.cplatform.mall.back.websys.service.BsFileService;
+
+/**
+ * 模版管理Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-8
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author mudeng@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class LocalLifeModuleService {
+
+	@Autowired
+	DbHelper dbHelper;
+
+	@Autowired
+	AppConfig appConfig;
+
+	@Autowired
+	PageModuleDao dao;
+	
+	@Autowired
+	PageModuleDataDao dataDao;
+
+	@Autowired
+	BsFileService bsFileService;
+
+	/**
+	 * 分页查询所有的模块信息
+	 * 
+	 * @param info
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<PageModule> getPageModulePage(PageModule pageModule, int pageNo, int pageSize) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*,mt.title tempName,(select u.user_name from t_sys_user u where u.id = t.create_user) as createUserName,(select u.user_name from t_sys_user u where u.id = t.update_user) as updateUserName from t_page_module t ");
+//		sqlBuff.append(" left join t_sys_region r on t.region_code = r.region_code");
+//		r.region_name regionName,
+		sqlBuff.append(" left join t_module_data_templet mt on t.temp_id = mt.id");
+		sqlBuff.append(" where 1 = 1 ");
+				if (StringUtils.isNotEmpty(pageModule.getTitle())) {
+					sqlBuff.append(" and t.title like ? ");
+					params.add("%" + pageModule.getTitle().trim() + "%");
+					}
+		sqlBuff.append("order by t.id desc");
+		return dbHelper.getPage(sqlBuff.toString(), PageModule.class, pageNo, pageSize, params.toArray());
+
+	}
+	/**
+	 * 根据模板id查询模块列表
+	 * @param tempId
+	 * @return
+	 * @throws Exception
+	 */
+	public List<PageModule> getPageModuleListByTempId(Long tempId) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_page_module t ");
+		sqlBuff.append(" where 1 = 1 ");
+					sqlBuff.append(" and t.temp_id = ? ");
+					params.add(tempId);
+		return dbHelper.getBeanList(sqlBuff.toString(), PageModule.class, params.toArray());
+
+	}
+	
+	/**
+	 * 分页查询所有的模块数据
+	 * @param pageModuleData
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws Exception
+	 */
+	public Page<PageModuleData> getPageModuleDataPage(PageModuleData pageModuleData, int pageNo, int pageSize) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*, mt.title tempName,mo.title moduleName,(select u.user_name from t_sys_user u where u.id = t.create_user) as createUserName,(select u.user_name from t_sys_user u where u.id = t.update_user) as updateUserName,(select u.user_name from t_sys_user u where u.id = t.audit_user) as auditUserName from t_page_module_data t ");
+//		sqlBuff.append(" left join t_sys_region r on t.region_code = r.region_code");
+//		r.region_name regionName,
+		sqlBuff.append(" left join t_module_data_templet mt on t.templet_id = mt.id");
+		sqlBuff.append(" left join t_page_module mo on t.module_id = mo.id");
+		sqlBuff.append(" where 1 = 1 ");
+				if (pageModuleData.getModuleId()!=null) {
+						sqlBuff.append(" and t.module_id = ? ");
+						params.add(pageModuleData.getModuleId());
+					}
+				if (pageModuleData.getStatus()!=null) {
+					sqlBuff.append(" and t.status = ? ");
+					params.add(pageModuleData.getStatus());
+				}
+				if (StringUtils.isNotEmpty(pageModuleData.getContentTitle())) {
+					sqlBuff.append(" and t.content_title like ? ");
+					params.add("%" + pageModuleData.getContentTitle().trim() + "%");
+				}
+		sqlBuff.append("order by t.sort_no");
+		return dbHelper.getPage(sqlBuff.toString(), PageModuleData.class, pageNo, pageSize, params.toArray());
+		
+	}
+	
+	/**
+	 * 根据模块id查询模块数据列表
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */
+	public List<PageModuleData> getPageModuleDataList(Long id) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_page_module_data t ");
+		sqlBuff.append(" where 1 = 1 ");
+			sqlBuff.append(" and t.module_id = ? ");
+			params.add(id);
+		return dbHelper.getBeanList(sqlBuff.toString(), PageModuleData.class,params.toArray());
+		
+	}
+	
+	/**
+	 * 根据模块id查询模板文件路径
+	 * @param moduleId
+	 * @return
+	 * @throws Exception
+	 */
+	public Map<String,String> getFilePath(Long moduleId) throws Exception{
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append(" select tm.conf_path from T_MODULE_DATA_TEMPLET tm where tm.id in (select  t.temp_id from T_PAGE_MODULE t where t.id = ?) ");
+		params.add(moduleId);
+		return dbHelper.getMap(sqlBuff.toString(), params.toArray());
+	}
+
+	/**
+	 * 查询模板数据列表
+	 * @return
+	 * @throws Exception
+	 */
+	public List<ModuleDataTemplet> getModuleDataTempletList() throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.* from t_module_data_templet t where 1 = 1 ");
+		sqlBuff.append("order by t.id desc");
+		return dbHelper.getBeanList(sqlBuff.toString(), ModuleDataTemplet.class, params.toArray());
+
+	}
+	
+	/**
+	 * 获取页面展示的json数据
+	 * @param pageModuleData
+	 * @param json
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject getDataJson(PageModuleData pageModuleData,JSONObject json) throws Exception {
+		JSONObject dataJson = null;
+		String temp = "";
+		if(StringUtils.isEmpty(pageModuleData.getContent())){
+			JSONArray jarr = JSONArray.fromObject(json.getString("fields"));
+			for(int i = 0;i<jarr.size();i++){
+				JSONObject jsonObj = JSONObject.fromObject(jarr.get(i));
+				if(i==0){
+					temp = temp + jsonObj.getString("code")+":''";
+				}else{
+					temp = temp + ","+jsonObj.getString("code")+":''";
+				}
+			}
+			dataJson = JSONObject.fromObject("{"+temp.replaceAll(" ", "").replaceAll("\n","").replaceAll("\r","")+"}");
+		}else{
+			dataJson = JSONObject.fromObject(pageModuleData.getContent().replaceAll(" ", "").replaceAll("\n","").replaceAll("\r",""));
+		}
+		return dataJson;
+	}
+	
+	/**
+	 * 保存模板数据信息
+	 * @param pageModuleData
+	 * @param request
+	 * @param json
+	 * @param uploadFile
+	 * @return
+	 * @throws Exception
+	 */
+	public PageModuleData savePageModuleData(PageModuleData pageModuleData,MultipartHttpServletRequest fileRequest,HttpServletRequest request,JSONObject json) throws Exception{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		PageModule pageModule = findById(pageModuleData.getModuleId());
+		String content = getRequestDataJson(request,json,fileRequest);
+		pageModuleData.setContent(content);
+		JSONObject contentJson = JSONObject.fromObject(content);
+		if(contentJson!=null){
+			pageModuleData.setContentTitle(contentJson.getString("title"));
+		}
+		pageModuleData.setStatus(0L);
+		pageModuleData.setTempletId(pageModule.getTempId());
+		pageModuleData.setCreateUser(sessionUser.getId());
+		pageModuleData.setCreateTime(TimeUtil.now());
+		pageModuleData.setModuleCode(pageModule.getCode());
+		pageModuleData.setStartTime(pageModuleData.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		pageModuleData.setEndTime(pageModuleData.getEndTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		dataDao.save(pageModuleData);
+		return pageModuleData;
+	}
+	
+	/**
+	 * 更新模板数据信息
+	 * @param pageModuleData
+	 * @param request
+	 * @param json
+	 * @param uploadFile
+	 * @return
+	 * @throws Exception
+	 */
+	public PageModuleData updatePageModuleData(PageModuleData pageModuleData,MultipartHttpServletRequest fileRequest,HttpServletRequest request,JSONObject json) throws Exception{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		PageModuleData pageModuleDataTemp = dataDao.findOne(pageModuleData.getId());
+		String content = getRequestDataJson(request,json,fileRequest);
+		pageModuleDataTemp.setContent(content);
+		JSONObject contentJson = JSONObject.fromObject(content);
+		if(contentJson!=null){
+			pageModuleDataTemp.setContentTitle(contentJson.getString("title"));
+		}
+		pageModuleDataTemp.setStatus(0L);
+		pageModuleDataTemp.setUpdateTime(TimeUtil.now());
+		pageModuleDataTemp.setUpdateUser(sessionUser.getId());
+		pageModuleDataTemp.setStartTime(pageModuleData.getStartTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		pageModuleDataTemp.setEndTime(pageModuleData.getEndTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		pageModuleDataTemp.setSortNo(pageModuleData.getSortNo());
+		pageModuleDataTemp.setRegionCode(pageModuleData.getRegionCode());
+		dataDao.save(pageModuleDataTemp);
+		return pageModuleData;
+	}
+	
+	/**
+	 * 审核模板数据信息
+	 * @param pageModuleData
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
+	public PageModuleData auditPageModuleData(PageModuleData pageModuleData,HttpServletRequest request) throws Exception{
+		SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+		pageModuleData.setAuditUser(sessionUser.getId());
+		pageModuleData.setAuditTime(TimeUtil.now());
+		dataDao.save(pageModuleData);
+		return pageModuleData;
+	}
+	
+	/**
+	 * 获取页面提交的json数据
+	 * @param request
+	 * @param json
+	 * @param path
+	 * @return
+	 * @throws Exception
+	 */
+	public String getRequestDataJson(HttpServletRequest request,JSONObject json,MultipartHttpServletRequest fileRequest) throws Exception{
+		String temp = "";
+		JSONArray jarr = JSONArray.fromObject(json.getString("fields"));
+		for(int i = 0;i<jarr.size();i++){
+			JSONObject jsonObj = JSONObject.fromObject(jarr.get(i));
+			JSONObject jsonEeditor = JSONObject.fromObject(jsonObj.getString("editor"));
+			if(i==0){
+				if("image".equals(jsonEeditor.getString("type"))){
+					String path = getRequestPath(fileRequest,jsonObj.getString("code")+"File");
+					if(StringUtils.isNotEmpty(path)){
+						temp = temp + jsonObj.getString("code")+":'"+path+"'";
+					}else{
+						temp = temp + jsonObj.getString("code")+":'"+request.getParameter(jsonObj.getString("code")).replaceAll("\n","").replaceAll("\r","")+"'";
+					}
+				}else{
+					temp = temp + jsonObj.getString("code")+":'"+request.getParameter(jsonObj.getString("code")).replaceAll("\n","").replaceAll("\r","")+"'";
+				}
+			}else{
+				if("image".equals(jsonEeditor.getString("type"))){
+					String path = getRequestPath(fileRequest,jsonObj.getString("code")+"File");
+					if(StringUtils.isNotEmpty(path)){
+						temp = temp + ","+jsonObj.getString("code")+":'"+path+"'";
+					}else{
+						temp = temp + ","+jsonObj.getString("code")+":'"+request.getParameter(jsonObj.getString("code")).replaceAll("\n","").replaceAll("\r","")+"'";
+					}
+				}else{
+				temp = temp + ","+jsonObj.getString("code")+":'"+request.getParameter(jsonObj.getString("code")).replaceAll("\n","").replaceAll("\r","")+"'";
+				}
+			}
+		}
+		return "{"+temp+"}";
+	}
+	
+	public String getRequestPath(MultipartHttpServletRequest fileRequest,String fileName) throws Exception{
+		String path = "";
+		MultipartFile uploadFile = fileRequest.getFile(fileName);
+		if (uploadFile != null && !uploadFile.isEmpty()) {
+			PathInfo pathInfo = bsFileService.dealModuleFile(uploadFile, BsFileService.LOCAL_LIFE);
+			 path = pathInfo.getRealWebPath("");
+			}
+		return path;
+	}
+
+	/**
+	 * 查询所有模版信息
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysTemplateInfo> list() throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * from t_sys_template_info t where 1 = 1 ");
+		sqlBuff.append("order by t.id desc");
+		return dbHelper.getPage(sqlBuff.toString(), SysTemplateInfo.class);
+
+	}
+
+	/**
+	 * 查询单个模版信息
+	 * 
+	 * @param id
+	 * @return
+	 * @throws SQLException 
+	 */
+	public PageModule findById(Long id) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*, r.region_name regionName from T_PAGE_MODULE t ");
+		sqlBuff.append(" left join t_sys_region r on t.region_code = r.region_code");
+		sqlBuff.append(" where 1 = 1 ");
+		sqlBuff.append("and t.id = ? ");
+		params.add(id);
+		return dbHelper.getBean(sqlBuff.toString(), PageModule.class, params.toArray());
+	}
+	
+	/**
+	 * 根据模板id查询模板数据信息
+	 * @param id
+	 * @return
+	 * @throws Exception
+	 */
+	public PageModuleData findPageModuleDataById(Long id) throws Exception {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select t.*, r.region_name regionName,mt.title tempName,mo.title moduleName,(select u.user_name from t_sys_user u where u.id = t.create_user) as createUserName,(select u.user_name from t_sys_user u where u.id = t.update_user) as updateUserName,(select u.user_name from t_sys_user u where u.id = t.audit_user) as auditUserName from t_page_module_data t ");
+		sqlBuff.append(" left join t_sys_region r on t.region_code = r.region_code");
+		sqlBuff.append(" left join t_module_data_templet mt on t.templet_id = mt.id");
+		sqlBuff.append(" left join t_page_module mo on t.module_id = mo.id");
+		sqlBuff.append(" where 1 = 1 ");
+		sqlBuff.append("and t.id = ? ");
+		params.add(id);
+		return dbHelper.getBean(sqlBuff.toString(), PageModuleData.class, params.toArray());
+	}
+
+	/**
+	 * 保存模版信息
+	 * 
+	 * @param sys
+	 * @param uploadFile
+	 * @param isValid
+	 * @throws Exception
+	 */
+	@Transactional
+	public void saveTemplate(ModuleDataTemplet moduleDataTemplet, MultipartFile uploadFile) throws Exception {
+		if (uploadFile != null && !uploadFile.isEmpty()) {
+			PathInfo pathInfo = bsFileService.dealModuleFile(uploadFile, BsFileService.LOCAL_LIFE);
+			moduleDataTemplet.setConfPath(pathInfo.getWebPath()+uploadFile.getOriginalFilename());
+		}
+		moduleDataTemplet.setType(1L);
+//		dao.save(moduleDataTemplet);
+	}
+}

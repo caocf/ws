@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_mms_batch_task

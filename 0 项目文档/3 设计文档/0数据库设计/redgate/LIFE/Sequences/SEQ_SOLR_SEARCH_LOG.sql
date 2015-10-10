@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_solr_search_log

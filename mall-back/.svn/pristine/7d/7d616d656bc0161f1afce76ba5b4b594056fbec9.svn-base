@@ -1,0 +1,120 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+<ht:head />
+<script type="text/javascript">
+	$().ready(function() {
+
+	
+	});
+</script>
+
+</head>
+<body>
+	<br />
+	<div id="search-menu">
+		<ul>
+			<ht:menu-btn type="search" />
+			<ct:display model="picConf_list" btn="add_btn">
+				<ht:menu-btn text="添加频道图片" url="/websys/channel/catalog/pic_add" />
+			</ct:display>
+		</ul>
+		<br style="clear: left" />
+	</div>
+	<div class="queryContainer">
+		<form name="queryForm" id="queryForm" action="?" method="get">
+			<table>
+				<tr>
+					<td width="70">图片名称：</td>
+					<td width="200"><input type="text" name="picAlt" value="${param.picAlt}" class="txt" />
+					</td>
+					 <td width="70">频道：</td>
+                <td width="200" >
+                    <select name="channel">
+                        <option value="">--请选择--</option>
+                    	<c:forEach items="${channelMap}" var="item">
+                        	    <option value="${item.key }" <c:if test="${param.channel == item.key}">selected="selected"</c:if>>${item.value }</option>
+                        </c:forEach>
+                    </select>
+                </td>
+                
+                <td width="70">楼层：</td>
+                <td width="200">
+                    <select name="postion">
+                        <option value="">--请选择--</option>
+                    	<c:forEach items="${groupMap }" var="item">
+                        	    <option value="${item.key }" <c:if test="${param.groupId == item.key}">selected="selected"</c:if>>${item.value }</option>
+                        </c:forEach>
+                    </select>
+                </td>
+                
+                <td width="70">区域：</td>
+                <td width="200">
+                     <input type="input" name="regionName" value="${param.regionName}" class="txt"/>
+                </td>
+                
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <ct:btn type="search" />
+                </td>
+            </tr>
+
+			</table>
+		</form>
+	</div>
+	<div class="container">
+		<br />
+		<h3>模版列表</h3>
+		<div class="mainbox">
+			<c:if test="${not empty pageData}">
+				<table class="datalist fixwidth">
+				<colgroup>
+			       	<col width="80"></col>
+			       	<col width="100"></col>
+			       	<col width="80"></col>
+			       	<col width="120"></col>
+			       	<col width="80"></col>
+			       	<col width="80"></col>
+			       	<col width="80"></col>
+		    	</colgroup>
+					<tr>
+						<th nowrap="nowrap" width="100">频道图片编号</th>
+						<th nowrap="nowrap" >图片名称</th>
+						<th nowrap="nowrap" width="100">楼层</th>
+						<th nowrap="nowrap" width="100">频道</th>
+						<th nowrap="nowrap" width="100">区域</th>
+						<th nowrap="nowrap"  width="100">排序</th>
+						<th nowrap="nowrap"  width="100">操作</th>
+					</tr>
+					<c:forEach items="${pageData.data}" var="snow">
+						<tr>
+							<td width="50" nowrap="nowrap">${snow.id}</td>
+							<td nowrap="nowrap"  class="ellipsis">${snow.picAlt}</td>
+							<td nowrap="nowrap" >${snow.postionName}</td>
+							<td nowrap="nowrap" >${snow.channelName}</td>
+							<td nowrap="nowrap" >${snow.regionName}</td>
+							<td nowrap="nowrap" >${snow.picIndex}</td>
+							<td width="100" nowrap="nowrap"><ct:display
+									model="picConf_list" btn="mod_btn">
+									<a href="pic_edit?id=${snow.id}">修改</a>
+								</ct:display> &nbsp;&nbsp; <ct:display model="picConf_list" btn="del_btn">
+									<a href="#" onclick="deleteItem('pic_del?id=${snow.id}');">删除</a>
+								</ct:display></td>
+						</tr>
+					</c:forEach>
+				</table>
+				<ht:page pageData="${pageData}" />
+			</c:if>
+			<c:if test="${empty pageData}">
+       	 <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+		</div>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+#token AES\u7f16\u7801\u5bc6\u94a5
+cookies.key = 1234567890bvcsdw
+#token\u6700\u5927\u4fdd\u5b58\u65f6\u95f4 \u9ed8\u8ba4two weeks
+cookies.maxAge = 1209600
+
+#\u7f51\u7ad9\u5730\u5740\uff0c\u540d\u79f0
+site.url = http://localhost:8080/
+site.name = \u6570\u636e\u4e2d\u5fc3
+
+upload.pic.ext = png,jpg,gif
+upload.apppic.maxsize = 81920
+upload.img.dir = d:/Temp/images/
+upload.img.path = /Temp/images/
+
+
+
+#xheditor \u4e0a\u4f20\u53c2\u6570
+xheditor.upload.ext = 7z,bmp,csv,doc,docx,gif,gz,gzip,jpeg,jpg,pdf,png,ppt,pptx,rar,tar,tgz,txt,xls,xlsx,zip,dat,jar
+xheditor.upload.img.ext = bmp,gif,jpeg,jpg,png
+
+xheditor.upload.maxsize = 20971520
+xheditor.upload.dir = d:/Temp/richfiles/
+xheditor.upload.path = /Temp/richfiles/
+xheditor.domain = localhost
+
+verify_server.address = http://192.168.1.148:19001
+verify_server.retry_times = 1
+verify_server.timeout = 60000
+verify_server.retry_interval =5000
+
+PAGE_STATIC_URL=http\://192.168.1.14/notice/item/gen.chtml
+
+ordergoods.img.server=http\://images.12580life.com
+ordergoods.host.server=http\://mall.12580life.com
+
+order_server.address = http://192.168.1.148:18701
+order_server.retry_times = 5
+order_server.timeout = 10000
+order_server.retry_interval =1000
+
+db_query.user=cylm
+
+web.show.num=20
+
+web.main.show=/order/getAllOrder,/orderPayStatus/getAllOrder,/paymoney/getAllOrder,/verify/getAllOrder
+
+#\u5de5\u5355\u9ed8\u8ba4\u5c55\u793a\u89d2\u8272
+monitor.role=\u79fb\u52a8,\u5bbd\u8fde,\u9ad8\u9633,\u65b9\u6b63
+
+
+#\u90ae\u7bb1\u53d1\u9001\u4eba
+mail.host = mail.c-platform.com
+mail.user = sys-service@c-platform.com
+mail.pwd = cplatform
+
+#\u90ae\u7bb1\u63a5\u6536\u4eba
+mail.obj = guyu@c-platform.com
+
+#\u6284\u9001\u4eba\uff0c\u5206\u53f7\u5206\u9694\u591a\u4e2a\u90ae\u7bb1
+mail.cc = 

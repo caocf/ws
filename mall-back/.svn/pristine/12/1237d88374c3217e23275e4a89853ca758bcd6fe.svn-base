@@ -1,0 +1,169 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.ListPage;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.websys.dao.SysAnnouncementDao;
+import com.cplatform.mall.back.websys.dao.SysFileImgDao;
+import com.cplatform.mall.back.websys.entity.SysAnnouncement;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * Title. <br>
+ * Description.
+ * <p/>
+ * Copyright: Copyright (c) 13-6-5 上午11:14
+ * <p/>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p/>
+ * Author: nicky
+ * <p/>
+ * Version: 1.0
+ * <p/>
+ */
+@Service
+public class SysAnnouncementService {
+
+	@Autowired
+	DbHelper dbHelper;
+
+	@Autowired
+	SysAnnouncementDao sysAnnouncementDao;
+	
+	@Autowired
+	private BsFileService bsFileService;
+	
+	@Autowired
+	private SysFileImgDao sysFileImgDao;
+
+	public ListPage<Map<String, String>> getAnnouncementPage(SysAnnouncement sysAnnouncement, int page, int pageSize) throws SQLException {
+
+		StringBuilder sql = new StringBuilder();
+		sql.append("select t1.*, t2.user_code, t2.user_name from t_sys_announcement t1, t_sys_user t2 where t1.pub_user = t2.id(+) ");
+
+		List<Object> params = new ArrayList<Object>();
+		if (!StringUtils.isEmpty(sysAnnouncement.getQueryTimeBegin()) && StringUtils.isNotBlank(sysAnnouncement.getQueryTimeBegin())) {
+			sql.append(" and t1.pub_time >= ?");
+			params.add(sysAnnouncement.getQueryTimeBegin().concat("000000"));
+		}
+
+		if (!StringUtils.isEmpty(sysAnnouncement.getQueryTimeEnd()) && StringUtils.isNotBlank(sysAnnouncement.getQueryTimeEnd())) {
+			sql.append(" and t1.pub_time <= ?");
+			params.add(sysAnnouncement.getQueryTimeEnd().concat("999999"));
+		}
+
+		if (StringUtils.isNotBlank(sysAnnouncement.getTitle())) {
+			sql.append(" and (t1.title like ? or t1.description like ?)");
+			params.add("%" + sysAnnouncement.getTitle().trim() + "%");
+			params.add("%" + sysAnnouncement.getTitle().trim() + "%");
+		}
+
+		if (StringUtils.isNotBlank(sysAnnouncement.getPubStatus())) {
+			sql.append(" and t1.pub_status = ?");
+			params.add(sysAnnouncement.getPubStatus());
+		} else {
+			sql.append(" and t1.pub_status != 3");
+		}
+
+		if (StringUtils.isNotBlank(sysAnnouncement.getPubDest())) {
+			sql.append(" and t1.pub_dest = ?");
+			params.add(sysAnnouncement.getPubDest());
+		}
+
+		if (StringUtils.isNotBlank(sysAnnouncement.getQueryUserCode())) {
+			sql.append(" and t2.user_code = ?");
+			params.add(sysAnnouncement.getQueryUserCode());
+		}
+
+		sql.append(" order by t1.id desc ");
+		return dbHelper.getMapPage(sql.toString(), page, pageSize, params.toArray());
+
+	}
+	@Transactional
+	public SysAnnouncement save(SysAnnouncement po,MultipartFile uploadfileAdvise,MultipartFile uploadfileAdviseExtend) throws Exception {
+		po.setPubTime(TimeStamp.getTime(14));
+		po.setPubUser(SessionUser.getSessionUser().getId());
+		po.setPubStatus(SysAnnouncement.STATUS_NEW);
+		SysAnnouncement sa = this.sysAnnouncementDao.save(po);
+		if(null != uploadfileAdvise){
+			saveAdvisePic(sa,uploadfileAdvise);
+		}
+		if(null != uploadfileAdviseExtend){
+			saveAdviseExtendPic(sa, uploadfileAdviseExtend);
+		}
+		return sa;
+	}
+	
+	public void saveAdvisePic(SysAnnouncement sa,MultipartFile uploadfile) throws Exception{
+		SysFileImg img = findImg(sa.getId(),BsFileService.ADVISE_PIC_KEY );
+		if(null != img){
+			sysFileImgDao.delete(img);
+		}
+		PathInfo pathInfo = bsFileService.dealMultipartFile(uploadfile, BsFileService.ADVISE_PIC_KEY, sa.getId());
+		sa.setAdvisePic(pathInfo.getWebPath());
+		this.sysAnnouncementDao.save(sa);
+	}
+	public void saveAdviseExtendPic(SysAnnouncement sa,MultipartFile uploadfile) throws Exception{
+		SysFileImg img = findImg(sa.getId(),BsFileService.ADVISE_EXTEND_PIC_KEY );
+		if(null != img){
+			sysFileImgDao.delete(img);
+		}
+		PathInfo pathInfo = bsFileService.dealMultipartFile(uploadfile, BsFileService.ADVISE_EXTEND_PIC_KEY, sa.getId());
+		sa.setAdviseExtendPic(pathInfo.getWebPath());
+		this.sysAnnouncementDao.save(sa);
+	}
+	
+	
+	public SysFileImg findImg(Long id ,String key){
+		return  sysFileImgDao.findByBsIdAndBsKey(id, key);
+	} 
+
+	public SysAnnouncement update(SysAnnouncement po) {
+		SysAnnouncement database = sysAnnouncementDao.findOne(po.getId());
+		database.setTitle(po.getTitle());
+		database.setDescription(po.getDescription());
+		database.setPubDest(po.getPubDest());
+		database.setPubTime(TimeStamp.getTime(14));
+		database.setPubUser(SessionUser.getSessionUser().getId());
+		database.setPubStatus(SysAnnouncement.STATUS_NEW);
+		database.setEndTime(po.getEndTime());
+		database.setAuditTime(null);
+		database.setAuditUser(null);
+		return this.sysAnnouncementDao.save(database);
+	}
+
+	public SysAnnouncement delete(Long id) {
+		SysAnnouncement po = this.sysAnnouncementDao.findOne(id);
+		po.setPubStatus(SysAnnouncement.STATUS_DEL);
+		po.setAuditUser(SessionUser.getSessionUser().getId());
+		po.setAuditTime(TimeStamp.getTime(14));
+		return this.sysAnnouncementDao.save(po);
+	}
+
+	public SysAnnouncement audit(Long id, boolean pass) {
+		SysAnnouncement po = this.sysAnnouncementDao.findOne(id);
+		if (pass) {
+			po.setPubStatus(SysAnnouncement.STATUS_PUB);
+		} else {
+			po.setPubStatus(SysAnnouncement.STATUS_REJECT);
+		}
+		po.setAuditUser(SessionUser.getSessionUser().getId());
+		po.setAuditTime(TimeStamp.getTime(14));
+		return this.sysAnnouncementDao.save(po);
+	}
+
+}

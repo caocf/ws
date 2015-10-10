@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_bc_service MAXVALUE 999

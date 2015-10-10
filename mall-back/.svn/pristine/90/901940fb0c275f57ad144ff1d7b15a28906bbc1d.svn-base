@@ -1,0 +1,114 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+	<ht:head/>
+	
+</head>
+<body>
+<br/>
+<div id="search-menu">
+    <ul>
+        <ht:menu-btn type="search"/>
+        <ct:display model="task_mode" btn="add_btn">
+        	<ht:menu-btn text="添加激活任务" url="/giftcard/task/preAdd" type="add"/>
+        </ct:display>
+	</ul>
+    <br style="clear: left" />
+</div>
+<div class="queryContainer" >
+    <form name="queryForm" id="queryForm" action="?" method="get">
+        <table>
+            <tr>
+              <td>创建方式：</td>
+              <td>
+              <select name="resources">
+						<option value="">未选择</option>
+						<option value="0" <c:if test="${param.status == 0}">selected="selected"</c:if>>批次号</option>
+						<option value="1" <c:if test="${param.status == 1}">selected="selected"</c:if>>文件</option>
+						<option value="2" <c:if test="${param.status == 2}">selected="selected"</c:if>>起止序列号</option>
+			  </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>  
+              <td>状态：</td>
+              <td>
+              <select name="status">
+						<option value="">未选择</option>
+						<option value="0" <c:if test="${param.resources == 0}">selected="selected"</c:if>>未处理</option>
+						<option value="1" <c:if test="${param.resources == 1}">selected="selected"</c:if>>处理中</option>
+						<option value="2" <c:if test="${param.resources == 2}">selected="selected"</c:if>>已处理</option>
+			  </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              </td>
+              <td><ct:btn type="search" /></td>
+        </table>
+    </form>
+</div>
+
+<div class="container">
+    <br/>
+    <h3>礼品卡激活列表</h3>
+
+    <div class="mainbox">
+        <c:if test="${not empty pageData}">
+
+        <table class="datalist fixwidth">
+        	<colgroup>
+		       	<col width="80"></col>
+		       	<col width="100"></col>
+		       	<col width="80"></col>
+		       	<col width="100"></col>
+		       	<col width="80"></col>
+	    	</colgroup>
+            <tr>
+                <th nowrap="nowrap" width="80">编号</th>
+                <th nowrap="nowrap"  width="300">创建方式</th>
+                <th nowrap="nowrap"  width="100">状态</th>
+                <th nowrap="nowrap"  width="180">创建时间</th>
+                <th nowrap="nowrap">操作</th>
+            </tr>
+
+            <c:forEach items="${pageData.data}" var="item">
+            <tr>
+                <td nowrap="nowrap">${item.id}</td>
+                <td nowrap="nowrap">
+                <c:if test="${item.resources == 0 }">批次号</c:if>
+                <c:if test="${item.resources == 1 }">文件</c:if>
+                <c:if test="${item.resources == 2 }">起止序列号</c:if>
+                </td>
+                <td nowrap="nowrap">
+                <c:if test="${item.status == 0 }">未处理</c:if>
+                <c:if test="${item.status == 1 }">处理中</c:if>
+                <c:if test="${item.status == 2 }">已处理</c:if>
+                </td>
+                <td nowrap="nowrap"><ct:time source="${item.createTime}" /></td>
+                <td nowrap="nowrap">
+                <ct:display model="task_mode" btn="view_btn">
+                 <a href="./viewlist?id=${item.id}">查看</a>
+                 </ct:display>
+                 <!-- 
+                 <c:if test="${item.status == 0 }">
+                 <ct:display model="channel_floor_list" btn="del_btn">
+                 &nbsp;&nbsp;
+                 <a href="#" onclick="deleteItem('./delete.do?id=${item.id}');">删除</a>
+                 </ct:display>
+                 </c:if>
+                  -->
+                </td>
+            </tr>
+            </c:forEach>
+        </table>
+
+        <ht:page pageData="${pageData}" />
+
+        </c:if>
+        <c:if test="${empty pageData}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+
+</div>
+
+</body>
+</html>

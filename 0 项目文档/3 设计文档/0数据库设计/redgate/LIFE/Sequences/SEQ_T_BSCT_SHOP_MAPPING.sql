@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_t_bsct_shop_mapping MAXVALUE 99999999999

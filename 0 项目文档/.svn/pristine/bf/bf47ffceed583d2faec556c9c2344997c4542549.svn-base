@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_umc_public_msg ON "LIFE".t_umc_public_msg(create_time);

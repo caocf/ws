@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_t_redpackage_order MAXVALUE 99999999

@@ -1,0 +1,378 @@
+package com.cplatform.mall.back.utils;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 标题、简要说明.
+ * <p>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-6 下午3:15:22
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhengmz@c-platform.com
+ * @version 1.0.0
+ */
+
+@Component
+public class PathUtil {
+
+	@Autowired
+	AppConfig appConfig;
+
+	/**
+	 * 获得模块前缀
+	 * 
+	 * @param module
+	 *            模块key
+	 * @return
+	 */
+	public String getKeyPrefix(String key) {
+		if (BsFileService.BS_ITEM_COVER_PIC_KEY.equals(key)) {
+			return appConfig.getUploadItemDir();
+		}
+		if (BsFileService.BS_ITEM_PIC_KEY.equals(key)) {// 商品图集
+			return appConfig.getUploadItemDir();
+		}
+		if (BsFileService.BS_PROPERTY_PIC_KEY.equals(key)) {// 属性相关图片
+			return appConfig.getUploadItemDir();
+		}
+
+		if (BsFileService.BS_STORE_TREATY_KEY.equals(key) || BsFileService.BS_CHANNEL_TREATY_KEY.equals(key)) {
+			return appConfig.getUploadFileDir();
+		}
+
+		// 其他情况
+		return appConfig.getUploadFileDir();
+	}
+
+	public PathInfo getPathInfo(String module, String ext, Long... ids) {
+		String webpath = "";
+		String savepath = "";// 保存路径
+		String filename = "";// 文件名称
+		ext = ext.toLowerCase();
+		String time = TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx);
+		String dir1 = time.substring(0, 8);
+		String dir2 = time.substring(8, 10);
+		String dir3 = time.substring(10);
+		if (BsFileService.MODULE_BRAND_IMG_KEY.equals(module)) {// 品牌
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("brand_%s%s.%s", dir2, dir3, ext);
+			return new PathInfo(appConfig.getUploadBrandDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.MODULE_TASK_BATCH.equals(module) || BsFileService.MODULE_TASK_BATCH_BLACK.equals(module)
+		        || BsFileService.MODULE_TASK_BATCH_WHITE.equals(module)) {// 群发任务
+			Long id = 0L;
+			if (ids != null && ids.length > 0) {
+				id = ids[0];
+			}
+			webpath = String.format("%s/%d/", dir1, id);
+			savepath = String.format("%s/%d/", dir1, id);
+			filename = String.format("%d_%s.%s", id, module, ext);
+			return new PathInfo(appConfig.getUploadTaskDir() + savepath, webpath, filename);
+		}
+
+		if (BsFileService.MODULE_TEMPLATE.equals(module)) {// 模版
+			webpath = appConfig.getTemplateFileDir();
+			savepath = appConfig.getTemplateFileDir();
+			filename = ext;
+			// filename = String.format("custom_template_%s.%s", time, ext);
+			return new PathInfo(appConfig.getTemplateFileDir(), webpath, filename);
+		}
+		if (BsFileService.MODULE_AD.equals(module)) {// 广告
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("ad_%s.%s", time, ext);
+			return new PathInfo(appConfig.getUploadAdDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.MODULE_CHANNEL_PIC.equals(module) || BsFileService.MODULE_CHANNEL_CMD_PIC.equals(module)) {// 频道,频道推荐
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("cn_%s.%s", time, ext);
+			return new PathInfo(appConfig.getUploadChannelDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.MODULE_SETTLE.equals(module)) {// 结算信息
+			webpath = String.format("item/settle/%s/%s/", dir1, dir2);
+			savepath = String.format("item/settle/%s/%s/", dir1, dir2);
+			filename = String.format("settle_%s.%s", time, ext);
+			return new PathInfo(appConfig.getUploadFileDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.GIFT_REQUIRED_KEY.equals(module)) {//礼品卡需求
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("gr_%s.%s", time, ext);
+			return new PathInfo(appConfig.getUploadGiftrequiredDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.LOTTERY_ACTIVE_CONF_KEY.equals(module)) {//抽奖活动图片
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("%s",ext);
+			return new PathInfo(appConfig.getUploadLotteryDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.GIFT_CARD_QRCODE_KEY.equals(module)) {//
+			webpath = String.format("%s/%s/", dir1, dir2);
+			savepath = String.format("%s/%s/", dir1, dir2);
+			filename = String.format("%s",ext);
+			return new PathInfo(appConfig.getUploadQrcodeDir() + savepath, webpath, filename);
+		}
+
+		return null;
+	}
+
+	/**
+	 * 获取不同业务类型的文件生成路径
+	 * 
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @param ext
+	 *            扩展名
+	 * @return
+	 */
+	public PathInfo getPathById(String key, long id, String ext) {
+
+		String webpath = "";
+		String savepath = "";// 保存路径
+		String filename = "";// 文件名称
+		ext = ext.toLowerCase();
+
+		/*
+		 * 算法： 第一层 = ID/(2000*2000) 第二层= (ID mod （2000×2000））/2000 第三层 = ID mod
+		 * 2000
+		 */
+		long l1 = id / (2000 * 2000);
+
+		long l2 = (id % (2000 * 2000)) / 2000;
+
+		long l3 = id % 2000;
+
+		if (BsFileService.BS_ITEM_COVER_PIC_KEY.equals(key)) {
+			// 商品封面
+			webpath = String.format("%d/%d/%d/N0/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/N0/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+
+			return new PathInfo(appConfig.getUploadItemDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.BS_ITEM_PIC_KEY.equals(key)) {// 商品图集
+			webpath = String.format("%d/%d/%d/N0/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/N0/", l1, l2, l3);
+			filename = String.format("p_%d%d%d_%s.%s", l1, l2, l3, TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx), ext);
+			return new PathInfo(appConfig.getUploadItemDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.BS_PROPERTY_PIC_KEY.equals(key)) {// 属性相关图片
+			webpath = String.format("p/%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("p/%d/%d/%d/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+			return new PathInfo(appConfig.getUploadItemDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.GIFT_CARD_QRCODE_KEY.equals(key)) {
+			webpath = String.format("%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+			return new PathInfo(appConfig.getUploadQrcodeDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.GIFT_REQUIRED_KEY.equals(key)) {
+			webpath = String.format("%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+			return new PathInfo(appConfig.getUploadGiftrequiredDir() + savepath, webpath, filename);
+		}
+		if (BsFileService.ADVISE_PIC_KEY.equals(key)) {
+			webpath = String.format("%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+			return new PathInfo(appConfig.getUploadAdvisePicDir()+ savepath, webpath, filename);
+		}
+		if (BsFileService.ADVISE_EXTEND_PIC_KEY.equals(key)) {
+			webpath = String.format("%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("%d/%d/%d/", l1, l2, l3);
+			filename = String.format("p_%d%d%d.%s", l1, l2, l3, ext);
+			return new PathInfo(appConfig.getUploadAdviseExtendPicDir()+ savepath, webpath, filename);
+		}
+		
+
+		/**
+		 * 把商户移动签署协议附件单独拿出来实现。屏蔽这边
+		 * 2013-09-02
+		 * 刘军
+		 * 
+		 */
+		/**
+		if (BsFileService.BS_STORE_TREATY_KEY.equals(key) || BsFileService.BS_CHANNEL_TREATY_KEY.equals(key)) {
+			// 商户移动签约签署协议附件
+			webpath = String.format("store/%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("store/%d/%d/%d/", l1, l2, l3);
+			filename = String.format("s_%d%d%d_%s.%s", l1, l2, l3, TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx), ext);
+			return new PathInfo(appConfig.getUploadFileDir() + savepath, webpath, filename);
+		}
+		***/
+
+		// 其他情况
+		webpath = String.format("other/%d/%d/%d/", l1, l2, l3);
+		savepath = String.format("other/%d/%d/%d/", l1, l2, l3);
+		filename = String.format("o_%d%d%d_%s.%s", l1, l2, l3, TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx), ext);
+		return new PathInfo(appConfig.getUploadFileDir() + savepath, webpath, filename);
+	}
+	
+	
+	/**
+	 * 获取商户移动签约签署协议附件生成路径
+	 * @author liujun 
+	 * 2013-09-
+	 * @param key
+	 *            业务key
+	 * @param id
+	 *            业务id
+	 * @param ext
+	 *            扩展名
+	 * @return
+	 * 
+	 */
+	public PathInfo getBusiContractPathById(String key, long id, String ext) {
+
+		String webpath = "";
+		String savepath = "";// 保存路径
+		String filename = "";// 文件名称
+		ext = ext.toLowerCase();
+
+		/*
+		 * 算法： 第一层 = ID/(2000*2000) 第二层= (ID mod （2000×2000））/2000 第三层 = ID mod
+		 * 2000
+		 */
+		long l1 = id / (2000 * 2000);
+
+		long l2 = (id % (2000 * 2000)) / 2000;
+
+		long l3 = id % 2000;
+
+	
+		
+
+		if (BsFileService.BS_STORE_TREATY_KEY.equals(key) || BsFileService.BS_CHANNEL_TREATY_KEY.equals(key)) {
+			// 商户移动签约签署协议附件
+			webpath = String.format("store/%d/%d/%d/", l1, l2, l3);
+			savepath = String.format("store/%d/%d/%d/", l1, l2, l3);
+			filename = String.format("s_%d%d%d_%s.%s", l1, l2, l3, TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx), ext);
+			return new PathInfo(appConfig.getUploadFileDir() + savepath, webpath, filename);
+		}
+
+		// 其他情况
+		webpath = String.format("other/%d/%d/%d/", l1, l2, l3);
+		savepath = String.format("other/%d/%d/%d/", l1, l2, l3);
+		filename = String.format("o_%d%d%d_%s.%s", l1, l2, l3, TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmssxxx), ext);
+		return new PathInfo(appConfig.getUploadFileDir() + savepath, webpath, filename);
+	}
+
+	/**
+	 * 获取商品图片规则，获得第几个图片
+	 * 
+	 * @param id
+	 * @param indx
+	 * @return
+	 */
+	public static String getItemPic(Long id, int indx) {
+		long l1 = id / (2000 * 2000);
+		long l2 = (id % (2000 * 2000)) / 2000;
+		long l3 = id % 2000;
+		String savepath = String.format("%d/%d/%d/N%d/", l1, l2, l3, indx);
+		return savepath;
+	}
+
+	public static class PathInfo {
+
+		public PathInfo(String savepath, String webpath, String filename) {
+			this.savepath = savepath;
+			this.webPath = webpath;
+			this.filename = filename;
+		}
+
+		private String savepath;
+
+		private String filename;
+
+		private String webPath;
+
+		public String getRealPath() {
+			return this.getSavepath() + this.getFilename();
+		}
+
+		/**
+		 * 获得真实的web访问领
+		 * 
+		 * @param contextPath
+		 *            是否有前置
+		 * @param ext
+		 *            扩展名
+		 * @return
+		 */
+		public String getRealWebPath(String contextPath) {
+			return contextPath + this.getWebPath() + this.getFilename();
+		}
+
+		public String getFilename() {
+			return filename;
+		}
+
+		public void setFilename(String filename) {
+			this.filename = filename;
+		}
+
+		public String getWebPath() {
+			return webPath;
+		}
+
+		public void setWebPath(String webPath) {
+			this.webPath = webPath;
+		}
+
+		public String getSavepath() {
+			return savepath;
+		}
+		
+		
+
+		public void setSavepath(String savepath) {
+			this.savepath = savepath;
+		}
+
+	}
+	
+//	public static String getExtName(String fileName){
+//		
+//		String extName="";
+//		//int indexPos=0;
+//		
+//		if(!"".equals(fileName)&&fileName!=null){
+//			if(fileName.indexOf(".")>-1){
+//				
+//				extName=fileName.substring(fileName.indexOf(".")+1);
+//			}
+//			
+//		}
+//		return extName;
+//		
+//	}
+
+	public static void main(String[] args) {
+		///long number = 7999999999L;
+		
+		 ///String fileName="test.doc";
+		 
+		///System.out.println(PathUtil.getExtName(fileName));
+		
+		//long maxFeeAmount=Long.valueOf("49999.99");
+		double a1=Double.parseDouble("4999.99")*100; 
+		System.out.println(new Double(a1).longValue()+"");
+		
+
+	}
+}

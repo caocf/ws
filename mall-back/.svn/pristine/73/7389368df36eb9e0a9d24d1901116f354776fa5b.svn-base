@@ -1,0 +1,627 @@
+package com.cplatform.mall.back.item.web;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.entity.AuditStep;
+import com.cplatform.mall.back.item.entity.ItemOrg;
+import com.cplatform.mall.back.item.entity.ItemPriceType;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.service.ItemManageService;
+import com.cplatform.mall.back.item.web.validator.ItemFeeValidator;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.entity.SysFee;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 套餐商品控制类 Title. <br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-6-28 下午6:11:13
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: LiuDong@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Controller
+@RequestMapping(value = "item/meal")
+public class MealController {
+
+	@Autowired
+	private ItemManageService itemManageService;
+
+	@Autowired
+	private StoreService storeService;
+
+	@Autowired
+	private ItemFeeValidator itemFeeValidator;
+
+	@Autowired
+	private AppConfig appConfig;
+	
+	@Autowired
+	private LogUtils logUtils;
+
+
+	/**
+	 * 商品列表
+	 * 
+	 * @param itemOrg
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/meallist")
+	public String meallist(ItemSale itemSale, @RequestParam(value = "page", defaultValue = "1", required = false) int page, HttpSession session,
+	        Model model) throws SQLException {
+		itemSale.setGroupFlag(1L);
+		Page<ItemSale> pageData = itemManageService.listItemSale(itemSale, page, Page.DEFAULT_PAGESIZE, "");
+		model.addAttribute("statusMap", ItemSale.statusMap);
+		model.addAttribute("pageData", pageData);
+		// model.addAttribute("syncGyFlagMap", ItemSale.syncGyFlagMap);
+		model.addAttribute("syncGyFlagMsg", Store.syncGyFlagMsg);
+		model.addAttribute("isValidMap", ItemSale.isValidMap);
+		return "/item/meal/meal-list";
+	}
+
+	@RequestMapping(value = "/mealAdd", method = RequestMethod.GET)
+	public String mealAdd(Model model) {
+		ItemSale itemSale = new ItemSale();
+		itemSale.setItemMode(0L);
+		// model.addAttribute("itemModeMap", ItemSale.itemModeMap);// 商品类型
+		// model.addAttribute("virtualTypeMap", ItemSale.virtualTypeMap);// 虚拟类型
+		// model.addAttribute("groupFlagMap", ItemSale.groupFlagMap);//
+		// 商户-门店-渠道商
+		List<SysFee> feeList = this.itemManageService.getAllSysFeeList();
+		model.addAttribute("feeList", feeList);
+
+		model.addAttribute("itemSale", itemSale);
+		return "/item/meal/meal-add";
+	}
+
+	@RequestMapping(value = "/mealAdd", method = RequestMethod.POST)
+	@ResponseBody
+	public Object mealSave(MultipartFile uploadfile, ItemSale sale, MultipartHttpServletRequest request,
+	        @RequestParam(required = false) String unlimitedStockNum, Model model, BindingResult result) throws IOException, SQLException {
+		sale.setCreateUserId(SessionUser.getSessionUser().getId());
+		sale.setCreateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		sale.setSyncGyFlag(0L);
+		sale.setIsValid(0L);
+		sale.setIsView(1L);
+		sale.setStatus(ItemSale.STATUS_BASE_NO_AUDIT);
+		sale.setItemMode(0L);
+		String ids = sale.getItemIds();
+		// String[] idArys = ids.split(",");
+		// int[] start = new int[idArys.length];
+		// int[] stop = new int[idArys.length];
+		// for (int i = 0; i < idArys.length; i++) {
+		// ItemSale is =
+		// itemManageService.findItemSaleById(Long.valueOf(idArys[i]));
+		// start[i] = Integer.parseInt(is.getSaleStartTime());
+		// stop[i] = Integer.parseInt(is.getSaleStopTime());
+		// }
+		// Arrays.sort(start);
+		// Arrays.sort(stop);
+		String[] times = itemManageService.getTime(ids);
+		long start = 0;
+		long end = 0;
+		if (null != times[0] && !"".equals(times[0])) {
+			start = Long.parseLong(times[0]);
+		}
+		if (null != times[1] && !"".equals(times[1])) {
+			end = Long.parseLong(times[1]);
+		}
+		if (start > end || times[0] == null || times[1] == null || "".equals(times[0]) || "".equals(times[1])) {
+			return JsonRespWrapper.successAlert("操作失败，套餐里的商品有效时间没有交集,无法组成套餐商品");
+		}
+		sale.setSaleStartTime(times[0]);
+		sale.setSaleStopTime(times[1]);
+		// itemManageService.addItemInfo(sale, uploadfile, null, null, request,
+		// null);
+		itemManageService.saveMealtg(sale);
+		// model.addAttribute("itemSale", itemSale);
+		logUtils.logAdd("添加套餐商品", "");
+		return JsonRespWrapper.success("操作完成", "/item/meal/meallist");
+	}
+
+	@RequestMapping(value = "/mealEdit", method = RequestMethod.GET)
+	public String mealEdit(@RequestParam Long id, Model model) throws SQLException {
+
+		ItemSale itemSale = this.itemManageService.findItemSaleById(id);
+		Store store = this.storeService.findStoreById(itemSale.getStoreId());
+		model.addAttribute("store", store);
+		itemManageService.getItemSale(itemSale);
+		model.addAttribute("initStoreNum", ItemSale.INIT_STOCK_NUM);
+		// 套餐商品关系表
+		String[] groupLinkArry = itemManageService.getGroupItem(id);
+		if (null != groupLinkArry[0] && !"".equals(groupLinkArry[0])) {
+			itemSale.setItemIds(groupLinkArry[0]);
+		}
+		if (null != groupLinkArry[1] && !"".equals(groupLinkArry[1])) {
+			itemSale.setItemName(groupLinkArry[1]);
+		}
+		String[] ids = itemSale.getItemIds().split(",");
+		Long minStock = 999999999L;
+		boolean limitFlag = false;
+		for (int i = 0; i < ids.length; i++) {
+			ItemSale item = itemManageService.findItemSaleById(Long.parseLong(ids[i]));
+			Long stockNum = item.getStockNum();
+			if (!ItemSale.INIT_STOCK_NUM.equals(stockNum) && stockNum < minStock) {
+				minStock = stockNum;
+				limitFlag = true;
+			}
+		}
+		long realStock;
+		if (!limitFlag) {
+			realStock = -1000;
+		} else {
+			realStock = minStock;
+		}
+		model.addAttribute("itemSale", itemSale);
+		model.addAttribute("realStock", realStock);
+		List<ItemPriceType> priceTypeList = itemManageService.getAllPriceTypeList(id);
+		model.addAttribute("priceList", priceTypeList);
+		model.addAttribute("map", ItemPriceType.priceTypeMap);
+
+		return "/item/meal/meal-edit";
+	}
+
+	@RequestMapping(value = "/mealEdit", method = RequestMethod.POST)
+	@ResponseBody
+	public Object mealUpdate(ItemSale sale, MultipartHttpServletRequest request, @RequestParam(required = false) String unlimitedStockNum,
+	        Model model, BindingResult result) throws IOException, SQLException {
+		ItemSale old = this.itemManageService.findItemSaleById(sale.getId());
+		sale.setCreateUserId(old.getCreateUserId());
+		sale.setCreateTime(old.getCreateTime());
+		sale.setUpdateTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		sale.setUpdateUserId(SessionUser.getSessionUser().getId());
+		sale.setImgPath(old.getImgPath());
+		sale.setShopUserId(old.getShopUserId());
+		sale.setShopClass(old.getShopClass());
+		sale.setStoreId(old.getStoreId());
+		sale.setSyncGyFlag(old.getSyncGyFlag());
+		sale.setIsView(old.getIsView());
+		sale.setIsValid(0L);
+		String ids = sale.getItemIds();
+		// String[] idArys = ids.split(",");
+		// int[] start = new int[idArys.length];
+		// int[] stop = new int[idArys.length];
+		// for (int i = 0; i < idArys.length; i++) {
+		// ItemSale is =
+		// itemManageService.findItemSaleById(Long.valueOf(idArys[i]));
+		// start[i] = Integer.parseInt(is.getSaleStartTime());
+		// stop[i] = Integer.parseInt(is.getSaleStopTime());
+		// }
+		// Arrays.sort(start);
+		// Arrays.sort(stop);
+		String[] times = itemManageService.getTime(ids);
+		long start = 0;
+		long end = 0;
+		if (null != times[0] && !"".equals(times[0])) {
+			start = Long.parseLong(times[0]);
+		}
+		if (null != times[1] && !"".equals(times[1])) {
+			end = Long.parseLong(times[1]);
+		}
+		if (start > end || times[0] == null || times[1] == null || "".equals(times[0]) || "".equals(times[1])) {
+			return JsonRespWrapper.successAlert("操作失败，套餐里的商品有效时间没有交集,无法组成套餐商品");
+		}
+		
+		sale.setSaleStartTime(times[0]);
+		sale.setSaleStopTime(times[1]);
+
+		Store store = this.storeService.findStoreById(sale.getStoreId());
+		if (store.getItemEditAuditFlag() == 1L) {
+			sale.setStatus(old.getStatus());
+		} else {
+			sale.setStatus(ItemSale.STATUS_BASE_NO_AUDIT);
+		}
+		// itemManageService.addItemInfo(sale, null, null, null, request, null);
+		// model.addAttribute("itemSale", itemSale);
+		itemManageService.saveMealtg(sale);
+		// return JsonRespWrapper.success("操作完成", "/item/meal/meallist");
+		// 返回到来源页面
+		String backUrl = request.getParameter("backUrl");
+		logUtils.logModify("修改套餐商品", "套餐商品id"+sale.getId());
+		return JsonRespWrapper.success("操作成功", backUrl);
+	}
+
+	@RequestMapping(value = "/mealView/{id}")
+	public String mealView(@PathVariable Long id, Model model) throws SQLException, UnsupportedEncodingException {
+
+		ItemSale itemSale = this.itemManageService.findItemSaleById(id);
+		Store store = this.storeService.findStoreById(itemSale.getStoreId());
+		model.addAttribute("store", store);
+		itemManageService.getItemSale(itemSale);
+		// 如果不限库存
+		if (itemSale.getStockNum().equals(ItemSale.INIT_STOCK_NUM)) {
+			model.addAttribute("storeNum", "不限");
+		} else {
+			model.addAttribute("storeNum", itemSale.getStockNum());
+		}
+
+		// 套餐商品关系表
+		String[] groupLinkArry = itemManageService.getGroupItem(id);
+		if (null != groupLinkArry[0] && !"".equals(groupLinkArry[0])) {
+			itemSale.setItemIds(groupLinkArry[0]);
+		}
+		if (null != groupLinkArry[1] && !"".equals(groupLinkArry[1])) {
+			itemSale.setItemName(groupLinkArry[1]);
+		}
+		model.addAttribute("initStoreNum", ItemSale.INIT_STOCK_NUM);
+		model.addAttribute("itemModeMap", ItemSale.itemModeMap);// 商品类型
+		model.addAttribute("virtualTypeMap", ItemSale.virtualTypeMap);// 虚拟类型
+		model.addAttribute("groupFlagMap", ItemSale.groupFlagMap);// 商户-门店-渠道商
+		Long feeType = itemSale.getFeeType();
+		if (feeType != null) {
+			SysFee fee = this.itemManageService.findSysFeeById(feeType);// 自服务没有费率
+			model.addAttribute("fee", fee);
+		}
+		model.addAttribute("itemSale", itemSale);
+		List<SysFileImg> coverFileLink = itemManageService.getItemImg(itemSale.getId(), BsFileService.BS_ITEM_COVER_PIC_KEY);
+		model.addAttribute("coverFileLink", coverFileLink);
+		return "/item/meal/meal-view";
+	}
+
+	/**
+	 * 商品删除
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/delete")
+	@ResponseBody
+	public Object deleteItem(@RequestParam(value = "itemId", required = false) String itemId, Model model) {
+		String[] idarray = itemId.split(",");
+		if (idarray != null) {
+			for (String id : idarray) {
+				if (!"".equals(id)) {
+					ItemSale sale = itemManageService.findItemSaleById(Long.parseLong(id));
+					sale.setStatus(ItemSale.STATUS_DELETE);
+					this.itemManageService.addOrUpdateItemSale(sale);
+				}
+			}
+		}
+		logUtils.logDelete("套餐商品删除", "套餐商品id"+itemId);
+		return JsonRespWrapper.successReload("删除成功");
+	}
+
+	/**
+	 * 进入商品照片添加
+	 * 
+	 * @param itemId
+	 *            商品id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/img/{itemId}")
+	public String imgAddItem(@PathVariable Long itemId, Model model) {
+		model.addAttribute("itemId", itemId);
+		try {
+			// 普通图片
+			List<SysFileImg> fileLink = itemManageService.getItemImg(itemId, BsFileService.BS_ITEM_PIC_KEY);
+			model.addAttribute("fileLink", fileLink);
+			// 封面图片
+			List<SysFileImg> coverFileLink = itemManageService.getItemImg(itemId, BsFileService.BS_ITEM_COVER_PIC_KEY);
+			model.addAttribute("coverFileLink", coverFileLink);
+			model.addAttribute("itemId", itemId);
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// 查询图片
+		return "/item/meal/meal-add-three";
+	}
+
+	/**
+	 * 商品上架下架
+	 * 
+	 * @param id
+	 * @param optype
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "/goodsOnLine/{optype}")
+	@ResponseBody
+	public Object goodsOnLine(@RequestParam(value = "itemId", required = false) String itemId, @PathVariable String optype, Model model)
+	        throws IOException {
+		String[] idarray = itemId.split(",");
+		String msg = "";
+		if (idarray != null) {
+			for (String id : idarray) {
+				if (!"".equals(id)) {
+					ItemSale sale = this.itemManageService.findItemSaleById(Long.parseLong(id));
+					//上架
+					if ("online".equals(optype)) {
+						String result = itemFeeValidator.validateIsLinkSettle(sale);
+						if (StringUtils.isNotEmpty(result)) {
+							msg += result;
+							continue;
+						} else if (sale.getIsValid() == 0L && sale.getStatus() != ItemSale.STATUS_BASE_AUDIT_PASS) {
+							msg += sale.getName() + "商品状态有误，不能上架!";
+						}else{
+							msg = this.itemManageService.whetherOnline(sale.getId());
+							if ("".equals(msg)) {
+								sale.setIsValid(1L);
+								// 套餐商品不用调用页面静态化接口
+								// this.itemManageService.pageStatic(sale);
+								this.itemManageService.addOrUpdateItemSale(sale);
+								msg += sale.getName() + "上架成功,";
+							} else {
+								msg += "套餐商品里面包含的商品中有已经下架的商品，该套餐商品暂不能上架";
+							}
+						}
+						logUtils.logOther("套餐商品上架", "套餐商品id"+itemId);
+					} else {
+						//下架
+						sale.setIsValid(0L);
+						this.itemManageService.addOrUpdateItemSale(sale);
+						msg += sale.getName() + "下架成功。";
+						logUtils.logOther("套餐商品下架", "套餐商品id"+itemId);
+					}
+				}
+ 
+			}
+		}
+		return JsonRespWrapper.successReload(msg);
+	}
+
+	/**
+	 * 商品送审
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/sendToAudit")
+	@ResponseBody
+	public Object sendToAudit(@RequestParam Long id, Model model) {
+		ItemSale sale = itemManageService.findItemSaleById(id);
+		String msg = itemManageService.sendToAudit(sale);
+		// if (sale.getStatus() == ItemSale.STATUS_BASE_AUDIT_PASS &&
+		// sale.getIsValid() == 1L) {
+		// result += this.itemManageService.pageStatic(sale);
+		// }
+		return JsonRespWrapper.successReload(msg);
+	}
+
+	/**
+	 * 商品第一步审核列表
+	 * 
+	 * @param itemOrg
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/mealOneAuditList")
+	public String auditList(ItemSale itemSale, String name, String id, String queryStartTime, String queryEndTime, String groupFlag,
+	        @RequestParam(value = "page", defaultValue = "1", required = false) int page, HttpSession session, Model model) throws SQLException {
+		itemSale.setStatus(ItemSale.STATUS_BASE_NO_AUDIT);
+		itemSale.setGroupFlag(1L);
+		Page<ItemSale> pageData = itemManageService.listItemSale(itemSale, page, Page.DEFAULT_PAGESIZE, "");
+		model.addAttribute("statusMap", ItemOrg.statusMap);
+		model.addAttribute("pageData", pageData);
+		return "/item/meal/meal-audit-list";
+	}
+
+	/**
+	 * 商品第二步审核列表
+	 * 
+	 * @param itemOrg
+	 * @param page
+	 * @param session
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/mealTwoAuditList")
+	public String auditListTwo(ItemSale itemSale, @RequestParam(value = "page", defaultValue = "1", required = false) int page, HttpSession session,
+	        Model model) throws SQLException {
+		itemSale.setStatus(ItemSale.STATUS_BASE_AUDITING);
+		itemSale.setGroupFlag(1L);
+		Page<ItemSale> pageData = itemManageService.listItemSale(itemSale, page, Page.DEFAULT_PAGESIZE, "");
+
+		model.addAttribute("statusMap", ItemOrg.statusMap);
+		model.addAttribute("pageData", pageData);
+		return "/item/meal/meal-audit-list-two";
+	}
+
+	/**
+	 * 进入第一步审核填写意见页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/auditing/{id}", method = RequestMethod.GET)
+	public String toAudit(@PathVariable Long id, Model model) throws IOException, Exception {
+		AuditStep step = new AuditStep();
+		step.setBsId(id);
+		model.addAttribute("step", step);
+		ItemSale sale = itemManageService.findItemSaleById(id);
+		itemManageService.getItemSale(sale);
+		model.addAttribute("itemSale", sale);
+		/**
+		 * 商户费率改从t_store_fee表中查询
+		 * 
+		 * @modify_by macl@c-platform.com start...
+		 */
+		// List<SysFee> feeList = this.itemManageService.getAllSysFeeList();
+		List<SysFee> feeList = this.itemManageService.getValidSysFee(sale.getStoreId());
+		/** 商户费率改从t_store_fee表中查询 ... end */
+
+		model.addAttribute("feeList", feeList);
+
+		// 获取会员限制
+		List<ItemPriceType> pricetypeList = itemManageService.findItemPriceType("320000");
+		model.addAttribute("pricetypeList", pricetypeList);
+		// 跳转到列表页面
+		return "/item/meal/meal-audit";
+	}
+
+	/**
+	 * 第一步审核操作
+	 * 
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "/audit")
+	@ResponseBody
+	public Object audit(ItemSale sale, @ModelAttribute("step") AuditStep step, Model model, HttpServletRequest request) {
+		try {
+			SessionUser sessionUser = (SessionUser) request.getSession().getAttribute(SessionUser.SESSION_USER_KEY);
+			step.setAuditUserId(sessionUser.getId());
+			itemManageService.auditItemSale(sale, step);
+			//
+			// return JsonRespWrapper.success("操作成功",
+			// "/item/meal/mealOneAuditList");
+			// 返回到来源页面
+			String backUrl = request.getParameter("backUrl");
+			logUtils.logAudit("套餐商品初审", "套餐商品id"+sale.getId());
+			return JsonRespWrapper.success("操作成功", backUrl);
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 进入第二步审核填写意见页面
+	 * 
+	 * @param id
+	 * @param model
+	 * @return
+	 * @throws IOException
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/twoAuditing/{id}", method = RequestMethod.GET)
+	public String twoAudit(@PathVariable Long id, Model model) throws IOException, Exception {
+		model.addAttribute("id", id);
+		// 跳转到列表页面
+		return "/item/meal/meal-audit-two";
+	}
+
+	/**
+	 * 商品第二步审核
+	 * 
+	 * @param id
+	 * @param status
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/auditTwo/{id}")
+	@ResponseBody
+	public Object audit(@PathVariable Long id, @RequestParam(value = "status", required = true) Long status,
+	        @RequestParam(value = "remark", required = true) String remark, Model model, HttpServletRequest request) {
+		ItemSale sale = itemManageService.findItemSaleById(id);
+		sale.setStatus(status);
+		AuditStep step = new AuditStep();
+		step.setAuditUserId(SessionUser.getSessionUser().getId());
+		// if (status == ItemSale.STATUS_BASE_AUDIT_RETJECT) {
+		// step.setStatus(2L);
+		// } else {
+		// step.setStatus(1L);
+		// }
+		step.setStatus(status);
+		step.setRemark(remark);
+		// sale.setIsValid(0L);
+		String result = itemManageService.auditItem(sale, step);
+
+		// if (sale.getStatus() == ItemSale.STATUS_BASE_AUDIT_PASS &&
+		// sale.getIsValid() == 1L) {
+		// result += this.itemManageService.pageStatic(sale);
+		// }
+		// return JsonRespWrapper.success(result,
+		// "/item/meal/mealTwoAuditList");
+		// 返回到来源页面
+		String backUrl = request.getParameter("backUrl");
+		logUtils.logAudit("套餐商品终审", "套餐商品id"+sale.getId());
+		return JsonRespWrapper.success(result, backUrl);
+	}
+
+	/**
+	 * 同步高阳
+	 * 
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(value = "/syncGy/{id}")
+	@ResponseBody
+	public Object syncGy(@PathVariable Long id, Model model) {
+		try {
+			ItemSale vo = itemManageService.findItemSaleById(id);
+			String msg = "同步完成";
+			Map<String, String> flag = this.itemManageService.syncItem(vo);
+			// if (!flag) {
+			// msg = "同步失败";
+			// }
+			// hisunProductionService.
+			// SyncGYResponseBean bean = null;
+			// if (vo != null) {
+			// if (vo.getSyncGyFlag() == 0L) {
+			// bean = this.syncInterface.syncAddGoods(vo);
+			// } else {
+			// bean = this.syncInterface.syncUpdateGoods(vo);
+			// }
+			// if (bean != null) {
+			// vo.setSyncGyFlag(Long.valueOf(bean.getCode()));
+			// this.itemSaleService.save(vo);
+			// msg = bean.getMsg();
+			// } else {
+			// msg = "同步失败";
+			// }
+			// } else {
+			// return JsonRespWrapper.success("未找到商品资料", "/item/saleitem/list");
+			// }
+			return JsonRespWrapper.success(flag.get("msg"), "/item/meal/meallist");
+
+		}
+		catch (Exception ex) {
+			// 未知的错误消息，一般是exception catch后通知用户
+			logUtils.logModify("短信够订单", "修改地址");
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+}

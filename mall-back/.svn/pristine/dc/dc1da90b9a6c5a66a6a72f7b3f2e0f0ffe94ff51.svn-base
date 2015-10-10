@@ -1,0 +1,799 @@
+package com.cplatform.mall.back.item.service;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.dao.HisunProductionLinkDao;
+import com.cplatform.mall.back.item.dao.HisunProductionSettleDao;
+import com.cplatform.mall.back.item.entity.HisunProductionLink;
+import com.cplatform.mall.back.item.entity.HisunProductionSettle;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.model.SyncGYProductionResponseBean;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.entity.SysRegion;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.SyncInterface;
+import com.cplatform.mall.back.utils.PathUtil.PathInfo;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+/**
+ * 商品协议管理相关. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-31 下午08:06:27
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class HisunProductionService {
+
+	private static Logger logger = Logger.getLogger(HisunProductionService.class);
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private HisunProductionSettleDao settleDao;
+
+	@Autowired
+	private HisunProductionLinkDao linkDao;
+
+	@Autowired
+	private ItemManageService itemManageService;
+
+	@Autowired
+	private BsFileService bsFileService;
+
+	@Autowired
+	private SyncInterface syncInterface;
+
+	@Autowired
+	private StoreService storeService;
+
+	@Autowired
+	private SysRegionService regionService;
+
+	@Autowired
+	private AppConfig config;
+
+	/**
+	 * 商品协议查询
+	 * 
+	 * @param settle
+	 *            商品协议实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<HisunProductionSettle> findSettle(HisunProductionSettle settle, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select settle.*, fee.name productiontypeName ");
+		sql.append("  from t_hisun_production_settle settle ");
+		sql.append("  	   left join t_sys_fee fee on settle.productiontype=fee.id left join t_store store on settle.store_id = store.id where 1=1 ");
+		List params = new ArrayList();
+		if (null != settle) {
+			if (StringUtils.isNotEmpty(settle.getProductionname())) {
+				sql.append(" and settle.productionname like ? ");
+				params.add("%" + settle.getProductionname().trim() + "%");
+			}
+			if (null != settle.getStatus()) {
+				sql.append(" and settle.status = ? ");
+				params.add(settle.getStatus());
+			}
+			if (null != settle.getType()) {
+				sql.append(" and settle.type = ? ");
+				params.add(settle.getType());
+			}
+			if (StringUtils.isNotEmpty(settle.getProductionefftime())) {
+				sql.append(" and settle.productionefftime >= ? ");
+				params.add(settle.getProductionefftime().replaceAll("-", ""));
+			}
+			if (StringUtils.isNotEmpty(settle.getProductionexptime())) {
+				sql.append(" and settle.productionexptime <= ? ");
+				params.add(settle.getProductionexptime().replaceAll("-", ""));
+			}
+			// @add_by macl@c-platform.com
+			if (StringUtils.isNotEmpty(settle.getStoreId())) {
+				sql.append(" and settle.store_id = ? ");
+				params.add(settle.getStoreId());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_STORE));
+		sql.append(" order by settle.id desc ");
+		return dbHelper.getPage(sql.toString(), HisunProductionSettle.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 商品协议查询
+	 * 
+	 * @param settle
+	 *            商品协议实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<HisunProductionSettle> findSettleAudit(HisunProductionSettle settle, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		if (settle == null) {
+			settle = new HisunProductionSettle();
+		}
+		settle.setStatus(0L);
+		return findSettle(settle, pageNo);
+	}
+
+	/**
+	 * 商品协议录入
+	 * 
+	 * @param settle
+	 * @throws IOException
+	 */
+	@Transactional
+	public HisunProductionSettle saveSettle(HisunProductionSettle settle, MultipartFile uploadFile, String whereAbout) throws Exception {
+		if ("add".equals(whereAbout)) {
+			String str = "";
+
+			str = dbHelper.queryScalar("select SEQ_SYS_ITEM_ID.nextval from dual ", null);
+
+			settle.setProductionid(str);
+		}
+		// 保存商品协议信息
+		if (null != uploadFile) {
+			PathInfo pathInfo = null;
+			if (uploadFile != null) {
+
+				pathInfo = bsFileService.dealModuleFile(uploadFile, BsFileService.MODULE_SETTLE);
+
+				settle.setFilePath(pathInfo.getRealWebPath(""));
+			}
+		}
+		settle = settleDao.save(settle);
+
+		return settle;
+	}
+
+	/**
+	 * 商品协议关联商品
+	 * 
+	 * @param settle
+	 * @throws IOException
+	 */
+	@Transactional
+	public HisunProductionLink saveLink(HisunProductionLink link, HisunProductionSettle settle) {
+		// 删除旧关联,并将商品结算状态置为“未同步”
+		HisunProductionLink oldLink = findOneLinkByItemId(link.getItemId());
+		if (null != oldLink) {
+			// 如果和原有协议id相等，不处理
+			if (oldLink.getSettleId() == settle.getId()) {
+				return oldLink;
+			}
+
+			// if (oldLink.getItemId() != null && oldLink.getSettleId() !=
+			// settle.getId()) { // 更换协议
+			// ItemSale oldItemSale =
+			// itemManageService.findOneItemSale(oldLink.getItemId());
+			// oldItemSale.setSyncGyFlag(0L);
+			// itemManageService.addOrUpdateItemSale(oldItemSale);
+			// }
+			// 删除老数据
+			linkDao.delete(oldLink.getId());
+		}
+
+		// ItemSale itemSale =
+		// itemManageService.findOneItemSale(link.getItemId());
+		link.setProductionType(settle.getProductiontype());
+		link.setSettlePrice(settle.getSettlementprice());
+		// 新关联插入关系表
+		link.setCreateTime(TimeStamp.getTime(14));
+		link.setProductionIdCash(getProductionId(CAPTITAL_TYPE_CASH, link.getProductionId()));
+		link.setProductionIdCoin(getProductionId(CAPTITAL_TYPE_COIN, link.getProductionId()));
+		link.setProductionIdScore(getProductionId(CAPTITAL_TYPE_SCORE, link.getProductionId()));
+
+		// @modify_by macl@c-platform.com start>>>
+		// if (1 == settle.getCapitaltype1()) {
+		// link.setProductionIdCash(link.getProductionId() + "cash");
+		//
+		// }
+		// if (1 == settle.getCapitaltype2()) {
+		// link.setProductionIdCoin(link.getProductionId() + "coin");
+		// }
+		// if (1 == settle.getCapitaltype3()) {
+		// link.setProductionIdScore(link.getProductionId() + "scor");
+		// }
+		// @modify_by macl@c-platform.com end<<<
+		linkDao.save(link);
+		// 更新商品高阳状态
+		itemManageService.updateSaleGYStatus(link.getItemId(), settle.getSyncGyStatus());
+		return link;
+	}
+
+	/**
+	 * 查询指定商品协议
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public HisunProductionSettle findOneSettle(Long id) {
+		HisunProductionSettle settle = settleDao.findOne(id);
+		return settle;
+	}
+
+	public HisunProductionSettle findSettle(Long id) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT settle.*, fee.name productiontypeName ");
+		sql.append("  FROM t_hisun_production_settle settle ");
+		sql.append("  	   LEFT JOIN t_sys_fee fee ON settle.productiontype=fee.id ");
+		sql.append(" WHERE settle.id = ? ");
+		List params = new ArrayList();
+		params.add(id);
+
+		return dbHelper.getBean(sql.toString(), HisunProductionSettle.class, params.toArray());
+	}
+
+	/**
+	 * 根据商品协议ID查询指定商品协议关联。一个协议可以关联多个商品
+	 * 
+	 * @param settleId
+	 */
+	public List<HisunProductionLink> findSettleLink(Long settleId) {
+		return linkDao.findBySettleId(settleId);
+	}
+
+	/**
+	 * 根据id获得一个连接对象
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public HisunProductionLink findByLinkId(Long id) {
+		return linkDao.findOne(id);
+	}
+
+	/**
+	 * 删除连接
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteHisunLink(Long id) {
+		HisunProductionLink link = findByLinkId(id);
+		if (link == null) {
+			return;
+		}
+		// 更新已关联的商品的高阳审核状态为未同步
+		if (link.getItemId() != null) {
+			itemManageService.updateSaleGYStatus(link.getItemId(), 0L);
+		}
+		linkDao.delete(link);
+	}
+
+	/**
+	 * 跟商品表管理获得 协议管理的商品资料
+	 * 
+	 * @param settleId
+	 *            协议id
+	 * @return
+	 */
+	public List<HisunProductionLink> findSettleItemLinks(Long settleId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT link.*,item.name itemName,item.SYNC_GY_FLAG itemGyStatus ");
+		sql.append("  FROM t_hisun_production_link link ");
+		sql.append("  	   LEFT JOIN t_item_sale item ON link.item_id=item.id ");
+		sql.append(" WHERE link.settle_id = ? ");
+
+		return dbHelper.getBeanList(sql.toString(), HisunProductionLink.class, new Object[] { settleId });
+	}
+
+	/**
+	 * 查询指定商品
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public ItemSale findOneItemSale(Long id) {
+		if (id != null) {
+			ItemSale itemSale = itemManageService.findOneItemSale(id);
+			return itemSale;
+		}
+		return null;
+	}
+
+	/**
+	 * 根据商品ID查询指定Link
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public HisunProductionLink findOneLinkByItemId(Long itemId) {
+		HisunProductionLink hisunProductionLink = linkDao.findByItemId(itemId);
+		return hisunProductionLink;
+	}
+
+	/**
+	 * 删除商品协议
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteSettle(Long id) {
+		List<HisunProductionLink> links = findSettleLink(id);
+		if (null != links) {
+			for (HisunProductionLink link : links) {
+				deleteHisunLink(link.getId());
+				// linkDao.delete(link);
+			}
+		}
+		settleDao.delete(id);
+		logUtils.logDelete("成功删除商品协议", "ID:" + id);
+	}
+
+	/**
+	 * 商品同步接口
+	 * 
+	 * @param itemSale
+	 *            商品实体类
+	 * @return 同步结果提示
+	 */
+	public Map<String, String> itemLinkManage(ItemSale itemSale) throws Exception {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String msg = "";
+		// 判断商品信息有效性
+		if (null == itemSale) {
+			msg = "操作失败：商品不存在！";
+			resultMap.put("result", "false");
+			resultMap.put("msg", msg);
+			return resultMap;
+		}
+
+		/*
+		*
+		*/
+		// if (3L != itemSale.getStatus()) {
+		// msg = "操作失败：商品未审核通过！";
+		// resultMap.put("result", "false");
+		// resultMap.put("msg", msg);
+		// return resultMap;
+		// }
+
+		Store store = storeService.findStoreById(itemSale.getStoreId());
+		// 判断商户信息有效性
+		if (null == store) {
+			msg = "操作失败：商户不存在！";
+			resultMap.put("result", "false");
+			resultMap.put("msg", msg);
+			return resultMap;
+		}
+		// 判断商户基本信息是否成功同步结算
+		if (StringUtils.isEmpty(store.getMerchid())) {
+			msg = "操作失败：商品所属商户基本信息未成功同步清算系统！";
+			resultMap.put("result", "false");
+			resultMap.put("msg", msg);
+			return resultMap;
+		}
+		/**
+		 * 校验itemSale是否已在link表建立关系 若已建立关系，则进入判断同步结算状态 否则，进行插入及同步结算操作
+		 */
+		HisunProductionLink link = findOneLinkByItemId(itemSale.getId());
+		if (null != link) {
+			/**
+			 * 校验是否已经同步结算 若未成功同步，进行同步结算操作，并更新商品协议与商品的结算状态 否则，则更新商品协议与商品的结算状态
+			 */
+			HisunProductionSettle settle = settleDao.findOne(link.getSettleId());
+
+			return query(settle);
+		} else {
+			// 插入商品协议表
+			/**
+			 * 只有在商品费率的清算类别为C（即按商品类别结算）时，才允许自动生成商品协议。 清算类别为C时，商品的协议价==商城价
+			 * 
+			 * @add_by macl@c-platform.com
+			 */
+			HisunProductionSettle settle = new HisunProductionSettle(itemSale);
+			if (StringUtils.isEmpty(store.getMerchid())) {
+				resultMap.put("result", "false");
+				resultMap.put("msg", "操作失败，商户资料未同步");
+				return resultMap;
+			}
+			settle.setMerchid(store.getMerchid());
+			settle.setStoreId(store.getId().toString());
+			settle.setServiceid(config.getSyncGyServiceId());
+			// settle.setCityid(store.getAreaCode());
+			if (StringUtils.isEmpty(store.getMerchid())) {
+				resultMap.put("result", "false");
+				resultMap.put("msg", "操作失败，商户资料未同步");
+				return resultMap;
+			}
+
+			// SysRegion region =
+			// regionService.findByRegionCode(store.getAreaCode());
+			// settle.setCityname(region.getRegionName());
+
+			settle = saveSettle(settle, null, null);
+			// 插入关系表
+			link = new HisunProductionLink();
+			link.setSettleId(settle.getId());
+			link.setProductionId(settle.getProductionid());
+			link.setItemId(itemSale.getId());
+
+			/*
+			 * 商品费率的清算类别为C(商品类别)时，协议价==商城价 start>>>
+			 * @modify_by macl@c-platform.com
+			 */
+			// link.setSettlePrice(itemSale.getSettlePrice());
+			link.setSettlePrice(itemSale.getShopPrice());
+			/* 商品费率的清算类别为C(商品类别)时，协议价==商城价 <<< end */
+
+			link.setProductionType(settle.getProductiontype());
+			link.setProductionIdCash(getProductionId(CAPTITAL_TYPE_CASH, settle.getProductionid()));
+			link.setProductionIdCoin(getProductionId(CAPTITAL_TYPE_COIN, settle.getProductionid()));
+			link.setProductionIdScore(getProductionId(CAPTITAL_TYPE_SCORE, settle.getProductionid()));
+			saveLink(link, settle);
+
+			// 同步结算
+			return settleSyncGy(settle);
+		}
+	}
+
+	/**
+	 * 商品同步接口
+	 * 
+	 * @param saleId
+	 *            商品ID
+	 * @return
+	 */
+	public Map<String, String> itemLinkManage(Long saleId) throws Exception {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String msg = "";
+		if (null == saleId) {
+			msg = "商品不存在，本次同步失败！";
+			resultMap.put("result", "false");
+			resultMap.put("msg", msg);
+			return resultMap;
+		}
+		ItemSale itemSale = itemManageService.findOneItemSale(saleId);
+		return itemLinkManage(itemSale);
+	}
+
+	/**
+	 * 查询同步结算
+	 * 
+	 * @param settle
+	 *            商品协议实体类
+	 * @return 返回bean
+	 */
+	public Map<String, String> query(HisunProductionSettle settle) {
+		if (null == settle) {
+			return null;
+		}
+		// 修改为不按照资金种类查询多次，只查询一次
+		String productId = settle.getProductionid();
+		settle.setProductionid(getProductionId(CAPTITAL_TYPE_CASH, productId));
+		settle.setCapitalType(1L);
+		SyncGYProductionResponseBean bean = syncInterface.querySettle(settle);
+		bean.setCapitaltype(CAPTITAL_TYPE_CASH);
+
+		return dealReponse(settle.getId(), bean);
+		// beanList.add(bean);
+
+		// if (1L == settle.getCapitaltype1()) {// 现金
+		// settle.setProductionid(getProductionId(CAPTITAL_TYPE_CASH,
+		// productId));
+		// settle.setCapitalType(1L);
+		// SyncGYProductionResponseBean bean =
+		// syncInterface.querySettle(settle);
+		// bean.setCapitaltype(CAPTITAL_TYPE_CASH);
+		// bean.setMsg(settle.getProductionid() + "现金：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// if (1L == settle.getCapitaltype2()) {// 商城币
+		// settle.setCapitalType(2L);
+		// settle.setProductionid(getProductionId(CAPTITAL_TYPE_COIN,
+		// productId));
+		// SyncGYProductionResponseBean bean =
+		// syncInterface.querySettle(settle);
+		// bean.setCapitaltype(CAPTITAL_TYPE_COIN);
+		// bean.setMsg(settle.getProductionid() + "商城币：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// if (1L == settle.getCapitaltype3()) {// 积分
+		// settle.setCapitalType(3L);
+		// settle.setProductionid(getProductionId(CAPTITAL_TYPE_SCORE,
+		// productId));
+		// SyncGYProductionResponseBean bean =
+		// syncInterface.querySettle(settle);
+		// bean.setCapitaltype(CAPTITAL_TYPE_SCORE);
+		// bean.setMsg(settle.getProductionid() + "积分：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// return dealReponse(settle.getId(), beanList);
+	}
+
+	/**
+	 * 新增或更新商品协议资料同步结算
+	 * 
+	 * @param settle
+	 *            商品协议实体类
+	 * @param capitaltype
+	 *            资金类型（1：现金；2：商城币；3：积分）
+	 * @return 返回bean
+	 */
+	public SyncGYProductionResponseBean addOrUpdate(HisunProductionSettle settle) {
+		/*
+		 * HisunProductionLink link = findOneLink(settle.getId()); // TODO:找不见
+		 * link 初始化一条 if (link == null) { link = new HisunProductionLink();
+		 * link.setSettleId(settle.getId());
+		 * link.setProductionId(settle.getProductionid());
+		 * link.setProductionIdCash(settle.getProductionid() + "cash");
+		 * link.setProductionIdCoin(settle.getProductionid() + "coin");
+		 * link.setProductionIdScore(settle.getProductionid() + "scor");
+		 * link.setSettlePrice(settle.getSettlementprice());
+		 * link.setProductionType(settle.getProductiontype());
+		 * linkDao.save(link); } else {// 找到link，保证link数据和settle数据一致
+		 * link.setProductionId(settle.getProductionid());
+		 * link.setProductionIdCash(settle.getProductionid() + "cash");
+		 * link.setProductionIdCoin(settle.getProductionid() + "coin");
+		 * link.setProductionIdScore(settle.getProductionid() + "scor");
+		 * link.setSettlePrice(settle.getSettlementprice());
+		 * link.setProductionType(settle.getProductiontype());
+		 * linkDao.save(link); }
+		 */
+
+		// 设置 settle 的地市数据,将地市信息，转换为areaCode
+		if (StringUtils.isNotEmpty(settle.getCityid())) {
+			SysRegion region = regionService.findByRegionCode(settle.getCityid());
+			settle.setCityid(region.getAreaCode());
+			settle.setCityname(region.getRegionName().replace("市", ""));
+		}
+
+		// List<SyncGYProductionResponseBean> beanList = new
+		// ArrayList<SyncGYProductionResponseBean>();
+		SyncGYProductionResponseBean bean = null;
+		// 不管资金种类，只需要同步一次
+
+		settle.setCapitalType(1L); // 现金
+		if (0L == settle.getSyncGyStatus1()) {
+			bean = syncInterface.syncAddSettle(settle, getProductionId(CAPTITAL_TYPE_CASH, settle.getProductionid()));
+		} else {
+			bean = syncInterface.syncUpdateSettle(settle, getProductionId(CAPTITAL_TYPE_CASH, settle.getProductionid()));
+		}
+		if (bean.isSyncSuccess()) {
+			bean.setStatus("6");
+			bean.setCapitaltype(CAPTITAL_TYPE_CASH);
+		}
+		bean.setMsg(bean.getMsg());
+		return bean;
+		//
+		// if (1L == settle.getCapitaltype1()) {// 现金
+		// settle.setCapitalType(1L);
+		// if (0L == settle.getSyncGyStatus1()) {
+		// bean = syncInterface.syncAddSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_CASH, settle.getProductionid()));
+		// } else {
+		// bean = syncInterface.syncUpdateSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_CASH, settle.getProductionid()));
+		// }
+		// if (bean.isSyncSuccess()) {
+		// bean.setStatus("6");
+		// bean.setCapitaltype(CAPTITAL_TYPE_CASH);
+		// }
+		// bean.setMsg("现金：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// if (1L == settle.getCapitaltype2()) {// 商城币
+		// settle.setCapitalType(2L);
+		// if (0L == settle.getSyncGyStatus2()) {
+		// bean = syncInterface.syncAddSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_COIN, settle.getProductionid()));
+		// } else {
+		// bean = syncInterface.syncUpdateSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_COIN, settle.getProductionid()));
+		// }
+		// if (bean.isSyncSuccess()) {
+		// bean.setStatus("6");
+		// bean.setCapitaltype(CAPTITAL_TYPE_COIN);
+		// }
+		// bean.setMsg("商城币：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// if (1L == settle.getCapitaltype3()) {// 积分
+		// settle.setCapitalType(3L);
+		// if (0L == settle.getSyncGyStatus3()) {
+		// bean = syncInterface.syncAddSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_SCORE, settle.getProductionid()));
+		// } else {
+		// bean = syncInterface.syncUpdateSettle(settle,
+		// getProductionId(CAPTITAL_TYPE_SCORE, settle.getProductionid()));
+		// }
+		// if (bean.isSyncSuccess()) {
+		// bean.setStatus("6");
+		// bean.setCapitaltype(CAPTITAL_TYPE_SCORE);
+		// }
+		// bean.setMsg("积分：" + bean.getMsg());
+		// beanList.add(bean);
+		// }
+		// return beanList;
+	}
+
+	/**
+	 * 更新商品协议及商品的结算状态 如果
+	 * 
+	 * @param settle
+	 * @param itemSale
+	 * @param queryBean
+	 * @param bean
+	 * @return
+	 */
+	@Transactional
+	public boolean saveSyncGyStatus(Long settleId, SyncGYProductionResponseBean queryBean) {
+
+		if (queryBean == null) {
+			return false;
+		}
+		if (queryBean.isSyncSuccess()) { // 提交，查询成功，更新协议及关联商品状态
+			Long status = (Long.valueOf(queryBean.getStatusMap()));
+			updateSettleStatus(settleId, status, queryBean.getCapitaltype());
+			// 更新关联商品对应的状态
+			List<HisunProductionLink> links = findSettleLink(settleId);
+			if (links != null) {
+				for (HisunProductionLink link : links) {
+					itemManageService.updateSaleGYStatus(link.getItemId(), status);
+				}
+			}
+			// 友好提示回复语
+			queryBean.setMsg(queryBean.getMsg() + "<br/>清算状态更新为：" + HisunProductionSettle.getSyncGyStatusMap().get(String.valueOf(status)));
+
+			return true;
+		}
+		return false;
+
+	}
+
+	/**
+	 * 更新settle 状态
+	 * 
+	 * @param id
+	 *            协议id
+	 * @param status
+	 *            更新后状态
+	 * @param capitaltype
+	 *            资金种类 1-现金 2-商城币 3-积分
+	 */
+	private void updateSettleStatus(Long id, Long status, String capitaltype) {
+		// 修改为不区分资金种类
+		HisunProductionSettle settle = findOneSettle(id);
+		// if (CAPTITAL_TYPE_CASH.equals(capitaltype)) {
+		settle.setSyncGyStatus1(status);
+		// } else if (CAPTITAL_TYPE_COIN.equals(capitaltype)) {
+		settle.setSyncGyStatus2(status);
+		// } else if (CAPTITAL_TYPE_SCORE.equals(capitaltype)) {
+		settle.setSyncGyStatus3(status);
+		// }
+		settleDao.save(settle);
+	}
+
+	/**
+	 * 商品协议同步接口
+	 * 
+	 * @param settle
+	 *            商品协议实体类
+	 * @return 同步结果提示
+	 */
+	@Transactional
+	public Map<String, String> settleSyncGy(HisunProductionSettle settle) {
+		// List<SyncGYProductionResponseBean> addOrUpdateBeanList = new
+		// ArrayList<SyncGYProductionResponseBean>();
+		/**
+		 * 当没有关联商品时 校验是否已经同步结算 若未成功同步，进行同步结算操作，并更新商品协议的结算状态 否则，则更新商品协议的结算状态
+		 */
+		// 查询商品协议资料维护
+		// queryBeanList = query(settle);
+		// 同步结算
+		SyncGYProductionResponseBean bean = addOrUpdate(settle);
+		return dealReponse(settle.getId(), bean);
+	}
+
+	/**
+	 * 处理高阳返回结果 通用处理
+	 * 
+	 * @param addOrUpdateBeanList
+	 * @return
+	 */
+	private Map<String, String> dealReponse(Long settleId, SyncGYProductionResponseBean queryBean) {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		boolean markSyncGy = false;
+		markSyncGy = saveSyncGyStatus(settleId, queryBean);
+
+		resultMap.put("result", Boolean.toString(markSyncGy));
+		resultMap.put("msg", queryBean.getMsg());
+		return resultMap;
+	}
+
+	/**
+	 * 成功关联商品后 若商品协议同步结算，则更新商品结算状态 否则，不做操作
+	 * 
+	 * @param link
+	 */
+	@Transactional
+	public void settleLinkItemSaleSyncGyStatus(HisunProductionLink link) {
+		HisunProductionSettle settle = findOneSettle(link.getSettleId());
+		// ItemSale itemSale =
+		// itemManageService.findOneItemSale(link.getItemId());
+		if (link.getItemId() == null) {
+			return;
+		}
+		// if (1L == settle.getCapitaltype1() || 1L == settle.getCapitaltype2()
+		// || 1L == settle.getCapitaltype3()) {
+		// itemSale.setSyncGyFlag(settle.getSyncGyStatus());
+		// itemManageService.addOrUpdateItemSale(itemSale);
+		itemManageService.updateSaleGYStatus(link.getItemId(), settle.getSyncGyStatus());
+		// }
+	}
+
+	public static final String CAPTITAL_TYPE_CASH = "CAPTITAL_TYPE_CASH";
+
+	public static final String CAPTITAL_TYPE_COIN = "CAPTITAL_TYPE_COIN";
+
+	public static final String CAPTITAL_TYPE_SCORE = "CAPTITAL_TYPE_SCORE";
+
+	/**
+	 * 修改为多个 类别传同样的值
+	 * 
+	 * @param type
+	 * @param productionId
+	 * @return
+	 */
+	private String getProductionId(String type, String productionId) {
+		// if (CAPTITAL_TYPE_CASH.equals(type)) {
+		// return productionId + "cash";
+		// } else if (CAPTITAL_TYPE_COIN.equals(type)) {
+		// return productionId + "coin";
+		// } else if (CAPTITAL_TYPE_SCORE.equals(type)) {
+		// return productionId + "scor";
+		// }
+		return productionId;
+	}
+
+	/**
+	 * 根据商品ID查询已关联的商品协议。
+	 * 
+	 * @param itemId
+	 * @return
+	 * @throws SQLException
+	 */
+	public HisunProductionSettle findLinkedSettle(Long itemId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT settle.*, fee.name productiontypeName FROM t_hisun_production_settle settle ");
+		sql.append("  LEFT JOIN t_sys_fee fee ON settle.productiontype=fee.id ");
+		sql.append(" WHERE settle.id in ");
+		sql.append("   (SELECT link.settle_id FROM t_hisun_production_link link WHERE link.item_id = ?) ");
+		List params = new ArrayList();
+		params.add(itemId);
+		return dbHelper.getBean(sql.toString(), HisunProductionSettle.class, params.toArray());
+	}
+}

@@ -1,0 +1,13 @@
+CREATE TABLE "LIFE".t_sys_pos (
+  "ID" NUMBER(8) NOT NULL,
+  "NAME" VARCHAR2(50 BYTE),
+  src VARCHAR2(50 BYTE),
+  "TYPE" VARCHAR2(20 BYTE),
+  factory VARCHAR2(50 BYTE),
+  CONSTRAINT pk_t_sys_pos PRIMARY KEY ("ID")
+);
+ALTER TABLE "LIFE".t_sys_pos ADD SUPPLEMENTAL LOG GROUP ggs_240446 ("ID") ALWAYS;
+COMMENT ON TABLE "LIFE".t_sys_pos IS '终端配置表，基于终端来源，类型，厂家';
+COMMENT ON COLUMN "LIFE".t_sys_pos."NAME" IS '可以为空';
+COMMENT ON COLUMN "LIFE".t_sys_pos."TYPE" IS '1--商户类型
+2--商品类型';

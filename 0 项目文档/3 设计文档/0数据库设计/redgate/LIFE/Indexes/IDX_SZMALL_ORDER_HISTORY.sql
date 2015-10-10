@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_szmall_order_history ON "LIFE".szmall_order_history(order_time);

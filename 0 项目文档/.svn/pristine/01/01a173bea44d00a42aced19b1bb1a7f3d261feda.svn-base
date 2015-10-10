@@ -1,0 +1,8 @@
+CREATE TABLE "LIFE".t_sys_invoice (
+  "ID" NUMBER(9) NOT NULL,
+  "NAME" VARCHAR2(40 BYTE),
+  CONSTRAINT pk_sys_invoice PRIMARY KEY ("ID")
+);
+ALTER TABLE "LIFE".t_sys_invoice ADD SUPPLEMENTAL LOG GROUP ggs_240439 ("ID") ALWAYS;
+COMMENT ON TABLE "LIFE".t_sys_invoice IS '发票字典表';
+COMMENT ON COLUMN "LIFE".t_sys_invoice."NAME" IS '发票名';

@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".seq_item_param_red MAXVALUE 99999999

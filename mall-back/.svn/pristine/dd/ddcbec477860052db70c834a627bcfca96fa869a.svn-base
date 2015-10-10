@@ -1,0 +1,136 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+    <head>
+        <ht:head/>
+    </head>
+<body>
+<br/>
+<div id="search-menu">
+    <ul>
+     <ht:menu-btn type="search"/>
+     <ct:display model="announcement" btn="add_btn">
+     	<ht:menu-btn text="添加公告" url="/websys/announcement/add"/>
+     </ct:display>
+    </ul>
+    <br style="clear: left" />
+</div>
+<div class="queryContainer" >
+    <form name="queryForm" id="queryForm" action="?" method="get">
+        <table>
+            <tr>
+                <td>发布时间：</td>
+                <td>
+                    <input type="text" id="inputStartTime" name="inputStartTime" value="${param.inputStartTime}" class="txt Wdate"
+                           readOnly onfocus="WdatePicker({vel:'queryTimeBegin',realDateFmt:'yyyyMMdd',maxDate:'#F{$dp.$D(\'inputEndTime\')||\'2020-10-01\'}'})" />
+                    <input type="hidden" name="queryTimeBegin" id="queryTimeBegin" value="${param.queryTimeBegin}"/>
+                    至
+                    <input type="text" id="inputEndTime" name="inputEndTime" value="${param.inputEndTime}" class="txt Wdate"
+                           readOnly onfocus="WdatePicker({vel:'queryTimeEnd',realDateFmt:'yyyyMMdd',minDate:'#F{$dp.$D(\'inputStartTime\')}',maxDate:'2020-10-01'})" />
+                    <input type="hidden" name="queryTimeEnd" id="queryTimeEnd" value="${param.queryTimeEnd}" />
+                </td>
+                <td>发布对象：</td>
+                <td width="200">
+                    <form:select path="queryObject.pubDest">
+                        <form:option value="" label="--请选择--"/>
+                        <form:options items="${destMap}" />
+                    </form:select>
+                </td>
+                <td>状态：</td>
+                <td width="200">
+                    <select name="pubStatus">
+                        <option value="">--请选择--</option>
+                        <option ${param.pubStatus == 0 ? 'selected' : ''} value="0">待审核</option>
+                        <option ${param.pubStatus == 1 ? 'selected' : ''} value="1">审核驳回</option>
+                        <option ${param.pubStatus == 2 ? 'selected' : ''} value="2">已发布</option>
+                    </select>
+                </td>
+
+            </tr>
+            <tr>
+                <td>关键字：</td>
+                <td><input type="text" name="title" value="${param.title}" class="txt" style="width:206px"/></td>
+                <td>发布人帐号：</td>
+                <td ><input type="text" name="queryUserCode" value="${param.queryUserCode}" class="txt" style="width:100px"/></td>
+                <td colspan="2" >&nbsp;
+                    <ct:btn type="search" />
+                </td>
+             </tr>  
+             
+        </table>
+    </form>
+</div>
+<div class="container">
+    <br/>
+    <h3>公告列表</h3>
+    <div class="mainbox">
+        <c:if test="${not empty pageData.data}">
+        <table class="datalist fixwidth">
+	        <colgroup>
+		       	<col width="200"></col>
+		       	<col width="60"></col>
+		       	<col width="100"></col>
+		       	<col width="100"></col>
+		       	<col width="80"></col>
+		       	<col width="80"></col>
+		       	<col width="150"></col>
+	    	</colgroup>
+            <tr>
+                <th nowrap="nowrap" width="240">公告标题</th>
+                <th nowrap="nowrap" width="70">发布对象</th>
+                <th nowrap="nowrap" width="80">发布时间</th>
+                <th nowrap="nowrap" width="80">结束时间</th>
+                <th nowrap="nowrap" width="60">发布人</th>
+                <th nowrap="nowrap" width="70">状态</th>
+                <th nowrap="nowrap" width="140">操作</th>
+            </tr>
+
+            <c:forEach items="${pageData.data}" var="item">
+            <tr>
+                <td nowrap="nowrap" class="ellipsis"><c:if test="${item.title == 0}">静态公告</c:if><c:if test="${item.title == 1}">拉伸公告</c:if><c:if test="${item.title !=0 && item.title !=1}">${item.title }</c:if></td>
+                <td nowrap="nowrap" >${destMap[item.pub_dest]}</td>
+                
+                <td nowrap="nowrap" ><ct:time source="${item.pub_time}" /></td>
+                <td nowrap="nowrap" ><ct:time source="${item.end_Time}" /></td>
+                <td nowrap="nowrap"  title="${item.user_code}">${item.user_name}</td>
+                <td nowrap="nowrap" >${statusMap[item.pub_status]}</td>
+                 
+                <td nowrap="nowrap">
+                 	<ct:display model="announcement" btn="view_btn">
+                    	<a href="<spring:url value="/websys/announcement/view/?id="/>${item.id}">查看</a>
+                    </ct:display>
+
+                    <c:if test="${item.pub_status == 0}">
+                    <ct:display model="announcement" btn="audit_btn">
+                        &nbsp;&nbsp;<a href="<spring:url value="/websys/announcement/audit/?id="/>${item.id}">审核</a>
+                    </ct:display></c:if>
+
+                    <ct:display model="announcement" btn="mod_btn">
+                        &nbsp;&nbsp;<a href="<spring:url value="/websys/announcement/edit/?id="/>${item.id}">修改</a>
+                    </ct:display>
+
+                    <c:if test="${item.pub_status < 3}">
+                    <ct:display model="announcement" btn="del_btn">
+                        &nbsp;&nbsp;<a href="#" onclick="deleteItem('<spring:url value="/websys/announcement/del/?id="/>${item.id}');">删除</a>
+                    </ct:display></c:if>
+                </td>
+            </tr>
+            
+            </c:forEach>
+        </table>
+
+        <ht:page pageData="${pageData}" />
+
+        </c:if>
+        <c:if test="${empty pageData.data}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+
+</div>
+
+</body>
+</html>

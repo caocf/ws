@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	
+	<title>抽奖活动</title>
+	
+	 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	 <link href="/css/base.css" rel="stylesheet" type="text/css" />
+	<link href="/css/layout.css" rel="stylesheet" type="text/css" />
+	<link href="/css/active.css" rel="stylesheet" type="text/css" />
+	
+	<script src="/js/jquery.min.js"></script>
+	<script src="/js/jQueryRotate.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script type="text/javascript" src="/js/jquery.cookie.js"></script>
+	<script type="text/javascript" src="/js/jquery.jqzoom.js"></script>
+	<script>
+//var active = {"imgUrl":"/img/activity/","activeId":1,"confs":[{"activeId":1,"id":1001,"key":"hitImg","value":"bg_active_alert.jpg"},{"activeId":1,"id":1002,"key":"pointerImg","value":"rotate-static.png"},{"activeId":1,"id":1003,"key":"bgImg","value":"ly-plate.png"},{"activeId":1,"id":1004,"key":"prizeNum","value":"8"}],"prizes":[{"position":"2,3","hitLevel":2,"activeId":1,"name":null,"hitMsg":"恭喜你获得二等奖"},{"position":null,"hitLevel":0,"activeId":1,"name":null,"hitMsg":null},{"position":"5,6","hitLevel":3,"activeId":1,"name":null,"hitMsg":"恭喜你获得三等奖"},{"position":null,"hitLevel":0,"activeId":1,"name":null,"hitMsg":null},{"position":"8","hitLevel":1,"activeId":1,"name":null,"hitMsg":"恭喜你获得一等奖1"},{"position":null,"hitLevel":0,"activeId":1,"name":null,"hitMsg":null},{"position":null,"hitLevel":0,"activeId":1,"name":null,"hitMsg":null}]}
+//var active ={"imgUrl":"/data/lotteryimg/","activeId":50,"confs":[{"activeId":50,"id":50,"key":"bgImg","value":"20130731/11/ly-plate.png"},{"activeId":50,"id":51,"key":"pointerImg","value":"20130731/11/rotate-static.png"},{"activeId":50,"id":52,"key":"hitImg","value":"20130731/11/bg_active_alert.jpg"},{"activeId":50,"id":53,"key":"prizeNum","value":"8"}],"prizes":[{"position":"8","hitLevel":1,"activeId":50,"name":"iphone5s","hitMsg":"恭喜你，获得了一等奖"}]}
+//var active={"imgUrl":"/data/lotteryimg/","activeId":41,"confs":[{"activeId":41,"id":61,"key":"bgImg","value":"20131023/15/ly-plate.png"},{"activeId":41,"id":62,"key":"pointerImg","value":"20131023/15/rotate-static.png"},{"activeId":41,"id":63,"key":"hitImg","value":"20131023/15/bg_active_alert.jpg"},{"activeId":41,"id":64,"key":"prizeNum","value":"8"}],"prizes":[{"position":"1","hitLevel":1,"activeId":41,"name":"测试商品","hitMsg":"恭喜您！获得一等奖。"}]};
+var active = {"imgUrl":"/data/lotteryimg/","activeId":41,"confs":[{"activeId":41,"id":41,"key":"prizeNum","value":"8"},{"activeId":41,"id":42,"key":"bgImg","value":"20131031/11/rotate.png"},{"activeId":41,"id":43,"key":"pointerImg","value":"20131031/11/rotate-static.png"},{"activeId":41,"id":44,"key":"hitImg","value":"20131031/15/确认.jpg"}],"prizes":[{"position":"2","hitLevel":1,"activeId":41,"name":"2013动感地带演唱会门票两张880元*2","hitMsg":"恭喜你，手气不错哦"},{"position":"5","hitLevel":2,"activeId":41,"name":"2013动感地带演唱会门票两张880元*2","hitMsg":"恭喜你，手气不错哦"},{"position":"8","hitLevel":3,"activeId":41,"name":"2013动感地带演唱会门票两张880元*2","hitMsg":"恭喜你，手气不错哦"}]}
+var G_CTX_ROOT = '';
+</script>
+	<script src="/js/rotate.js"></script>
+</head>
+
+<body>
+<script type="text/javascript" src="/js/head.js"></script>
+	<div class="wrapper mauto">
+	    <div class="breadcrumb"> 
+	 </div>
+    <div id="active_main" class="main">
+    	<div id="action_main">
+			<div class="ly-plate">
+		    	<div id="alert_window"></div>
+				<div class="rotate-bg"></div>
+				<div class="lottery-star"><img src="#" id="lotteryBtn"></div>
+			</div>
+		</div>
+       </div>
+         <div id="action_info">
+        	<h1 class="f18 col_link mb20">红钻会员购物抽奖赢演唱会门票</h1>
+            <h3 class="mb15 f14">活动时间: 即日起至2013年11月7日</h3>
+			<h3 class="mb15 f14">参与对象:江苏省内移动用户</h3>
+            <h3 class="f14">活动方式</h3>
+            <p class="f14 mb15  lh32">
+            1、	红钻会员活动期间在移动商城购物，现金支付部分满10元以上，即可以获得1次抽奖机会;<br />
+			2、	系统将在用户成功支付的第二天发送短信告知用户可使用的抽奖机会次数及抽奖地址，用户根据短信提示登录商城即可参与抽奖;(限接收短信当日抽奖)<br />
+			3、	用户在抽奖页面中参与抽奖可即时获知中奖情况，工作人员将在活动结束后统一对中奖用户进行外呼联系。</p>
+			<h3 class="mb15 f14">活动奖项：<strong class="red f20">价值880元2013动感地带演唱会门票2张</strong></h3>
+        </div>
+    </div>
+</div>
+	<script type="text/javascript" src="/js/foot.js"></script>
+</body>
+
+</html>

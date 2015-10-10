@@ -1,0 +1,80 @@
+@import url("btn.css");
+
+/* block ui*/
+.blockUI h1{font-size:24px;color:#999;margin:10px 0 20px 20px;line-height:1.5em;}
+
+/* jquery pagination plugin css */
+.wp-pagination .wp-inner {
+    /* padding-top: 10px;*/
+    padding-bottom: 0px;
+    width: 100%;
+    font-size: 11px;
+    margin:0;
+}
+.wp-pagination a {
+    text-decoration: none;
+}
+
+.wp-pagination a:hover { text-decoration:none; }
+
+.wp-pagination span {
+    cursor: default;
+}
+
+.wp-pagination a, .wp-pagination span {
+    line-height: 12px;
+    display: block;
+    float: left;
+    padding: 3px 5px;
+    margin-left: 2px;
+    margin-right: 2px;
+    font-family: Arial;
+    font-size:11px;
+    font-weight: normal;
+    font-style: normal;
+    color: #333399;
+    border: 1px solid #d0d0e9;
+    background-color: #fff;
+}
+.wp-pagination .current.prev, .wp-pagination .current.next, .wp-pagination span {
+    color: #ddd;
+    border: 1px solid #d0d0e9;
+    background-color: #fff;
+}
+.wp-pagination .current {
+    border-color: #bfbfbf;
+    background-color: #6797D6;
+    color:#fff;
+}
+.wp-pagination a:hover {
+    border-color: #ff8000;
+}
+
+
+    /* 翻页css */
+#wp_page_numbers ul, #wp_page_numbers li, #wp_page_numbers a {
+    background: white; padding: 0; margin: 0; border: none; text-decoration: none;
+    font-weight: normal; font-style: normal; list-style: none; text-transform: none;
+    text-indent: 0px; font-variant: normal; text-align: left; line-height: 12px;
+    letter-spacing: 0px; word-spacing: 0px; font-size: 11px; font-family: Arial;
+}
+#wp_page_numbers { text-align: right; padding-top: 10px; padding-bottom: 0px; width: 100%; background: white;}
+#wp_page_numbers ul { float:right; }
+#wp_page_numbers li { float: left; display: block; margin-bottom: 2px; }
+#wp_page_numbers a {
+    padding: 3px; padding-left: 5px; padding-right: 5px; margin-left: 2px;
+    margin-right: 2px; display: block; color: #333399; border: 1px solid #d0d0e9;
+}
+#wp_page_numbers li a:hover { border-color: #ff8000; }
+#wp_page_numbers li.space { padding: 6px; padding-left: 2px; padding-right: 2px; color: #d0d0e9; }
+#wp_page_numbers li.page_info, #wp_page_numbers li.no_link, #wp_page_numbers li.active_page {
+    display: block; padding: 3px; padding-left: 5px; padding-right: 5px; cursor:default;
+    margin-left: 2px; margin-right: 2px; font-size: 11px; border: 1px solid #bfbfbf;
+}
+#wp_page_numbers li.page_info { color: #666; margin-right:0px;}
+#wp_page_numbers li.no_link { color: #bfbfbf; }
+#wp_page_numbers li.active_page { color:#fff; background:#6797D6; font-weight:bold; }
+
+/* common */
+*{ word-wrap:break-word; outline:none; }
+}

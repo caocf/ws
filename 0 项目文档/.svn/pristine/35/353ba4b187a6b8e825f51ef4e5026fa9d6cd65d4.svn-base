@@ -1,0 +1,9 @@
+CREATE TABLE "LIFE".hn_member_ex (
+  "ID" NUMBER(12) NOT NULL,
+  wuserid VARCHAR2(20 BYTE) NOT NULL,
+  hnuserid VARCHAR2(20 BYTE) NOT NULL,
+  hnmode VARCHAR2(2 BYTE) NOT NULL,
+  hntype VARCHAR2(2 BYTE) NOT NULL,
+  createtime DATE DEFAULT sysdate NOT NULL,
+  CONSTRAINT pk_hn_member_ex PRIMARY KEY ("ID")
+);

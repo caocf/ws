@@ -1,0 +1,1171 @@
+package com.cplatform.mall.back.utils;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component("appConfig")
+public class AppConfig {
+
+	/** token cookie 的名称 */
+	public static final String COOKIE_TOKEN = "mplusid";
+
+	/** 登录 session 的名称 */
+	public static final String SESS_LOGIN_USER = "_dest_login_";
+
+	/** 账号锁定状态 */
+	public static final String INFO_LOCKED = "locked";
+
+	/** 邮箱需要验证 */
+	public static final String INFO_NEED_VALIDATE = "need-validate";
+
+	/** 邮箱已经验证过了 */
+	public static final String INFO_ALREADY_VALIDATE = "already-validate";
+
+	/** 验证失败，code和数据库不相符 */
+	public static final String INFO_VALIDATE_FAIL = "validate-fail";
+
+	/** 错误的email，在数据库中找不到 */
+	public static final String INFO_WRONG_EMAIL = "wrong-email";
+
+	/** 邮箱验证成功 */
+	public static final String INFO_VALIDATE_SUCCESS = "validate-success";
+
+	/** 创建账号成功，验证邮件已发送 */
+	public static final String INFO_VALIDATE_SEND = "validate-send";
+
+	@Value("${sso.server:}")
+	private String ssoServer;
+
+	@Value("${sso.client:}")
+	private String ssoClient;
+
+	@Value("${test.facklogin:false}")
+	private boolean fackLogin;
+
+	@Value("${xheditor.upload.ext:}")
+	private String[] xheditorExts;
+
+	@Value("${xheditor.upload.ext:}")
+	private String xheditorExt;
+
+	@Value("${xheditor.upload.img.ext:}")
+	private String[] xheditorImageExts;
+
+	@Value("${xheditor.upload.img.ext:}")
+	private String xheditorImageExt;
+
+	@Value("${xheditor.upload.maxsize:}")
+	private long xheditorMaxSize;
+
+	@Value("${xheditor.upload.dir:}")
+	private String xheditorUploadDir;
+
+	@Value("${xheditor.upload.path:}")
+	private String xheditorUploadPath;
+
+	@Value("${xheditor.domain:}")
+	private String xheditorDomain;
+
+	@Value("${refreshFrontPageUrl:}")
+	private String refreshFrontPageUrl;
+
+	// 礼品卡高阳接口
+	@Value("${giftcard.syncIp:}")
+	private String giftCardSyncIp;
+
+	@Value("${giftcard.syncPort:}")
+	private int giftCardSyncPort;
+
+	@Value("${giftcard.syncPlatCode:}")
+	private String giftCardSyncPlatCode;
+
+	@Value("${giftcard.syncMd5Key:}")
+	private String giftCardSyncMd5Key;
+
+	@Value("${cache.refresh.url:}")
+	private String cacheRefreshUrl;
+
+	@Value("${storeUrl:}")
+	private String storeUrl;
+
+	@Value("${itemUrl:}")
+	private String itemUrl;
+
+	@Value("${sysTypeUrl:}")
+	private String sysTypeUrl;
+
+	@Value("${ifCardUrl:}")
+	private String ifCardUrl;
+
+	@Value("${giftcard.syncDesKey:}")
+	private String giftCardSyncDesKey;
+
+	@Value("${FTP_GF_USER:}")
+	private String ftpGfUser;
+
+	@Value("${FTP_GF_PWD:}")
+	private String ftpGfPwd;
+
+	@Value("${FTP_GF_DOWN_PATH:}")
+	private String ftpGfDownPath;
+
+	@Value("${FTP_GF_DOWN_UP:}")
+	private String ftpGfUpPath;
+	
+	@Value("${FTP_GF_DOWN_IP:}")
+	private String ftpGfDownIp;
+	
+	@Value("${FTP_GF_DOWN_PORT:}")
+	private String ftpGfDownPort;
+	
+	@Value("${FTP_GF_DOWN_USER:}")
+	private String ftpGfDownUser;
+	
+	@Value("${FTP_GF_DOWN_PWD:}")
+	private String ftpGfDownPwd;
+	
+
+	@Value("${open.cache.refresh.url:}")
+	private String openCacheRefreshUrl;
+
+	/** jms 短信发送SPCode **/
+	@Value("${jms.sms.spcode:106585854}")
+	private String jmsSmsSpcode;
+
+	/** jms 短信发送目标队列 **/
+	@Value("${jms.sms.destination:q_sms_mt_act_2}")
+	private String jmsSmsDestination;
+
+	public String getOpenCacheRefreshUrl() {
+		return openCacheRefreshUrl;
+	}
+
+	public void setOpenCacheRefreshUrl(String openCacheRefreshUrl) {
+		this.openCacheRefreshUrl = openCacheRefreshUrl;
+	}
+
+	public String getFtpGfUser() {
+		return ftpGfUser;
+	}
+
+	public void setFtpGfUser(String ftpGfUser) {
+		this.ftpGfUser = ftpGfUser;
+	}
+
+	public String getFtpGfPwd() {
+		return ftpGfPwd;
+	}
+
+	public void setFtpGfPwd(String ftpGfPwd) {
+		this.ftpGfPwd = ftpGfPwd;
+	}
+
+	public String getFtpGfDownPath() {
+		return ftpGfDownPath;
+	}
+
+	public void setFtpGfDownPath(String ftpGfDownPath) {
+		this.ftpGfDownPath = ftpGfDownPath;
+	}
+
+	public String getFtpGfUpPath() {
+		return ftpGfUpPath;
+	}
+
+	public void setFtpGfUpPath(String ftpGfUpPath) {
+		this.ftpGfUpPath = ftpGfUpPath;
+	}
+
+	public String getIfCardUrl() {
+		return ifCardUrl;
+	}
+
+	public void setIfCardUrl(String ifCardUrl) {
+		this.ifCardUrl = ifCardUrl;
+	}
+
+	public String getStoreUrl() {
+		return storeUrl;
+	}
+
+	public void setStoreUrl(String storeUrl) {
+		this.storeUrl = storeUrl;
+	}
+
+	public String getItemUrl() {
+		return itemUrl;
+	}
+
+	public void setItemUrl(String itemUrl) {
+		this.itemUrl = itemUrl;
+	}
+
+	public String getSysTypeUrl() {
+		return sysTypeUrl;
+	}
+
+	public void setSysTypeUrl(String sysTypeUrl) {
+		this.sysTypeUrl = sysTypeUrl;
+	}
+
+	public String getCacheRefreshUrl() {
+		return cacheRefreshUrl;
+	}
+
+	public void setCacheRefreshUrl(String cacheRefreshUrl) {
+		this.cacheRefreshUrl = cacheRefreshUrl;
+	}
+
+	public String getXheditorDomain() {
+		return xheditorDomain;
+	}
+
+	public void setXheditorDomain(String xheditorDomain) {
+		this.xheditorDomain = xheditorDomain;
+	}
+
+	public String[] getXheditorExts() {
+		return xheditorExts;
+	}
+
+	public void setXheditorExts(String[] xheditorExts) {
+		this.xheditorExts = xheditorExts;
+	}
+
+	public String getXheditorExt() {
+		return xheditorExt;
+	}
+
+	public void setXheditorExt(String xheditorExt) {
+		this.xheditorExt = xheditorExt;
+	}
+
+	public String[] getXheditorImageExts() {
+		return xheditorImageExts;
+	}
+
+	public void setXheditorImageExts(String[] xheditorImageExts) {
+		this.xheditorImageExts = xheditorImageExts;
+	}
+
+	public String getXheditorImageExt() {
+		return xheditorImageExt;
+	}
+
+	public void setXheditorImageExt(String xheditorImageExt) {
+		this.xheditorImageExt = xheditorImageExt;
+	}
+
+	public long getXheditorMaxSize() {
+		return xheditorMaxSize;
+	}
+
+	public void setXheditorMaxSize(long xheditorMaxSize) {
+		this.xheditorMaxSize = xheditorMaxSize;
+	}
+
+	public String getXheditorUploadDir() {
+		return xheditorUploadDir;
+	}
+
+	public void setXheditorUploadDir(String xheditorUploadDir) {
+		this.xheditorUploadDir = xheditorUploadDir;
+	}
+
+	public String getXheditorUploadPath() {
+		return xheditorUploadPath;
+	}
+
+	public void setXheditorUploadPath(String xheditorUploadPath) {
+		this.xheditorUploadPath = xheditorUploadPath;
+	}
+
+	@Value("${sms.sp.code:}")
+	private String smsSpCode;
+
+	@Value("${mms.sp.code:}")
+	private String mmsSpCode;
+
+	@Value("${upload.tmp.dir:}")
+	private String uploadTmpDir;
+
+	@Value("${upload.tmp.path:}")
+	private String uploadTmpPath;
+
+	@Value("${upload.img.dir:}")
+	private String uploadImgDir;
+
+	@Value("${upload.img.path:}")
+	private String uploadImgPath;
+
+	@Value("${upload.maxsize:}")
+	private long uploadMaxsize;
+
+	@Value("${upload.file.dir:}")
+	private String uploadFileDir;
+
+	@Value("${upload.file.path:}")
+	private String uploadFilePath;
+
+	public String getUploadFilePath() {
+		return uploadFilePath;
+	}
+
+	public void setUploadFilePath(String uploadFilePath) {
+		this.uploadFilePath = uploadFilePath;
+	}
+
+	@Value("${upload.template.dir:}")
+	private String uploadTemplateDir;
+
+	@Value("${upload.locallife.dir:}")
+	private String locallifeDir;
+
+	@Value("${upload.locallife.path:}")
+	private String locallifePath;
+
+	/** 彩信物理路径 */
+	@Value("${CONT.MMS.PATH:}")
+	private String mmsPath;
+
+	/** 彩信web访问路径 */
+	@Value("${CONT.MMS.WEBPATH:}")
+	private String mmsWebPath;
+
+	/** 默认彩信规格 */
+	@Value("${CONT.MMS.DEFAULT.SIZE:}")
+	private String mmsDefaultSize;
+
+	/** 彩信图片默认大小上限 */
+	@Value("${CONT.MMS.PIC.MAX.SIZE:}")
+	private long mmsPicMaxSize;
+
+	/** 彩信铃声默认大小上限 */
+	@Value("${CONT.MMS.SOUND.MAX.SIZE:}")
+	private long mmsSoundMaxSize;
+
+	/** 彩信默认大小上限 */
+	@Value("${CONT.MMS.MAX.SIZE:}")
+	private long mmsMaxSize;
+
+	/** 彩信临时文件目录 */
+	@Value("${CONT.MMS.TMP:}")
+	private String mmsTmp;
+
+	/** 找回密码 */
+	@Value("${RETAKE_PWD_CODE_EFFECTIVE_TIME:}")
+	private String retakePwdCodeEffectiveTime;
+
+	/**
+	 * 同步高阳接口地址
+	 */
+	@Value("${SYNC_GY_URL:}")
+	private String syncGyUrl;
+
+	/**
+	 * 同步高阳接口_用户名
+	 */
+	@Value("${SYNC_GY_USERID:}")
+	private String syncGyUserId;
+
+	/**
+	 * #同步高阳接口_密钥
+	 */
+	@Value("${SYNC_GY_KEY:}")
+	private String syncGyKey;
+
+	/** 会员boss积分查询接口url */
+	@Value("${MEMBER_SCORE_QUERY_URL:}")
+	private String memberScore;
+
+	/** 商城币查询接口url */
+	@Value("${MEMBER_COIN_QUERY_URL:}")
+	private String memberCoin;
+
+	/** mapabc key url */
+	@Value("${MAPABC_KEY_URL:}")
+	private String mapABCKey;
+
+	/**
+	 * 页面静态化调用接口url
+	 */
+	@Value("${PAGE_STATIC_URL:}")
+	private String pageStaticUrl;
+
+	/**
+	 * 业务编号
+	 */
+	@Value("${SYNC_GY_SERVICE_ID:}")
+	private String syncGyServiceId;
+
+	/**
+	 * 会员等级
+	 */
+	@Value("${res.root:}")
+	private String resRoot;
+
+	@Value("${res.web.root:}")
+	private String resWebRoot;
+
+	@Value("${upload.ad.dir:}")
+	private String uploadAdDir;
+
+	@Value("${upload.ad.path:}")
+	private String uploadAdPath;
+
+	@Value("${upload.brand.dir:}")
+	private String uploadBrandDir;
+
+	@Value("${upload.brand.path:}")
+	private String uploadBrandPath;
+
+	@Value("${upload.task.dir:}")
+	private String uploadTaskDir;
+
+	@Value("${upload.task.path:}")
+	private String uploadTaskPath;
+
+	@Value("${upload.channel.dir:}")
+	private String uploadChannelDir;
+
+	@Value("${upload.channel.path:}")
+	private String uploadChannelPath;
+
+	@Value("${upload.item.dir:}")
+	private String uploadItemDir;
+
+	@Value("${upload.item.path:}")
+	private String uploadItemPath;
+
+	@Value("${upload.shop.dir:}")
+	private String uploadShopDir;
+
+	@Value("${upload.shop.path:}")
+	private String uploadShopPath;
+
+	@Value("${MEMBER_USER_LEVEL:}")
+	private String memberUserLevel;
+
+	@Value("${upload.lottery.dir:}")
+	private String uploadLotteryDir;
+
+	@Value("${upload.lottery.path:}")
+	private String uploadLotteryPath;
+
+	@Value("${upload.qrcode.dir:}")
+	private String uploadQrcodeDir;
+
+	@Value("${upload.qrcode.path:}")
+	private String uploadQrcodePath;
+
+	@Value("${upload.giftrequired.dir:}")
+	private String uploadGiftrequiredDir;
+
+	@Value("${upload.giftrequired.path:}")
+	private String uploadGiftrequiredPath;
+
+	@Value("${upload.advisepic.dir:}")
+	private String uploadAdvisePicDir;
+
+	@Value("${upload.advisepic.path:}")
+	private String uploadAdvisePicPath;
+
+	@Value("${upload.adviseextendpic.dir:}")
+	private String uploadAdviseExtendPicDir;
+
+	@Value("${upload.adviseextendpic.path:}")
+	private String uploadAdviseExtendPicPath;
+
+	@Value("${qrcodeLink:}")
+	private String qrcodeLink;
+
+	/**
+	 * 订单物流追踪快递100 id
+	 */
+	@Value("${order.express_key:}")
+	private String orderExpressKey;
+
+	@Value("${exception_url:}")
+	private String exceptionUrl;
+
+	/**
+	 * 生成商户店铺静态接口
+	 */
+	@Value("${MAKE_STORE_SHOP_URL:}")
+	private String makeStoreShopUrl;
+
+	@Value("${STORE_BROWSE_URL:}")
+	private String settingsBrowse;
+	
+	@Value("${STORE_HOME_URL:}")
+	private String storeHomePage;
+
+	/**
+	 * 普通门店用户设置权限
+	 */
+	@Value("${SHOP_USER_ROLE:}")
+	private String shopUserRole;
+
+	/**
+	 * 会员等级配置
+	 */
+	@Value("${USER_GRADE:}")
+	private String userGrade;
+
+	/**
+	 * 索引全量更新地址
+	 */
+	@Value("${SEARCH_IDX_URL:}")
+	private String searchidxurl;
+
+	/**
+	 * 索引增量更新地址
+	 */
+	@Value("${SEARCH_IDX_ADD_URL:}")
+	private String searchidxaddurl;
+
+	/**
+	 * 短信模板下载地址
+	 */
+	@Value("${SMS_MODEL_URL:}")
+	private String smsModelUrl;
+
+	/**
+	 * 计费代码
+	 */
+	@Value("${BILLCODE:}")
+	private String billCode;
+
+	/**
+	 * ftp配置
+	 * 
+	 * @return
+	 */
+	@Value("${FTP_SERVER_IP:}")
+	private String ftpServerIp;
+
+	@Value("${FTP_SERVER_PORT:}")
+	private String ftpServerPort;
+
+	@Value("${FTP_USER:}")
+	private String ftpUser;
+
+	@Value("${FTP_PASSWD:}")
+	private String ftpPasswd;
+
+	@Value("${FTP_REMOTEPATH:}")
+	private String ftpRemotePath;
+
+	@Value("${order.export:}")
+	private String orderExportNumber;
+
+	public String getExceptionUrl() {
+		return exceptionUrl;
+	}
+
+	public void setExceptionUrl(String exceptionUrl) {
+		this.exceptionUrl = exceptionUrl;
+	}
+
+	public String getBillCode() {
+		return billCode;
+	}
+
+	public void setBillCode(String billCode) {
+		this.billCode = billCode;
+	}
+
+	public String getSmsModelUrl() {
+		return smsModelUrl;
+	}
+
+	public void setSmsModelUrl(String smsModelUrl) {
+		this.smsModelUrl = smsModelUrl;
+	}
+
+	public String getSearchidxurl() {
+		return searchidxurl;
+	}
+
+	public void setSearchidxurl(String searchidxurl) {
+		this.searchidxurl = searchidxurl;
+	}
+
+	public String getSearchidxaddurl() {
+		return searchidxaddurl;
+	}
+
+	public void setSearchidxaddurl(String searchidxaddurl) {
+		this.searchidxaddurl = searchidxaddurl;
+	}
+
+	public String getUserGrade() {
+		return userGrade;
+	}
+
+	public void setUserGrade(String userGrade) {
+		this.userGrade = userGrade;
+	}
+
+	public String getShopUserRole() {
+		return shopUserRole;
+	}
+
+	public void setShopUserRole(String shopUserRole) {
+		this.shopUserRole = shopUserRole;
+	}
+
+	public String getMakeStoreShopUrl() {
+		return makeStoreShopUrl;
+	}
+
+	public void setMakeStoreShopUrl(String makeStoreShopUrl) {
+		this.makeStoreShopUrl = makeStoreShopUrl;
+	}
+
+	public String getPageStaticUrl() {
+		return pageStaticUrl;
+	}
+
+	public void setPageStaticUrl(String pageStaticUrl) {
+		this.pageStaticUrl = pageStaticUrl;
+	}
+
+	public String getUploadFileDir() {
+		return uploadFileDir;
+	}
+
+	public String getTemplateFileDir() {
+		return uploadTemplateDir;
+	}
+
+	public String getSyncGyUrl() {
+		return syncGyUrl;
+	}
+
+	public void setSyncGyUrl(String syncGyUrl) {
+		this.syncGyUrl = syncGyUrl;
+	}
+
+	public String getSyncGyUserId() {
+		return syncGyUserId;
+	}
+
+	public void setSyncGyUserId(String syncGyUserId) {
+		this.syncGyUserId = syncGyUserId;
+	}
+
+	public String getSyncGyKey() {
+		return syncGyKey;
+	}
+
+	public void setSyncGyKey(String syncGyKey) {
+		this.syncGyKey = syncGyKey;
+	}
+
+	public void setMemberScore(String memberScore) {
+		this.memberScore = memberScore;
+	}
+
+	public String getMemberScore() {
+		return memberScore;
+	}
+
+	public void setMemberCoin(String memberCoin) {
+		this.memberCoin = memberCoin;
+	}
+
+	public String getMemberCoin() {
+		return memberCoin;
+	}
+
+	public void setMapABCKey(String mapABCKey) {
+		this.mapABCKey = mapABCKey;
+	}
+
+	public String getMapABCKey() {
+		return mapABCKey;
+	}
+
+	public void setSyncGyServiceId(String syncGyServiceId) {
+		this.syncGyServiceId = syncGyServiceId;
+	}
+
+	public String getSyncGyServiceId() {
+		return syncGyServiceId;
+	}
+
+	public void setMemberUserLevel(String memberUserLevel) {
+		this.memberUserLevel = memberUserLevel;
+	}
+
+	public String getMemberUserLevel() {
+		return memberUserLevel;
+	}
+
+	public String getRetakePwdCodeEffectiveTime() {
+		return retakePwdCodeEffectiveTime;
+	}
+
+	public void setRetakePwdCodeEffectiveTime(String retakePwdCodeEffectiveTime) {
+		this.retakePwdCodeEffectiveTime = retakePwdCodeEffectiveTime;
+	}
+
+	public String getMmsDefaultSize() {
+		return mmsDefaultSize;
+	}
+
+	public long getMmsMaxSize() {
+		return mmsMaxSize;
+	}
+
+	public String getMmsPath() {
+		return mmsPath;
+	}
+
+	public long getMmsPicMaxSize() {
+		return mmsPicMaxSize;
+	}
+
+	public long getMmsSoundMaxSize() {
+		return mmsSoundMaxSize;
+	}
+
+	public String getSettingsBrowse() {
+		return settingsBrowse;
+	}
+
+	public void setSettingsBrowse(String settingsBrowse) {
+		this.settingsBrowse = settingsBrowse;
+	}
+
+	public String getMmsTmp() {
+		return mmsTmp;
+	}
+
+	public String getMmsWebPath() {
+		return mmsWebPath;
+	}
+
+	public String getSmsSpCode() {
+		return smsSpCode;
+	}
+
+	public String getMmsSpCode() {
+		return mmsSpCode;
+	}
+
+	public long getUploadMaxsize() {
+		return uploadMaxsize;
+	}
+
+	public String getUploadImgDir() {
+		return uploadImgDir;
+	}
+
+	public String getUploadImgPath() {
+		return uploadImgPath;
+	}
+
+	public String getUploadTmpDir() {
+		return uploadTmpDir;
+	}
+
+	public String getUploadTmpPath() {
+		return uploadTmpPath;
+	}
+
+	public void setMmsDefaultSize(String mmsDefaultSize) {
+		this.mmsDefaultSize = mmsDefaultSize;
+	}
+
+	public void setMmsMaxSize(long mmsMaxSize) {
+		this.mmsMaxSize = mmsMaxSize;
+	}
+
+	public void setMmsPath(String mmsPath) {
+		this.mmsPath = mmsPath;
+	}
+
+	public void setMmsPicMaxSize(long mmsPicMaxSize) {
+		this.mmsPicMaxSize = mmsPicMaxSize;
+	}
+
+	public void setMmsSoundMaxSize(long mmsSoundMaxSize) {
+		this.mmsSoundMaxSize = mmsSoundMaxSize;
+	}
+
+	public void setMmsTmp(String mmsTmp) {
+		this.mmsTmp = mmsTmp;
+	}
+
+	public void setMmsWebPath(String mmsWebPath) {
+		this.mmsWebPath = mmsWebPath;
+	}
+
+	public String getSsoServer() {
+		return ssoServer;
+	}
+
+	public void setSsoServer(String ssoServer) {
+		this.ssoServer = ssoServer;
+	}
+
+	public String getSsoClient() {
+		return ssoClient;
+	}
+
+	public void setSsoClient(String ssoClient) {
+		this.ssoClient = ssoClient;
+	}
+
+	public boolean isFackLogin() {
+		return fackLogin;
+	}
+
+	public void setFackLogin(boolean fackLogin) {
+		this.fackLogin = fackLogin;
+	}
+
+	public String getResRoot() {
+		return resRoot;
+	}
+
+	public String getResWebRoot() {
+		return resWebRoot;
+	}
+
+	public String getUploadAdDir() {
+		return uploadAdDir;
+	}
+
+	public String getUploadAdPath() {
+		return uploadAdPath;
+	}
+
+	public String getUploadBrandDir() {
+		return uploadBrandDir;
+	}
+
+	public String getUploadBrandPath() {
+		return uploadBrandPath;
+	}
+
+	public String getUploadTaskDir() {
+		return uploadTaskDir;
+	}
+
+	public String getUploadTaskPath() {
+		return uploadTaskPath;
+	}
+
+	public String getUploadChannelDir() {
+		return uploadChannelDir;
+	}
+
+	public String getUploadChannelPath() {
+		return uploadChannelPath;
+	}
+
+	public String getUploadItemDir() {
+		return uploadItemDir;
+	}
+
+	public String getUploadItemPath() {
+		return uploadItemPath;
+	}
+
+	public String getUploadShopDir() {
+		return uploadShopDir;
+	}
+
+	public String getUploadShopPath() {
+		return uploadShopPath;
+	}
+
+	public String getRefreshFrontPageUrl() {
+		return refreshFrontPageUrl;
+	}
+
+	public void setRefreshFrontPageUrl(String refreshFrontPageUrl) {
+		this.refreshFrontPageUrl = refreshFrontPageUrl;
+	}
+
+	public String getUploadLotteryDir() {
+		return uploadLotteryDir;
+	}
+
+	public String getUploadLotteryPath() {
+		return uploadLotteryPath;
+	}
+
+	public void setUploadLotteryDir(String uploadLotteryDir) {
+		this.uploadLotteryDir = uploadLotteryDir;
+	}
+
+	public void setUploadLotteryPath(String uploadLotteryPath) {
+		this.uploadLotteryPath = uploadLotteryPath;
+	}
+
+	public static String getCookieToken() {
+		return COOKIE_TOKEN;
+	}
+
+	public static String getSessLoginUser() {
+		return SESS_LOGIN_USER;
+	}
+
+	public static String getInfoLocked() {
+		return INFO_LOCKED;
+	}
+
+	public static String getInfoNeedValidate() {
+		return INFO_NEED_VALIDATE;
+	}
+
+	public static String getInfoAlreadyValidate() {
+		return INFO_ALREADY_VALIDATE;
+	}
+
+	public static String getInfoValidateFail() {
+		return INFO_VALIDATE_FAIL;
+	}
+
+	public static String getInfoWrongEmail() {
+		return INFO_WRONG_EMAIL;
+	}
+
+	public static String getInfoValidateSuccess() {
+		return INFO_VALIDATE_SUCCESS;
+	}
+
+	public static String getInfoValidateSend() {
+		return INFO_VALIDATE_SEND;
+	}
+
+	public String getUploadTemplateDir() {
+		return uploadTemplateDir;
+	}
+
+	public String getUploadQrcodeDir() {
+		return uploadQrcodeDir;
+	}
+
+	public String getUploadQrcodePath() {
+		return uploadQrcodePath;
+	}
+
+	public String getUploadGiftrequiredDir() {
+		return uploadGiftrequiredDir;
+	}
+
+	public String getUploadGiftrequiredPath() {
+		return uploadGiftrequiredPath;
+	}
+
+	public String getOrderExpressKey() {
+		return orderExpressKey;
+	}
+
+	public void setOrderExpressKey(String orderExpressKey) {
+		this.orderExpressKey = orderExpressKey;
+	}
+
+	@Value("${upload.mmsschedule.dir:}")
+	private String uploadMmsScheduleDir;
+
+	public String getUploadMmsScheduleDir() {
+		return uploadMmsScheduleDir;
+	}
+
+	public void setUploadMmsScheduleDir(String uploadMmsScheduleDir) {
+		this.uploadMmsScheduleDir = uploadMmsScheduleDir;
+	}
+
+	public String getFtpServerIp() {
+		return ftpServerIp;
+	}
+
+	public void setFtpServerIp(String ftpServerIp) {
+		this.ftpServerIp = ftpServerIp;
+	}
+
+	public String getFtpServerPort() {
+		return ftpServerPort;
+	}
+
+	public void setFtpServerPort(String ftpServerPort) {
+		this.ftpServerPort = ftpServerPort;
+	}
+
+	public String getFtpUser() {
+		return ftpUser;
+	}
+
+	public void setFtpUser(String ftpUser) {
+		this.ftpUser = ftpUser;
+	}
+
+	public String getFtpPasswd() {
+		return ftpPasswd;
+	}
+
+	public void setFtpPasswd(String ftpPasswd) {
+		this.ftpPasswd = ftpPasswd;
+	}
+
+	public String getFtpRemotePath() {
+		return ftpRemotePath;
+	}
+
+	public void setFtpRemotePath(String ftpRemotePath) {
+		this.ftpRemotePath = ftpRemotePath;
+	}
+
+	public String getGiftCardSyncIp() {
+		return giftCardSyncIp;
+	}
+
+	public void setGiftCardSyncIp(String giftCardSyncIp) {
+		this.giftCardSyncIp = giftCardSyncIp;
+	}
+
+	public int getGiftCardSyncPort() {
+		return giftCardSyncPort;
+	}
+
+	public void setGiftCardSyncPort(int giftCardSyncPort) {
+		this.giftCardSyncPort = giftCardSyncPort;
+	}
+
+	public String getGiftCardSyncPlatCode() {
+		return giftCardSyncPlatCode;
+	}
+
+	public void setGiftCardSyncPlatCode(String giftCardSyncPlatCode) {
+		this.giftCardSyncPlatCode = giftCardSyncPlatCode;
+	}
+
+	public String getGiftCardSyncMd5Key() {
+		return giftCardSyncMd5Key;
+	}
+
+	public void setGiftCardSyncMd5Key(String giftCardSyncMd5Key) {
+		this.giftCardSyncMd5Key = giftCardSyncMd5Key;
+	}
+
+	public String getGiftCardSyncDesKey() {
+		return giftCardSyncDesKey;
+	}
+
+	public void setGiftCardSyncDesKey(String giftCardSyncDesKey) {
+		this.giftCardSyncDesKey = giftCardSyncDesKey;
+	}
+
+	public String getUploadAdvisePicDir() {
+		return uploadAdvisePicDir;
+	}
+
+	public String getUploadAdvisePicPath() {
+		return uploadAdvisePicPath;
+	}
+
+	public String getUploadAdviseExtendPicDir() {
+		return uploadAdviseExtendPicDir;
+	}
+
+	public String getUploadAdviseExtendPicPath() {
+		return uploadAdviseExtendPicPath;
+	}
+
+	public String getOrderExportNumber() {
+		return orderExportNumber;
+	}
+
+	public void setOrderExportNumber(String orderExportNumber) {
+		this.orderExportNumber = orderExportNumber;
+	}
+
+	public String getQrcodeLink() {
+		return qrcodeLink;
+	}
+
+	public void setQrcodeLink(String qrcodeLink) {
+		this.qrcodeLink = qrcodeLink;
+	}
+
+	public String getLocallifeDir() {
+		return locallifeDir;
+	}
+
+	public void setLocallifeDir(String locallifeDir) {
+		this.locallifeDir = locallifeDir;
+	}
+
+	public String getLocallifePath() {
+		return locallifePath;
+	}
+
+	public void setLocallifePath(String locallifePath) {
+		this.locallifePath = locallifePath;
+	}
+
+	public String getJmsSmsSpcode() {
+		return jmsSmsSpcode;
+	}
+
+	public void setJmsSmsSpcode(String jmsSmsSpcode) {
+		this.jmsSmsSpcode = jmsSmsSpcode;
+	}
+
+	public String getJmsSmsDestination() {
+		return jmsSmsDestination;
+	}
+
+	public void setJmsSmsDestination(String jmsSmsDestination) {
+		this.jmsSmsDestination = jmsSmsDestination;
+	}
+
+	public String getStoreHomePage() {
+		return storeHomePage;
+	}
+
+	public void setStoreHomePage(String storeHomePage) {
+		this.storeHomePage = storeHomePage;
+	}
+
+	public String getFtpGfDownIp() {
+		return ftpGfDownIp;
+	}
+
+	public void setFtpGfDownIp(String ftpGfDownIp) {
+		this.ftpGfDownIp = ftpGfDownIp;
+	}
+
+	public String getFtpGfDownPort() {
+		return ftpGfDownPort;
+	}
+
+	public void setFtpGfDownPort(String ftpGfDownPort) {
+		this.ftpGfDownPort = ftpGfDownPort;
+	}
+
+	public String getFtpGfDownUser() {
+		return ftpGfDownUser;
+	}
+
+	public void setFtpGfDownUser(String ftpGfDownUser) {
+		this.ftpGfDownUser = ftpGfDownUser;
+	}
+
+	public String getFtpGfDownPwd() {
+		return ftpGfDownPwd;
+	}
+
+	public void setFtpGfDownPwd(String ftpGfDownPwd) {
+		this.ftpGfDownPwd = ftpGfDownPwd;
+	}
+	
+	
+
+}

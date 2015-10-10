@@ -1,0 +1,36 @@
+html {
+	background: #FFFFFF;
+}
+ul,ol {
+	margin: 0;
+	padding: 0;
+}
+form .control-group .control-label {
+	float: left;
+    margin-bottom: 5px;
+    text-align: left;
+    width: 100px;
+}
+.queryContainer form {
+	margin: 0;
+}
+ul.brandList li{
+	background: #6F7A8A;
+    color: #FFFFFF;
+    cursor: pointer;
+    display: inline-block;
+    font-family: "Microsoft YaHei";
+    list-style-type: none;
+    margin-left: 5px;
+    padding: 5px;
+}
+ul.brandList li:hover{
+	background: #62AEEF;
+}
+
+ul.brandList li.selected{
+	background: #62AEEF;
+}
+.modal-box-page {
+	padding: 10px 0;
+}

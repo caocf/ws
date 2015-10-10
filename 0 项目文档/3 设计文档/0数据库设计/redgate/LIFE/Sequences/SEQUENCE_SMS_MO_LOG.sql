@@ -1,0 +1,1 @@
+CREATE SEQUENCE "LIFE".sequence_sms_mo_log

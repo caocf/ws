@@ -1,0 +1,87 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+	<ht:head/>
+</head>
+<body>
+<br/>
+<div id="search-menu">
+    <ul>
+        <ht:menu-btn type="search"/>
+        <ct:display model="segment_list" btn="add_btn">
+        <ht:menu-btn text="添加号段" url="/sys/segment/add" type="add"/>        
+		</ct:display>
+        <ct:display model="segment_list" btn="imp_btn">
+        <ht:menu-btn text="批量导入" url="/sys/segment/upload" />
+        </ct:display>
+    </ul>
+    <br style="clear: left" />
+</div>
+<div class="queryContainer" >
+    <form name="queryForm" id="queryForm" action="?" method="get">
+        <table>
+            <tr>
+                <td>号段：</td>
+                <td><input type="text" name="segmentCode" value="${sysSegment.segmentCode}" class="txt" style="width:206px"/></td>
+                <td>地市：</td>
+                <td><input type="text" name="areaCode" value="${sysSegment.areaCode}" class="txt" style="width:206px"/></td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <ct:btn type="search" />
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<div class="container">
+    <br/>
+    <h3>号段列表</h3>
+
+    <div class="mainbox">
+        <c:if test="${not empty segmentPage}">
+
+        <table class="datalist fixwidth">
+            <tr>
+                <th nowrap="nowrap" width="100">号段编号</th>
+                <th nowrap="nowrap" width="100">号段</th>
+                <th nowrap="nowrap" width="100">操作码</th>
+                <th nowrap="nowrap" width="100">归属地</th>
+                <th nowrap="nowrap" width="120">操作</th>
+            </tr>
+
+            <c:forEach items="${segmentPage.data}" var="item">
+            <tr>
+                <td nowrap="nowrap">${item.id}</td>
+                <td nowrap="nowrap">${item.segmentCode}</td>
+                <td nowrap="nowrap">${item.operatorCode}</td>
+                <td nowrap="nowrap">${item.areaCode}</td>
+                <td nowrap="nowrap">
+                <ct:display model="segment_list" btn="mod_btn">
+                   	<a href="edit?id=${item.id}">修改</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                </ct:display>
+                <ct:display model="segment_list" btn="del_btn">
+                   	<a href="#" onclick="deleteItem('./delete/${item.id}');">删除</a>
+                </ct:display>
+                </td>
+            </tr>
+            </c:forEach>
+        </table>
+
+        <ht:page pageData="${segmentPage}" />
+
+        </c:if>
+        <c:if test="${empty segmentPage}">
+        <div class="note">
+            <p class="i">目前没有相关记录!</p>
+        </div>
+        </c:if>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+body{ background:url(bg.jpg) repeat-x #d5fbff top center; text-align:center;}
+#logo{ position:absolute; top:20px; left:200px; widows:400px; height:100px;}
+.wrapper{ width:760px; margin:0 auto; text-align:left; background:url(bg_menu.jpg) top center no-repeat; position:relative; }
+#login_menu{ min-height:240px; width:450px; padding:268px 180px 20px; }
+#des{ top:207px; font-size:16px; color:#FFFFFF; width:420px; text-align:center; line-height:24px; position:absolute; left:180px; }
+.line{  font-size:14px; line-height:28px; padding-left:20px; position:relative; height:39px; margin-bottom:20px;}
+.line label{ position:absolute; left:0;font-size:16px; line-height:28px;   height:39px;padding-left:20px; z-index:999; color:#6699CC;}
+.line .line_input{ padding-left:56px;font-size:16px; line-height:28px;   height:39px; position:relative; }
+.line .line_input input{ border:0; line-height:25px;  margin:2px 0 0 0; padding:0; height:25px; background:#FFFFFF; font-size:16px; }
+.btn a{ display:block; text-align:center; width:160px; margin:5px 120px 0 120px; }
+#copyright{ color:#666666; text-align:center;}
+:focus { outline: 0; }
+
+
+#vcodeRefresh {padding:3px 10px; position:relative;top:-5px; color:#666;}
+#vcodeImage { cursor: pointer;}
+.vcodeDiv {position:absolute; top:0; left:190px; margin-top:5px;}
+.alert {position:absolute; top:150px; height:50px; line-height:50px; width:400px; font-size:14px; color:red; font-weight:bolder; text-align: center; }

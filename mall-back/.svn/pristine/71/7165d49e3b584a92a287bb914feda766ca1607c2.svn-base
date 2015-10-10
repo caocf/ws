@@ -1,0 +1,297 @@
+package com.cplatform.mall.back.giftcard.web;
+
+import java.sql.SQLException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.giftcard.entity.GiftRequired;
+import com.cplatform.mall.back.giftcard.service.GiftRequiredService;
+import com.cplatform.mall.back.model.SessionUser;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.store.service.StoreService;
+import com.cplatform.mall.back.sys.service.SysRegionService;
+import com.cplatform.mall.back.utils.AppConfig;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.websys.entity.SysFileImg;
+import com.cplatform.mall.back.websys.service.BsFileService;
+import com.cplatform.util2.TimeStamp;
+
+
+/**
+ * 
+ * 礼品卡需求控制器
+ * 
+ * */
+
+@Controller
+@RequestMapping(value = "/gift/required")
+public class GiftRequiredController {
+	
+	@Autowired
+	private GiftRequiredService giftRequiredService;
+	
+	@Autowired
+	private SysRegionService sysRegionService;
+	
+	@Autowired 
+	private AppConfig appconfig;
+	
+	@Autowired 
+	private StoreService storeService;
+	
+	/**
+	 * 列表展示页面
+	 * */
+	@RequestMapping(value = "/list")
+	public String giftList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model) throws SQLException {
+		Page<GiftRequired> pageData = giftRequiredService.giftRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("statusMap", GiftRequired.statusMap);
+		return "/giftcard/giftRequired-list";
+	}
+	
+	/**
+	 * 进入添加页面
+	 * */
+	
+	@RequestMapping(value = "/add",method = RequestMethod.GET)
+	public String add(GiftRequired giftRequired) throws SQLException {
+		return "/giftcard/giftRequired-add";
+	}
+	/**
+	 * 进行添加
+	 * */
+	@RequestMapping(value = "/add", method = RequestMethod.POST)
+	@ResponseBody
+	public Object save(GiftRequired giftRequired,HttpSession session,HttpServletRequest request) throws SQLException {
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		giftRequired.setCreateUserId(sessionUser.getId());
+		giftRequired.setCreatedTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		giftRequired.setStatus(0L);
+		giftRequired.setPrintFaceStatus(0L);
+		giftRequired.setBindItemStatus(0L);
+		giftRequired.setMakeCardStatus(0L);
+		giftRequired.setIssuingTime(giftRequired.getIssuingTime().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		giftRequired.setEffortDate(giftRequired.getEffortDate().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		giftRequired.setExpiryDate(giftRequired.getExpiryDate().replaceAll("-", "").replaceAll(" ", "").replaceAll(":", ""));
+		giftRequiredService.save(giftRequired);
+		String backUrl = request.getParameter("backUrl");
+		return JsonRespWrapper.success("操作成功", backUrl);
+	}
+	/**
+	 * 删除
+	 * */
+	@RequestMapping(value = "/delete/{id}",method = RequestMethod.GET)
+	@ResponseBody
+	public Object delete(@PathVariable Long id ) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		giftRequired.setStatus(-1L);
+		giftRequiredService.save(giftRequired);
+		return JsonRespWrapper.success("删除成功", "/gift/required/list");
+	}
+	
+	/**
+	 * 查看页面
+	 * */
+	@RequestMapping(value = "/view/{id}",method = RequestMethod.GET)
+	public String view(@PathVariable Long id ,Model model) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		model.addAttribute("giftRequired",giftRequired);
+		String regionCode  = giftRequired.getRegionCode();
+		String[] regionCodes = regionCode.split(",");
+		String regionCodeName = "";
+		for (int i = 0; i < regionCodes.length; i++) {
+			if (i == regionCodes.length - 1) {
+				regionCodeName += sysRegionService.findByRegionCode(regionCodes[i]).getRegionName();
+			} else {
+				regionCodeName += sysRegionService.findByRegionCode(regionCodes[i]).getRegionName() + ",";
+			}
+		}
+		model.addAttribute("regionCodeName",regionCodeName);
+		Store store = storeService.findStoreById(giftRequired.getStoreId());
+		giftRequired.setStoreName(store.getName());
+		return "/giftcard/giftRequired-view";
+	}
+	/**
+	 * 进入修改页面
+	 * */
+	@RequestMapping(value = "/edit/{id}",method = RequestMethod.GET)
+	public String edit(@PathVariable Long id ,Model model) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		model.addAttribute("giftRequired",giftRequired);
+		String regionCode  = giftRequired.getRegionCode();
+		String[] regionCodes = regionCode.split(",");
+		String regionCodeName = "";
+		for (int i = 0; i < regionCodes.length; i++) {
+			if (i == regionCodes.length - 1) {
+				regionCodeName += sysRegionService.findByRegionCode(regionCodes[i]).getRegionName();
+			} else {
+				regionCodeName += sysRegionService.findByRegionCode(regionCodes[i]).getRegionName() + ",";
+			}
+		}
+		model.addAttribute("regionCodeName",regionCodeName);
+		Store store = storeService.findStoreById(giftRequired.getStoreId());
+		giftRequired.setStoreName(store.getName());
+		return "/giftcard/giftRequired-edit";
+	}
+	/**
+	 * 送审
+	 * */
+	@RequestMapping(value = "/sendToAudit/{id}",method = RequestMethod.GET)
+	@ResponseBody
+	public Object sendToAudit(@PathVariable Long id ) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		giftRequired.setStatus(1L);
+		giftRequiredService.save(giftRequired);
+		return JsonRespWrapper.success("送审成功，待审核", "/gift/required/list");
+	}
+	/**
+	 * 进入审核列表页面
+	 * */
+	
+	@RequestMapping(value = "/auditList")
+	public String auditList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model) throws SQLException {
+		giftRequired.setStatus(1L);
+		Page<GiftRequired> pageData = giftRequiredService.giftRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		return "/giftcard/giftRequired-auditList";
+	}
+	/**
+	 * 进入审核页面
+	 * */
+	
+	@RequestMapping(value = "/audit/{id}",method = RequestMethod.GET)
+	public String audit(@PathVariable Long id,Model model,GiftRequired giftRequired) throws SQLException {
+		model.addAttribute("batchNo", id);
+		return "/giftcard/giftRequired-audit";
+	}
+	/**
+	 * 进行审核
+	 * */
+	@RequestMapping(value = "/audit/{id}",method = RequestMethod.POST)
+	@ResponseBody
+	public Object auditGiftRequired(@PathVariable Long id,GiftRequired giftRequired,HttpSession session ) throws SQLException {
+		GiftRequired gr = giftRequiredService.findById(id);
+		SessionUser sessionUser = (SessionUser) session.getAttribute(SessionUser.SESSION_USER_KEY);
+		gr.setStatus(giftRequired.getStatus());
+		gr.setAuditUserId(sessionUser.getId());
+		gr.setAuditMsg(giftRequired.getAuditMsg());
+		gr.setAuditTime(TimeStamp.getTime(TimeStamp.YYYYMMDDhhmmss));
+		giftRequiredService.save(gr);
+		return JsonRespWrapper.success("审核成功", "/gift/required/auditList");
+	}
+	/**
+	 * 制卡列表页面
+	 * */
+	
+	@RequestMapping(value = "/makeCardList")
+	public String makeCardList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model) throws SQLException {
+		giftRequired.setStatus(2L);
+		Page<GiftRequired> pageData = giftRequiredService.giftRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("makeCardStatusMap", GiftRequired.makeCardStatusMap);
+		return "/giftcard/makeCard-list";
+	}
+	
+	/**
+	 * 制卡
+	 * */
+	@RequestMapping(value = "/makeCard/{id}")
+	@ResponseBody
+	public Object makeCard(@PathVariable Long id, Model model) throws Exception {
+		String msg = giftRequiredService.makeCard(id);
+		return JsonRespWrapper.successReload(msg);
+	}
+
+	/**
+	 * 封套印刷列表页面
+	 * */
+	
+	@RequestMapping(value = "/printCardList")
+	public String printCardList(GiftRequired giftRequired,@RequestParam(value = "page", defaultValue = "1", required = false) int page, Model model) throws SQLException {
+		giftRequired.setStatus(2L);
+		Page<GiftRequired> pageData = giftRequiredService.giftRequiredList(giftRequired, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		model.addAttribute("printFaceStatusMap", GiftRequired.printFaceStatusMap);
+		return "/giftcard/printCard-list";
+	}
+	/**
+	 * 开始印刷
+	 * */
+	@RequestMapping(value = "/startPrint/{id}",method = RequestMethod.GET)
+	@ResponseBody
+	public Object startPrint(@PathVariable Long id ) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		giftRequired.setPrintFaceStatus(1L);
+		giftRequiredService.save(giftRequired);
+		return JsonRespWrapper.success("操作成功", "/gift/required/printCardList");
+	}
+	/**
+	 * 印刷完成
+	 * */
+	@RequestMapping(value = "/donePrint/{id}",method = RequestMethod.GET)
+	@ResponseBody
+	public Object donePrint(@PathVariable Long id ) throws SQLException {
+		GiftRequired giftRequired = giftRequiredService.findById(id);
+		giftRequired.setPrintFaceStatus(2L);
+		giftRequiredService.save(giftRequired);
+		return JsonRespWrapper.success("操作成功", "/gift/required/printCardList");
+	}
+	/**
+	 * 导出
+	 * */
+	@RequestMapping(value = "/download/{id}")
+	public void download(@PathVariable Long id,HttpServletRequest request,HttpServletResponse response) throws Exception{
+		giftRequiredService.download(id,request, response);
+	}
+	/**
+	 * 管理图片
+	 * */
+	@RequestMapping(value = "/img")
+	public String imageManage(@RequestParam(value = "id", required = false) Long id,Model model) throws Exception{
+		model.addAttribute("id", id);
+		SysFileImg img  = giftRequiredService.findImg(id, BsFileService.GIFT_REQUIRED_KEY);
+		if(null != img){
+			model.addAttribute("fileWebPath", img.getFileWebPath());
+		}
+		return "/giftcard/imageManage";
+	}
+	/**
+	 * 图片添加
+	 * */
+	@RequestMapping(value = "/imgAdd/{id}", method = RequestMethod.POST)
+	@ResponseBody
+	public Object imageAdd(@PathVariable Long id,MultipartFile uploadfile) throws Exception{
+		giftRequiredService.savePic(id,uploadfile);
+		return JsonRespWrapper.success("操作成功", "/gift/required/img?id="+id);
+	}
+	/**
+	 * 下载文件
+	 * */
+	@RequestMapping(value = "/getFile/{id}", method = RequestMethod.GET)
+	@ResponseBody
+	public Object getFile(@PathVariable Long id,HttpServletRequest request) throws Exception{
+		boolean flag = giftRequiredService.downFile(appconfig.getFtpGfDownIp(), Integer.parseInt(appconfig.getFtpGfDownPort()), appconfig.getFtpGfDownUser(), appconfig.getFtpGfDownPwd(), appconfig.getFtpGfDownPath(), request.getSession().getServletContext().getRealPath("")+"/static/resources/", id);
+		if(flag){
+			return JsonRespWrapper.success("下载成功", "/gift/required/makeCardList");
+		}else{
+			return JsonRespWrapper.success("下载失败", "/gift/required/makeCardList");
+		}
+		
+	}
+	
+	
+}

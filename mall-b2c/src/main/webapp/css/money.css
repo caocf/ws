@@ -1,0 +1,68 @@
+#money #sidebar{ margin-bottom:10px; border-bottom:1px solid #dedede;  }	
+	#money #sidebar .related-content{ line-height:2em; padding-bottom:15px; color:#999; }
+	
+	.search_wrap{ height:32px; line-height:32px;   background: none repeat scroll 0 0 #F3F3F3;
+    border: 1px solid #DEDEDE; margin-bottom:10px; color:#666;}
+	.search_wrap label{
+    background: url("../images/gotone_icon2.gif") no-repeat scroll left center transparent;
+    margin-left: 6px;
+    padding-left: 20px;
+}
+
+.search_wrap input.comment_text{height:20px; line-height:20px; border:1px solid #dedede; padding:0 5px; margin-right:10px;}
+	#money table {
+    border: 1px solid #D4EBFD;
+	border-top:none;
+	margin-bottom:10px;
+	color:#666;
+	}
+	#money td {
+    line-height: 24px;
+    padding: 3px 0;
+    text-align: center;
+	   background: none repeat scroll 0 0 #EEF7FF;
+    border-top: 1px solid #D4EBFD;
+}
+	#money .page_numbers{ padding:5px 0 10px;}
+	#money .col_link td{ color:#007BC7;}
+	#money .money_btn{
+		background: none repeat scroll 0 0 #007BC7;
+		border: medium none;
+		color: #FFFFFF;
+		cursor: pointer;
+		display:block;
+		text-align:center;
+		margin:20px 0 20px 270px;
+		font-size: 16px;
+		height: 32px;
+		line-height: 32px;
+		overflow: hidden;
+		width: 200px;	
+		}
+		#money .btn_line{ text-align:center;}
+			#money .money_btn_small{
+		background: none repeat scroll 0 0 #007BC7;
+		border: medium none;
+		color: #FFFFFF;
+		cursor: pointer;
+		display:inline-block;
+		text-align:center;
+		margin:20px 0 20px 20px;
+		font-size: 12px;
+		height: 28px;
+		line-height: 24px;
+		overflow: hidden;
+		width: 120px;	
+		padding:2px 0 4px;
+		}
+		#money .content dl{
+		    background: none repeat scroll 0 0 #EEF7FF;
+   			border-top: 1px solid #D4EBFD;
+			position:relative;
+			
+		}
+		#money .content dl input{ height:24px; line-height:24px; border:1px solid #D4EBFD; padding:0 5px; margin-right:10px;}
+		#money .content dl dt{ width:120px; position:absolute; left:30px; height:36px; line-height:36px;  color: #666; }
+		#money .content dl dd{ min-height:24px; line-height:24px; padding:6px 20px 6px 180px; border-left: 1px solid #D4EBFD; border-right: 1px solid #D4EBFD;  color: #666;}
+		
+		

@@ -1,0 +1,65 @@
+package com.cplatform.mall.back.utils;
+
+import jxl.common.Logger;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.gift_card_interface.GiftCardClient;
+import com.cplatform.gift_card_interface.bean.GetCardNumberRequest;
+import com.cplatform.settle_interface.SettleInterfaceClient;
+
+/**
+ * 
+ * Title.礼品卡功能高阳接口<br>
+ * Description.
+ * <p>
+ * Copyright: Copyright (c) 2013-9-18 下午01:43:18
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * Author: macl@c-platform.com
+ * <p>
+ * Version: 1.0
+ * <p>
+ */
+@Service
+public class GiftCardSyncInterface {
+	private static Logger log = Logger.getLogger(GiftCardSyncInterface.class);
+	
+	@Autowired
+	public AppConfig config;
+
+	@Autowired
+	private LogUtils logUtils;
+
+	public void init() {
+		try {
+			//需要完成AppConfig方法
+//			GiftCardClient.init(config.getGiftCardSyncIp(), config.getGiftCardSyncPort(),
+//					config.getGiftCardSyncPlatCode(),
+//					config.getGiftCardSyncMd5Key(),
+//					config.getGiftCardSyncDesKey());
+		}
+		catch (Exception e) {
+			logUtils.logAdd("初始化礼品卡高阳接口类失败", e.getMessage());
+			log.error("初始化礼品卡高阳接口类失败："+e.getMessage());
+		}
+
+	}
+	/**
+	 * 高阳制卡接口
+	 * @throws Exception
+	 */
+	public void makeCard() throws Exception {
+		init();
+		
+		//test code >>>
+		GetCardNumberRequest request = new GetCardNumberRequest();
+		request.setOrderno("123");
+		request.setQuantity(1);
+
+		GiftCardClient.getInstance().sendRequest(request, 10000);
+		//test code <<<
+	}
+}

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_t_member ON "LIFE".t_member_0910(terminal_id);

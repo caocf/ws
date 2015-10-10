@@ -1,0 +1,87 @@
+<%@ page language="java" pageEncoding="utf-8"%>
+<%@ include file="../../includes/importer.jsp"%>
+<!doctype html>
+<html>
+<head>
+    <head>
+    <ht:head/>
+    <ht:xheditor />
+    </head>
+<body>
+
+<div id="content">
+<!-- forms -->
+<div class="box">
+    <!-- box / title -->
+    <div class="title">
+        <h5>
+        ${sysAnnouncement.id==null?"添加公告":"修改公告" }</h5>
+    </div>
+    <!-- end box / title -->
+    <form:form method="post" id="fm" commandName="sysAnnouncement" htmlEscape="true" acceptCharset="utf-8" cssClass="required-validate">
+       <c:if test="${sysAnnouncement.id != null }">
+       <form:hidden path="id"/>
+       </c:if>
+        <div class="form">
+            <div class="fields">
+                <div class="field">
+                    <div class="label noinput">ID：</div>
+                    <div class="input">${sysAnnouncement.id==null?"自动生成": sysAnnouncement.id }</div>
+                </div>
+
+                <div class="field">
+                    <div class="label" class="req">
+                        <label for="pubDest">发布对象:</label>
+                    </div>
+                    <div class="select">
+                        <form:select path="pubDest">
+                            <form:options items="${destMap}" />
+                        </form:select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        <label for="title" class="req">公告标题：</label>
+                    </div>
+                    <div class="input">
+                        <form:input path="title" cssClass="small required max-length-50" maxlength="50" />
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="label">
+                        <label for="title" class="req">有效时间：</label>
+                    </div>
+                    <div class="input">
+	                     <input type="text" id="inputEndTime" name="inputEndTime" value="<ct:time source="${sysAnnouncement.endTime}" />" class="txt Wdate"
+	                           readOnly onfocus="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',vel:'endTime',realFullFmt:'yyyyMMddHHmmss',minDate:'%y-%M-%d',maxDate:'2050-10-01'})" maxlength="50"/>
+                        <form:hidden path="endTime" cssClass="small required " maxlength="50" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="label">
+                        <label for="description" class="req">公告内容：</label>
+                    </div>
+                    <div class="input">
+                        <form:textarea path="description" cssClass="cxheditor required" cols="80" rows="20" />
+                        <span class="error" id="advice-server-description" style="display:none"></span>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <div class="highlight">
+                        <input type="submit" name="submit.highlight" value="提交" />
+                    </div>
+                    <input type="reset" name="reset" value="重置" />
+                    <a href="${ctx}/websys/announcement" class="btnAnchor">返回</a>
+                </div>
+            </div>
+        </div>
+    </form:form>
+</div>
+<!-- end forms -->
+</div>
+
+
+</body>
+</html>

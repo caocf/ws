@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE"."Index_SMSBUY_ITEM_ROUTER" ON "LIFE".t_smsbuy_item_router(act_id,item_id);

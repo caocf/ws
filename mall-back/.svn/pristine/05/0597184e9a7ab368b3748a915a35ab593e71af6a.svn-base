@@ -1,0 +1,119 @@
+package com.cplatform.mall.back.websys.service;
+
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.websys.dao.SysTypeItemParamDao;
+import com.cplatform.mall.back.websys.entity.SysTypeItemParam;
+
+/**
+ * 商品分类参数管理相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-27 上午09:49:07
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class SysTypeItemParamService {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private SysTypeItemParamDao sysTypeItemParamDao;
+
+	/**
+	 * 商品分类参数查询
+	 * 
+	 * @param param
+	 *            商品分类参数实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SysTypeItemParam> findSysTypeItemParam(SysTypeItemParam param, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select param.*, type.name typeName,ts.name storeName from t_sys_type_item_param param join  t_sys_type type on param.type_id = type.id");
+		sql.append(" left join t_store ts on ts.id = param.shop_id ");
+		sql.append("   where 1=1    ");
+		List params = new ArrayList();
+		if (null != param) {
+			if (StringUtils.isNotEmpty(param.getTypeName())) {
+				sql.append(" and type.name like ? ");
+				params.add("%" + param.getTypeName() + "%");
+			}
+			if (StringUtils.isNotEmpty(param.getParamKey())) {
+				sql.append(" and param.param_key like ? ");
+				params.add("%" + param.getParamKey() + "%");
+			}
+			if (StringUtils.isNotEmpty(param.getStoreName())) {
+				sql.append(" and ts.name like ? ");
+				params.add("%" + param.getStoreName() + "%");
+			}
+		}
+		sql.append(" order by param.rank desc, param.id desc ");
+		return dbHelper.getPage(sql.toString(), SysTypeItemParam.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 插入商户自定义分类值
+	 * 
+	 * @param typeItemParam
+	 * @param keys
+	 *            自定义key
+	 * @param values
+	 *            自定义zhi
+	 * @throws InvocationTargetException
+	 * @throws IllegalAccessException
+	 */
+	public void saveShopParams(SysTypeItemParam typeItemParam, String[] keys, String[] values) throws IllegalAccessException,
+	        InvocationTargetException {
+		SysTypeItemParam tmp = null;
+		for (int i = 0; i < keys.length; i++) {
+			tmp = new SysTypeItemParam();
+			BeanUtils.copyProperties(tmp, typeItemParam);
+			tmp.setParamKey(keys[i]);
+			tmp.setParamValue(values[i]);
+			tmp.setParamType(3l);
+			tmp.setRequiredFlag(0l);
+			sysTypeItemParamDao.save(tmp);
+		}
+	}
+
+	public void updateShopParams(SysTypeItemParam typeItemParam, String[] keys, String[] values) {
+
+	}
+
+	/**
+	 * 获得一个商户分分类自定义参数
+	 * 
+	 * @param shopId
+	 * @param typeId
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<SysTypeItemParam> getShopTypeItemParam(Long shopId, Long typeId) throws SQLException {
+		String sql = "select  a.* from t_sys_type_item_param a where a.type_id=? and (a.shop_id is null or a.shop_id=?) order by a.shop_id asc ";
+		return dbHelper.getBeanList(sql, SysTypeItemParam.class, new Object[] { typeId, shopId });
+	}
+
+}

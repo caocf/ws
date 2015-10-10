@@ -1,0 +1,8 @@
+Template.Upload_Path = /tmp/upload
+
+Template.Config_Encoding = GBK
+
+Template.FTL_Encoding = GBK
+
+Template.Component_URL = http://localhost:8081/mall-b2c/ftl/component
+

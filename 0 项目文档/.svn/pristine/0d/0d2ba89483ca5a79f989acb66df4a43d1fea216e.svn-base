@@ -1,0 +1,10 @@
+﻿
+#spec-list li b{display:block;position:absolute;z-index:1;bottom:0;left:4px;width:54px;height:49px;height:18px;font:12px/18px simsun;color:#fff}
+#spec-list li b{background:rgba(0,0,0,.4);filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, StartColorStr='#8c000000', EndColorStr='#8c000000')}:root 
+#spec-list li b,:root 
+#spec-list li b{filter:progid:DXImageTransform.Microsoft.Gradient(GradientType=0, StartColorStr='#00000000', EndColorStr='#00000000')}
+
+.jqzoom{position:relative;padding:0}
+.zoomdiv{z-index:8;position:absolute;top:0;left:322px;width:400px;height:400px;background:url(../img/loading.gif) #fff no-repeat center center;border:1px solid #e4e4e4;display:none;text-align:center;overflow:hidden}
+.bigimg{width:800px;height:800px}
+.jqZoomPup{z-index:3;visibility:hidden;position:absolute;top:0;left:0;width:50px;height:50px;border:1px solid #aaa;background:#FEDE4F 50% top no-repeat;opacity:.5;-moz-opacity:.5;-khtml-opacity:.5;filter:alpha(Opacity=50);cursor:move}

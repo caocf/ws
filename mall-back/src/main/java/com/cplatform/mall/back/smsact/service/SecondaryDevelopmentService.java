@@ -1,0 +1,205 @@
+package com.cplatform.mall.back.smsact.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.smsact.dao.SmsActOnlineDao;
+import com.cplatform.mall.back.smsact.dao.SmsActRouterDao;
+import com.cplatform.mall.back.smsact.entity.SmsActOnline;
+import com.cplatform.mall.back.smsact.entity.SmsActRouter;
+import com.cplatform.mall.back.sys.dao.SysSpcodeDao;
+import com.cplatform.mall.back.sys.entity.SysSpcode;
+import com.cplatform.mall.back.utils.LogUtils;
+/**
+ * 
+ * 终端相关Service. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-25 下午02:58:59
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class SecondaryDevelopmentService {
+	@Autowired
+	private LogUtils logUtils;
+	
+	@Autowired
+	private DbHelper dbHelper;
+	
+	@Autowired
+	private SmsActOnlineDao smsActOnlineDao;
+	
+	@Autowired
+	private SmsActRouterDao smsActRouterDao;
+	
+	@Autowired
+	private SysSpcodeDao sysSpcodeDao;
+	
+	/**
+	 * 二次开发短信业务配置查询
+	 * @param online    二次开发短信业务配置实体类
+	 * @param pageNo    当前页
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SmsActOnline> findSmsActOnline(SmsActOnline online, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select ol.* from t_sms_act_online ol where 1=1 ");
+		List params = new ArrayList();
+		if(null != online){
+			if (StringUtils.isNotEmpty(online.getActName())) {
+				sql.append(" and ol.act_name like ? ");
+				params.add("%" + online.getActName().trim() + "%");
+			}
+			if (StringUtils.isNotEmpty(online.getStatus())) {
+				sql.append(" and ol.status = ? ");
+				params.add(online.getStatus());
+			}
+			if (StringUtils.isNotEmpty(online.getStartTime())) {
+				sql.append(" and ol.start_time >= ? ");
+				params.add(online.getStartTime().replaceAll("-", "") + "000000");
+			}
+			if (StringUtils.isNotEmpty(online.getEndTime())) {
+				sql.append(" and ol.end_time <= ? ");
+				params.add(online.getEndTime().replaceAll("-", "") + "235959");
+			}
+		}
+		sql.append(" order by ol.act_id desc ");
+		return dbHelper.getPage(sql.toString(), SmsActOnline.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+	
+	/**
+	 * 二次开发短信业务指令查询
+	 * @param router    二次开发短信业务指令实体类
+	 * @param pageNo    当前页
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<SmsActRouter> findSmsActRouter(SmsActRouter router, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select router.* from t_sms_act_router router where 1=1 ");
+		List params = new ArrayList();
+		if(null != router){
+			if (null != router.getActId()) {
+				sql.append(" and router.act_id = ? ");
+				params.add(router.getActId());
+			}
+			if (StringUtils.isNotEmpty(router.getCommand())) {
+				sql.append(" and router.command like ? ");
+				params.add("%" + router.getCommand() + "%");
+			}
+			if (StringUtils.isNotEmpty(router.getSpCode())) {
+				sql.append(" and router.sp_code = ? ");
+				params.add(router.getSpCode());
+			}
+			if (null != router.getCmdOptType()) {
+				sql.append(" and router.cmd_opt_type = ? ");
+				params.add(router.getCmdOptType());
+			}
+			if (null != router.getPayType()) {
+				sql.append(" and router.pay_type = ? ");
+				params.add(router.getPayType());
+			}
+			if (null != router.getIsSession()) {
+				sql.append(" and router.is_session = ? ");
+				params.add(router.getIsSession());
+			}
+		}
+		sql.append(" order by router.id desc ");
+		return dbHelper.getPage(sql.toString(), SmsActRouter.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+	
+	/**
+	 * 查询指定短信业务
+	 * @param id    短信业务ID
+	 */
+	@Transactional
+	public SmsActOnline findOneOnline(Long id) {
+		SmsActOnline online = smsActOnlineDao.findOne(id);
+		return online;		
+	}
+	
+	/**
+	 * 查询指定短信业务指令
+	 * @param id    短信业务指令ID
+	 */
+	@Transactional
+	public SmsActRouter findOneRouter(Long id) {
+		SmsActRouter router = smsActRouterDao.findOne(id);
+		return router;		
+	}
+	
+	/**
+	 * 根据业务ID查询指定短信业务指令
+	 * @param id    短信业务指令ID
+	 */
+	@Transactional
+	public List<SmsActRouter> findRouterByOnline(Long actId) {
+		List<SmsActRouter> routerList = smsActRouterDao.findByActId(actId);
+		return routerList;		
+	}
+	
+	/**
+	 * 查出根特服号
+	 */
+	@Transactional
+	public List<SysSpcode> findByValid() {
+		List<SysSpcode> sysSpcodeList = sysSpcodeDao.findByValid(0);
+		return sysSpcodeList;		
+	}
+	
+	/**
+	 * 指令唯一性校验
+	 * @param command    指令
+	 * @param spCode    特服号
+	 */
+	@Transactional
+	public List<SmsActRouter> findByCommandAndSpCode(String command, String spCode) {
+		List<SmsActRouter> routerList = smsActRouterDao.findByCommandAndSpCode(command, spCode);
+		return routerList;		
+	}
+	
+	/**
+	 * 配置短信业务
+	 * @param online    短信业务实体类
+	 */
+	@Transactional
+	public SmsActOnline saveOnline(SmsActOnline online) {
+		//保存会员信息
+		online = smsActOnlineDao.save(online);
+		return online;		
+	}
+	
+	/**
+	 * 配置短信业务指令
+	 * @param router    短信业务指令实体类
+	 */
+	@Transactional
+	public SmsActRouter saveRouter(SmsActRouter router) {
+		//保存会员信息
+		router = smsActRouterDao.save(router);
+		return router;		
+	}
+	
+	/**
+	 * 删除指令
+	 * @param id
+	 */
+	@Transactional
+	public void deleteRouter(Long id) {
+		smsActRouterDao.delete(id);
+		logUtils.logDelete("成功删除指令", "ID:" + id);	
+	}
+}

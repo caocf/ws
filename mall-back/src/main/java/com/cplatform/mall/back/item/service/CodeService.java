@@ -1,0 +1,392 @@
+package com.cplatform.mall.back.item.service;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ItemSale;
+import com.cplatform.mall.back.item.entity.StoreCode;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.util2.security.MD5;
+import com.cplatform.verifycode.Encrypt;
+
+@Service
+public class CodeService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	/**
+	 * 查询商品信息
+	 * 
+	 * @param itemOrg
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ItemSale> listItemSale(ItemSale itemSale, String codeType, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder(100);
+		sql.append("select sa.*,st.name as storename,sa.name as itemName ,stype.name as typeName")
+		        .append("	from t_item_sale sa  join  t_store st on  sa.store_id = st.id  ")
+		        .append(" left join  t_sys_type stype  on  sa.type_Id = stype.id where 1 = 1 and sa.status != -1 ");
+		List<Object> params = new ArrayList<Object>();
+		if (StringUtils.isNotEmpty(itemSale.getStoreName())) {
+			sql.append(" and st.name like ? ");
+			params.add("%" + itemSale.getStoreName() + "%");
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getItemName())) {
+			sql.append(" and sa.name like ? ");
+			params.add("%" + itemSale.getItemName().trim() + "%");
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getSaleStartTime())) {
+			sql.append(" and sa.sale_start_time >= ? ");
+			params.add(itemSale.getSaleStartTime() + "000000");
+		}
+		if (StringUtils.isNotEmpty(itemSale.getSaleStopTime())) {
+			sql.append(" and sa.sale_stop_time <= ? ");
+			params.add(itemSale.getSaleStopTime() + "235959");
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getVerifyCodeType() == null ? "" : itemSale.getVerifyCodeType().toString())) {
+			sql.append(" and sa.verify_code_type = ? ");
+			params.add(itemSale.getVerifyCodeType());
+		}
+
+		if (StringUtils.isNotEmpty(itemSale.getSendCodeMode() == null ? "" : itemSale.getSendCodeMode().toString())) {
+			sql.append(" and sa.send_code_mode = ? ");
+			params.add(itemSale.getSendCodeMode());
+		}
+		if (itemSale.getSendCodeChannel() != null) {
+			sql.append(" and sa.send_code_channel = ? ");
+			params.add(itemSale.getSendCodeChannel());
+		}
+		if (itemSale.getStatus() != null) {
+			sql.append(" and sa.status = ? ");
+			params.add(itemSale.getStatus());
+		}
+		if (itemSale.getSyncGyFlag() != null) {
+			sql.append(" and sa.sync_gy_flag = ? ");
+			params.add(itemSale.getSyncGyFlag());
+		}
+		if (itemSale.getStoreId() != null) {
+			sql.append(" and sa.store_id = ? ");
+			params.add(itemSale.getStoreId());
+		}
+		if ("storecode".equals(codeType)) {
+			sql.append(" and (sa.virtual_type != 1 or sa.virtual_type is null) ");
+		} else if ("cardcode".equals(codeType)) {
+			sql.append(" and sa.virtual_type = 1 ");
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_ITEM));// 控制数据访问
+		sql.append(" order by sa.id desc");
+		return dbHelper.getPage(sql.toString(), ItemSale.class, pageNo, pageSize, params.toArray());
+	}
+
+	public void makeCountList(List<ItemSale> souceList, List<Object> destList, String codeType) throws SQLException {
+		if (souceList != null) {
+			for (ItemSale vo : souceList) {
+				int count = this.getCount(vo.getId(), vo.getStoreId(), codeType);
+				destList.add(count);
+			}
+		}
+	}
+
+	public Page<StoreCode> findStoreCodeList(StoreCode vo, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * ");
+		sqlBuff.append("  from t_verify_store_code_common t ");
+		sqlBuff.append(" where 1 = 1 ");
+		if (StringUtils.isNotEmpty(vo.getItemId())) {
+			sqlBuff.append("   and t.item_id = ? ");
+			params.add(vo.getItemId());
+		}
+		if (StringUtils.isNotEmpty(vo.getStoreId())) {
+			sqlBuff.append("   and t.store_id = ?");
+			params.add(vo.getStoreId());
+		}
+		if (StringUtils.isNotEmpty(vo.getCreateDate())) {
+			sqlBuff.append("   and substr(t.create_date,0,8) = ?");
+			params.add(vo.getCreateDate().replaceAll("-", "").replaceAll(" ", ""));
+		}
+		if (StringUtils.isNotEmpty(vo.getStatus())) {
+			sqlBuff.append("   and t.status = ?");
+			params.add(vo.getStatus());
+		}
+		sqlBuff.append(" order by t.create_date desc");
+
+		return dbHelper.getPage(sqlBuff.toString(), StoreCode.class, pageNo, pageSize, params.toArray());
+	}
+
+	public Page<StoreCode> findCardCodeList(StoreCode vo, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select * ");
+		sqlBuff.append("  from t_verify_card_code_common t ");
+		sqlBuff.append(" where 1 = 1 ");
+		if (StringUtils.isNotEmpty(vo.getItemId())) {
+			sqlBuff.append("   and t.item_id = ? ");
+			params.add(vo.getItemId());
+		}
+		if (StringUtils.isNotEmpty(vo.getStoreId())) {
+			sqlBuff.append("   and t.store_id = ?");
+			params.add(vo.getStoreId());
+		}
+		if (StringUtils.isNotEmpty(vo.getCreateDate())) {
+			sqlBuff.append("   and substr(t.create_date,0,8) = ?");
+			params.add(vo.getCreateDate().replaceAll("-", "").replaceAll(" ", ""));
+		}
+		if (StringUtils.isNotEmpty(vo.getStatus())) {
+			sqlBuff.append("   and t.status = ?");
+			params.add(vo.getStatus());
+		}
+		sqlBuff.append(" order by t.id desc");
+
+		return dbHelper.getPage(sqlBuff.toString(), StoreCode.class, pageNo, pageSize, params.toArray());
+	}
+
+	private int getCount(Long itemId, Long storeId, String codeType) throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select count(*) ");
+		if ("storecode".equals(codeType)) {
+			sqlBuff.append("  from t_verify_store_code_common t ");
+		} else if ("cardcode".equals(codeType)) {
+			sqlBuff.append("  from t_verify_card_code_common t ");
+		}
+		sqlBuff.append(" where t.item_id = ? ");
+		sqlBuff.append("   and t.store_id = ?");
+		List<Object> params = new ArrayList<Object>();
+		params.add(itemId);
+		params.add(storeId);
+		String count = dbHelper.queryScalar(sqlBuff.toString(), params.toArray());
+		return Integer.valueOf(count);
+	}
+
+	/**
+	 * 导入商户码
+	 * 
+	 * @param vo
+	 * @param storeId
+	 * @param in
+	 * @return
+	 * @throws Exception
+	 */
+	@Transactional
+	public boolean importStoreCode(StoreCode vo, InputStream in) throws Exception {
+		boolean flag = true;
+		InputStreamReader is = null;
+		BufferedReader br = null;
+		List<Object[]> codeList = new ArrayList<Object[]>();
+		String code = null;
+		try {
+			is = new InputStreamReader(in);
+			br = new BufferedReader(is);
+			while ((code = br.readLine()) != null) {
+				Object[] obj = new Object[10];
+				obj[0] = MD5.digest2Str(code);
+				obj[1] = Encrypt.encrypt(code);
+				obj[2] = vo.getStoreId();
+				obj[3] = vo.getItemId();
+				obj[4] = vo.getCreateDate();
+				obj[5] = vo.getStatus();
+				obj[6] = vo.getGenerateDate();
+				obj[7] = vo.getVerifyDate();
+				obj[8] = vo.getOrderId();
+				obj[9] = vo.getUserId();
+				codeList.add(obj);
+			}
+
+			StringBuilder sqlBuff = new StringBuilder();
+			sqlBuff.setLength(0);
+			sqlBuff.append("insert into t_verify_store_code_common ");
+			sqlBuff.append("  (code_md5, ");
+			sqlBuff.append("   code_rsa, ");
+			sqlBuff.append("   store_id, ");
+			sqlBuff.append("   item_id, ");
+			sqlBuff.append("   create_date, ");
+			sqlBuff.append("   status, ");
+			sqlBuff.append("   generate_date, ");
+			sqlBuff.append("   verify_date, ");
+			sqlBuff.append("   order_id, ");
+			sqlBuff.append("   user_id) ");
+			sqlBuff.append("values ");
+			sqlBuff.append("  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+			dbHelper.batch(sqlBuff.toString(), codeList);
+
+		}
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = false;
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = false;
+		}
+		finally {
+
+			if (br != null) {
+				try {
+					br.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if (is != null) {
+				try {
+					in.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if (in != null) {
+				try {
+					in.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+		return flag;
+
+	}
+
+	/**
+	 * 导入卡密
+	 * 
+	 * @param vo
+	 * @param storeId
+	 * @param in
+	 * @return
+	 * @throws Exception
+	 */
+	@Transactional
+	public boolean importCardCode(StoreCode vo, InputStream in) throws Exception {
+		boolean flag = true;
+		InputStreamReader is = null;
+		BufferedReader br = null;
+		List<Object[]> codeList = new ArrayList<Object[]>();
+		String code = null;
+		try {
+			long id = this.getMaxId();
+			is = new InputStreamReader(in);
+			br = new BufferedReader(is);
+			while ((code = br.readLine()) != null) {
+				Object[] obj = new Object[10];
+				obj[0] = ++id;
+				code.replaceAll("，", ",");
+				if (code.split(",").length < 2) {
+					continue;
+				}
+				obj[1] = code.split(",")[0];
+				obj[2] = Encrypt.encrypt(code.split(",")[1]);
+				obj[3] = vo.getStoreId();
+				obj[4] = vo.getItemId();
+				obj[5] = vo.getCreateDate();
+				obj[6] = vo.getStatus();
+				obj[7] = vo.getGenerateDate();
+				obj[8] = vo.getOrderId();
+				obj[9] = vo.getUserId();
+				codeList.add(obj);
+			}
+
+			StringBuilder sqlBuff = new StringBuilder();
+			sqlBuff.setLength(0);
+			sqlBuff.append("insert into t_verify_card_code_common ");
+			sqlBuff.append("  (id, ");
+			sqlBuff.append("   card_id, ");
+			sqlBuff.append("   card_key, ");
+			sqlBuff.append("   store_id, ");
+			sqlBuff.append("   item_id, ");
+			sqlBuff.append("   create_date, ");
+			sqlBuff.append("   status, ");
+			sqlBuff.append("   generate_date, ");
+			sqlBuff.append("   order_id, ");
+			sqlBuff.append("   user_id) ");
+			sqlBuff.append("values ");
+			sqlBuff.append("  (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+			dbHelper.batch(sqlBuff.toString(), codeList);
+
+		}
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = false;
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			flag = false;
+		}
+		finally {
+
+			if (br != null) {
+				try {
+					br.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if (is != null) {
+				try {
+					in.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			if (in != null) {
+				try {
+					in.close();
+				}
+				catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		}
+		return flag;
+
+	}
+
+	private long getMaxId() throws SQLException {
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select nvl(max(id),'1') from t_verify_card_code_common");
+		long num = 1;
+		String id = dbHelper.queryScalar(sqlBuff.toString(), null);
+		num = Long.valueOf(id);
+		return num;
+	}
+}

@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".com_audit_trail_action_date_i ON "LIFE".com_audit_trail(aud_action,aud_date);

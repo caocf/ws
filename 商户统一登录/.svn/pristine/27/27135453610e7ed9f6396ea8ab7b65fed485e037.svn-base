@@ -1,0 +1,310 @@
+@CHARSET "UTF-8";
+body,html,ul,li {
+	margin: 0;
+	padding: 0;
+}
+img {
+	border: none;
+}
+.left {
+	float: left;
+}
+.right {
+	float: right;
+}
+.clear {
+	clear: both;
+}
+
+label.error {
+	
+}
+.login-page {
+	margin: 0 auto;
+    width: 980px;
+}
+.login-header {
+	padding: 20px 0;
+}
+.login-header img {
+	height: 60px;
+}
+.login-body {
+	background: url(bg.png) no-repeat;
+	height: 406px;
+}
+.login-box {
+	background: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    float: right;
+    padding: 30px;
+    *padding: 30px 30px 0 30px;
+    width: 300px;
+    margin-top: 20px;
+}
+.form-valid-error-box {
+    background: #DA4F49;
+    background: -moz-linear-gradient(top,  #EE5F5B 0%, #D8605F 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#EE5F5B), color-stop(100%,#D8605F));
+    background: -webkit-linear-gradient(top,  #EE5F5B 0%,#D8605F 100%);
+    background: -o-linear-gradient(top,  #EE5F5B 0%,#D8605F 100%);
+    background: -ms-linear-gradient(top,  #EE5F5B 0%,#D8605F 100%);
+    background: linear-gradient(to bottom,  #EE5F5B 0%,#D8605F 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#EE5F5B', endColorstr='#D8605F',GradientType=0 );
+    height: 28px;;
+    line-height: 28px;
+    margin-bottom: 5px;
+    padding: 0 10px;
+    color: #fff;
+    font-size: 12px;
+}
+.error-desc {
+    color: #FFFFFF;
+    font-size: 12px;
+}
+.error-box-close a {
+    background: url(del-info-icon.png) no-repeat;
+    width: 16px;
+    height: 16px;
+    display: block;
+    margin-top: 6px;
+}
+.error-box-close a:hover {
+    background: url(del-info-icon-over.png) no-repeat;
+}
+.login-form-widget {
+	
+}
+.login-form-widget .form-title {
+	font-family: "Microsoft Yahei";
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+.login-form-widget .form-input {
+	position: relative;
+}
+.login-form-widget .valid-code {
+	margin-left: 10px;
+}
+.valid-code img {
+	height: 30px;
+	width: 100px;
+}
+.login-form-widget .change-pic {
+	font-size: 12px;
+	margin-left: 10px;
+}
+.change-pic .change-desc {
+	color: #666666;
+}
+.login-form-widget a {
+	color: #0f7dda;
+	text-decoration: none;
+	font-size: 12px;
+}
+.register-href {
+	margin-top: 10px;
+    text-align: right;
+}
+.login-form-widget a:hover {
+	text-decoration: underline;
+}
+.form-input input[type="text"],
+.form-input input[type="password"] {
+	background: #ffffff;
+	background: -moz-linear-gradient(top, #ffffff 0%, #f5f5f5 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#f5f5f5));
+	background: -webkit-linear-gradient(top, #ffffff 0%,#f5f5f5 100%);
+	background: -o-linear-gradient(top, #ffffff 0%,#f5f5f5 100%);
+	background: linear-gradient(to bottom, #ffffff 0%,#f5f5f5 100%);
+	border: 1px solid #c9c9c9;
+	-webkit-box-shadow: inset 0 1px 1px rgba(255, 255, 255, 1), 0 1px 1px rgba(0, 0, 0, 0.050);
+	-moz-box-shadow: inset 0 1px 1px rgba(255, 255, 255, 1), 0 1px 1px rgba(0, 0, 0, 0.050);
+	box-shadow: inset 0 1px 1px rgba(255, 255, 255, 1), 0 1px 1px rgba(0, 0, 0, 0.050);
+	-webkit-transition: border linear 0.2s, box-shadow linear 0.2s;
+	-moz-transition: border linear 0.2s, box-shadow linear 0.2s;
+	-o-transition: border linear 0.2s, box-shadow linear 0.2s;
+	transition: border linear 0.2s, box-shadow linear 0.2s;
+	height: auto;
+	padding: 2px 3px;
+	margin-bottom: 10px;
+	font-size: 14px;
+	line-height: 22px;
+	color: #777777;
+	-webkit-border-radius: 1px;
+	-moz-border-radius: 1px;
+	border-radius: 1px;
+	min-height: 26px !important;
+	width: 268px;
+}
+.form-input input[type="text"]:focus,
+.form-input input[type="password"]:focus {
+	border-color: rgba(98, 174, 239, 0.8);
+	outline: 0;
+	border: 1px solid #61aeef \9;
+	/* IE6-9 */
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(98, 174, 239, 0.6);
+		-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(98, 174, 239, 0.6);
+			box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(98, 174, 239, 0.6);
+}
+.form-input #username {
+	background: url(user-icon.gif) no-repeat 3px center;
+	padding: 0 0 0 30px;
+}
+.form-input a.removeTxt {
+	background: url(del-info-icon.png) no-repeat;
+	height: 16px;
+    position: absolute;
+    right: 5px;
+    top: 6px;
+    width: 16px;
+}
+.form-input #password {
+	background: url(password-icon.gif) no-repeat 3px center;
+	padding: 0 0 0 30px;
+}
+.form-input #vcode {
+	width: 100px;
+}
+label.checkbox.inline {
+	color: #999999;
+    display: inline-block;
+    font-family: "Microsoft Yahei";
+    font-size: 14px;
+    vertical-align: middle;
+    margin-bottom: 10px;
+}
+div.checker {
+	padding-right: 5px;
+}
+
+input.disabled {
+
+}
+
+input.submit-btn {
+	color: #ffffff;
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+	background-color: #62aeef;
+	background-image: -moz-linear-gradient(top, #0088cc, #519fe2);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0088cc), to(#519fe2));
+	background-image: -webkit-linear-gradient(top, #0088cc, #519fe2);
+	background-image: -o-linear-gradient(top, #0088cc, #519fe2);
+	background-image: linear-gradient(to bottom, #0088cc, #519fe2);
+	background-repeat: repeat-x;
+	border-color: #519fe2 #519fe2 #002a80;
+	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+	border-width: 1px;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0088cc', endColorstr='#519fe2', GradientType=0);
+    font-family: "Microsoft Yahei";
+    font-size: 16px;
+    padding: 5px 0;
+    width: 100%;
+    *border: 0;
+    cursor: pointer;
+}
+input.submit-btn:hover {
+	background-color: #519fe2;
+	-webkit-transition: background-position 0.2s linear;
+	-moz-transition: background-position 0.2s linear;
+	-o-transition: background-position 0.2s linear;
+	transition: background-position 0.2s linear;
+	background-position: 0 -15px;
+}
+input.submit-btn.disabled {
+	background:#519FE2;
+	cursor:default;
+	opacity: 0.65;
+	filter: alpha(opacity=65);
+	  -webkit-box-shadow: none;
+	     -moz-box-shadow: none;
+	          box-shadow: none;
+}
+
+.origin-login-btn {
+	margin-top:15px;
+}
+a.origin-login {
+	color: #ffffff;
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+	background-color: #5bb75b;
+	background-image: -moz-linear-gradient(top, #62c462, #72b110);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#62c462), to(#72b110));
+	background-image: -webkit-linear-gradient(top, #62c462, #72b110);
+	background-image: -o-linear-gradient(top, #62c462, #72b110);
+	background-image: linear-gradient(to bottom, #62c462, #72b110);
+	background-repeat: repeat-x;
+	border-color: #72b110 #72b110 #387038;
+	border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff51a351', GradientType=0);
+    font-family: "Microsoft Yahei";
+    font-size: 16px;
+    padding: 5px 0;
+    width: 100%;
+    *border: 0;
+    cursor: pointer;
+	display:block;
+	text-align:center;
+}
+a:hover.origin-login {
+	background-color: #72b110;
+	-webkit-transition: background-position 0.2s linear;
+	-moz-transition: background-position 0.2s linear;
+	-o-transition: background-position 0.2s linear;
+	transition: background-position 0.2s linear;
+	background-position: 0 -15px;
+	text-decoration:none;
+}
+
+.login-footer {
+	background-color: #FFFFFF;
+	background-image: -moz-linear-gradient(top, #EBEBEB, #FFFFFF);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#EBEBEB), to(#FFFFFF));
+	background-image: -webkit-linear-gradient(top, #EBEBEB, #FFFFFF);
+	background-image: -o-linear-gradient(top, #EBEBEB, #FFFFFF);
+	background-image: linear-gradient(to bottom, #EBEBEB, #FFFFFF);
+	background-repeat: repeat-x;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e8e8e8', endColorstr='#ffffff');
+}
+.copyright {
+	background: url(login-footer-sep.png) no-repeat center 0;
+	color: #666666;
+    font-size: 12px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+}
+.ie8div {
+    display: none;
+    position: relative;
+    top: -35px;
+    color: #666666;
+    font-size: 12px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+}
+.ie8div a {
+    color: #0f7dda;
+    font-size: 12px;
+}
+.explore-upgrade-box {
+    background: #FFB900;
+    line-height: 50px;
+}
+.explore-upgrade-word {
+    color: #FFFFFF;
+    font-family: 'Microsoft Yahei';
+    font-size: 13px;
+    font-weight: bold;
+    margin: 0 auto;
+    width: 980px;
+}
+.explore-upgrade-word a {
+    color: #0F7DDA;
+    padding: 0 5px;
+    text-decoration: none;
+}
+.explore-upgrade-word a:hover {
+    text-decoration: underline;
+}

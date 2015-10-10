@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".index_verify_founder_store ON "LIFE".t_verify_founder_store(local_store_id);

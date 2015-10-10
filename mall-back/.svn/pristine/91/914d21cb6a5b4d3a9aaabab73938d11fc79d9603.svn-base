@@ -1,0 +1,139 @@
+package com.cplatform.mall.back.item.web;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import net.sf.json.JSONArray;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.item.entity.ThirdCodeImport;
+import com.cplatform.mall.back.item.entity.ThirdCodeName;
+import com.cplatform.mall.back.item.service.ThirdCodeService;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.LogUtils;
+
+/**
+ * @Title	第三方码管理控制层
+ * @Description
+ * @Copyright: Copyright (c) 2013-10-21
+ * @Company: 北京宽连十方数字技术有限公司
+ * @Author chencheng
+ * @Version: 1.0
+ *
+ */
+@Controller
+@RequestMapping(value = "/item/thirdcode")
+public class ThirdCodeController {
+	private static Logger log = Logger.getLogger(ThirdCodeController.class);
+	@Autowired
+	private ThirdCodeService thirdCodeService;
+	@Autowired
+	private LogUtils logUtils;
+
+	/**
+	 * 第三方码管理列表
+	 * @param thirdCodeName
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/list")
+	public String list(ThirdCodeName thirdCodeName,
+			@RequestParam(value = "page", required = false, defaultValue = "1") int page,
+			Model model) throws SQLException{
+		Page<ThirdCodeName> pageData =thirdCodeService.listCodeNames(thirdCodeName, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		List<ThirdCodeName> codeNames=thirdCodeService.listAllThirdCodeName();
+		model.addAttribute("codeNames", codeNames);
+		return "/item/thirdcode/thirdcode-list";
+	}
+	
+	@RequestMapping(value = "/add",method=RequestMethod.GET)
+	public String preAdd(Model model) throws SQLException{
+		List<ThirdCodeName> codeNames=thirdCodeService.findCodeNameByCodeType(2L);
+		model.addAttribute("codeNames", codeNames);
+		return "/item/thirdcode/thirdcode-add";
+	}
+	
+	@RequestMapping(value="/selectCodeNames")
+	@ResponseBody
+	public Object selectCodeNames(Long codeType) throws SQLException{
+		List<ThirdCodeName> codeNames=thirdCodeService.findCodeNameByCodeType(codeType);
+//		return JSONArray.fromObject(codeNames).toString();
+		return codeNames;
+	}
+	
+	@RequestMapping(value="/selectStore")
+	public String selectItem(Model model,Store store,
+			@RequestParam(value = "page", defaultValue = "1", required = false) int page) throws SQLException{
+		Page<Store> storePage = thirdCodeService.selectStore(store,page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", storePage);
+		return "/item/thirdcode/thirdcode-select-store";
+	}
+	/**
+	 * 第三方码添加
+	 * @param request
+	 * @param model
+	 * @param uploadfile
+	 * @param name
+	 * @param nameId
+	 * @return
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "/add",method=RequestMethod.POST)
+	@ResponseBody
+	public Object add(HttpServletRequest request,Model model,Long storeId,
+			MultipartFile uploadfile,String name,Long nameId,Long codeType) {
+		String result="导入失败";
+		try {
+			result = thirdCodeService.importExcell(codeType,storeId,uploadfile,name,nameId,request);
+			if(StringUtils.isEmpty(result)){
+				//码和商户不一致
+				return JsonRespWrapper.successAlert("导入失败,码和商户不一致");
+			}
+		} catch (Exception e) {
+			log.error("导入第三方码失败:"+e.getMessage());
+			return JsonRespWrapper.error("导入文件失败,导入数据格式错误.<br />"+e.getMessage());
+		}
+		logUtils.logAdd("第三方码管理", "导入码文件");
+		return JsonRespWrapper.success(result, "/item/thirdcode/list");
+	}
+	
+	
+	/**
+	 * 第三方码查看
+	 * @param thirdCodeImport
+	 * @param id
+	 * @param page
+	 * @param model
+	 * @return
+	 * @throws SQLException
+	 */
+	@RequestMapping(value = "/view")
+	public String view(ThirdCodeImport thirdCodeImport,Long id,Long codeType,
+			@RequestParam(value = "page", required = false, defaultValue = "1") int page,
+			Model model) throws SQLException{
+		thirdCodeImport.setCodeNameId(id);
+		thirdCodeImport.setCodeType(codeType);
+		Page<ThirdCodeImport> pageData =thirdCodeService.viewCodeNames(thirdCodeImport, page, Page.DEFAULT_PAGESIZE);
+		model.addAttribute("pageData", pageData);
+		return "/item/thirdcode/thirdcode-view";
+	}
+	
+}

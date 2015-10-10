@@ -1,0 +1,563 @@
+package com.cplatform.mall.back.store.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.store.dao.ShopDao;
+import com.cplatform.mall.back.store.dao.ShopPosLinkDao;
+import com.cplatform.mall.back.store.dao.ShopTagDao;
+import com.cplatform.mall.back.store.dao.ShopTypeLinkDao;
+import com.cplatform.mall.back.store.dao.StoreDao;
+import com.cplatform.mall.back.store.entity.Shop;
+import com.cplatform.mall.back.store.entity.ShopPosLink;
+import com.cplatform.mall.back.store.entity.ShopTag;
+import com.cplatform.mall.back.store.entity.ShopTypeLink;
+import com.cplatform.mall.back.store.entity.Store;
+import com.cplatform.mall.back.utils.LogUtils;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+import com.cplatform.mall.back.websys.dao.SysPosDao;
+import com.cplatform.mall.back.websys.entity.SysPos;
+
+/**
+ * 门店管理相关. <br>
+ * 类详细说明.
+ * <p>
+ * Copyright: Copyright (c) 2013-5-31 下午08:06:27
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author zhaowei@c-platform.com
+ * @version 1.0.0
+ */
+@Service
+public class ShopService {
+
+	@Autowired
+	private LogUtils logUtils;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	private ShopDao shopDao;
+
+	@Autowired
+	private StoreDao storeDao;
+
+	@Autowired
+	private ShopTypeLinkDao shopTypeLinkDao;
+
+	@Autowired
+	private SysPosDao sysPosDao;
+
+	@Autowired
+	private ShopPosLinkDao shopPosLinkDao;
+
+	@Autowired
+	private ShopTagDao shopTagDao;
+
+	/**
+	 * 门店查询
+	 * 
+	 * @param shop
+	 *            门店实体映射
+	 * @param pageNo
+	 *            页码
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<Shop> findShop(Shop shop, int pageNo) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("select shop.*, region.region_name regionName, store.name storeName, ext.fz_shop_id fzShopId ")
+		        .append(" from t_shop shop left join t_sys_region region on shop.area_code = region.region_code ")
+		        .append(" left join t_shop_ext ext on ext.shop_id = shop.id ")
+		        .append(" left join t_store store on store.id = shop.ac_shop_id where 1=1 ");
+		List params = new ArrayList();
+		if (null != shop) {
+			if (StringUtils.isNotEmpty(shop.getName())) {
+				sql.append(" and shop.name like ? ");
+				params.add("%" + shop.getName() + "%");
+			}
+			if (StringUtils.isNotEmpty(shop.getAreaCode())) {
+				sql.append(" and shop.area_code like ? ");
+				params.add("%" + shop.getAreaCode() + "%");
+			}
+			if (StringUtils.isNotEmpty(shop.getStoreName())) {
+				sql.append(" and store.name like ? ");
+				params.add("%" + shop.getStoreName() + "%");
+			}
+			if (null != shop.getIsChain()) {
+				sql.append(" and shop.is_chain = ? ");
+				params.add(shop.getIsChain());
+			}
+			if (null != shop.getStatus()) {
+				sql.append(" and shop.status = ? ");
+				params.add(shop.getStatus());
+			}
+			if (StringUtils.isNotEmpty(shop.getStartTimeBegin())) {
+				sql.append(" and shop.start_time >= ? ");
+				params.add(shop.getStartTimeBegin().replaceAll("-", "") + "000000");
+			}
+
+			if (StringUtils.isNotEmpty(shop.getStopTimeEnd())) {
+				sql.append(" and shop.stop_time <= ? ");
+				params.add(shop.getStopTimeEnd().replaceAll("-", "") + "235959");
+			}
+			if (null != shop.getIsBaseShop()) {
+				sql.append(" and shop.is_base_shop = ? ");
+				params.add(shop.getIsBaseShop());
+			}
+			if (null != shop.getSort()) {
+				sql.append(" and shop.sort = ? ");
+				params.add(shop.getSort());
+			}
+			if (null != shop.getIsValid()) {
+				sql.append(" and shop.is_valid = ? ");
+				params.add(shop.getIsValid());
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODULE_SHOP));
+		sql.append(" order by shop.id desc ");
+		return dbHelper.getPage(sql.toString(), Shop.class, pageNo, Page.DEFAULT_PAGESIZE, params.toArray());
+	}
+
+	/**
+	 * 门店录入
+	 * 
+	 * @param shop
+	 */
+	@Transactional
+	public Shop saveShop(Shop shop, String typeIdstr, String[] posIds, String[] posNos, String[] terminalIds, String[] tags) {
+		// 保存门店信息
+		shop = shopDao.save(shop);
+		logUtils.logAdd("成功录入门店信息,ID：", shop.getId().toString());
+		if (typeIdstr != null) {
+			String[] typeIds = typeIdstr.split(",");
+			// 门店标签
+			for (String typeId : typeIds) {
+				if (!typeId.isEmpty()) {
+					ShopTypeLink shopTypeLink = new ShopTypeLink();
+					shopTypeLink.setShopId(shop.getId());
+					shopTypeLink.setTypeId(Long.valueOf(typeId));
+					saveShopTypeLink(shopTypeLink);
+				}
+			}
+		}
+		if (posIds != null) {
+			// 门店终端
+			for (int i = 0; i < posIds.length; i++) {
+				ShopPosLink shopPosLink = new ShopPosLink();
+				// 校验设备号唯一
+				List<ShopPosLink> posNoList = checkOnePosNo(posNos[i]);
+				if (posNoList.size() > 0) {
+					logUtils.logOther("终端设备号(" + posNos[i] + ")已存在", "添加已忽略此条目");
+					continue;
+				}
+				// 校验终端标识唯一
+				List<ShopPosLink> terminalIdList = checkOneTerminalId(terminalIds[i]);
+				if (terminalIdList.size() > 0) {
+					logUtils.logOther("终端标识(" + terminalIds[i] + ")已存在", "添加已忽略此条目");
+					continue;
+				}
+
+				// 校验是否重复添加终端
+				List<ShopPosLink> linkList = findShopPosLink(Long.valueOf(posIds[i]), posNos[i], terminalIds[i]);
+				if (linkList.size() > 0) {
+					logUtils.logOther("终端(" + posNos[i] + ")已存在", "终端号：" + posIds[i] + "已经被配置，已忽略");
+					continue;
+				}
+				shopPosLink.setShopId(shop.getId());
+				shopPosLink.setPosId(Long.valueOf(posIds[i]));
+				shopPosLink.setPosNo(posNos[i]);
+				shopPosLink.setTerminalId(terminalIds[i]);
+				saveShopPosLink(shopPosLink);
+			}
+		}
+		if (tags != null) {
+			// 门店标签
+			for (String tag : tags) {
+				if (!tag.isEmpty()) {
+					ShopTag shopTag = new ShopTag();
+					shopTag.setShopId(shop.getId());
+					shopTag.setShopClass(Shop.SHOP_CLASS_1);
+					shopTag.setTag(tag);
+					saveShopTag(shopTag);
+				}
+			}
+		}
+		return shop;
+	}
+
+	/**
+	 * 如果typeIds不为空，则执行删除分类操作
+	 * 
+	 * @param shop
+	 * @param typeIds
+	 */
+	@Transactional
+	public void editShopType(Shop shop, String typeId) {
+		String[] typeIds = typeId.split(",");
+		if (typeIds != null) {
+			List<ShopTypeLink> typeList = findShopTypeLinkByShopId(shop.getId());
+			if (typeList.size() > 0) {
+				for (int j = 0; j < typeList.size(); j++) {
+					deleteShopType(typeList.get(j).getId());
+				}
+			}
+		}
+	}
+
+	/**
+	 * 如果tags不为空，则执行删除标签操作
+	 * 
+	 * @param shop
+	 * @param tags
+	 */
+	@Transactional
+	public void editShopTag(Shop shop, String[] tags) {
+		if (tags != null) {
+			List<ShopTag> tagList = findShopTagByShopId(shop.getId());
+			if (tagList.size() > 0) {
+				for (int j = 0; j < tagList.size(); j++) {
+					deleteShopTag(tagList.get(j).getId());
+				}
+			}
+		}
+	}
+
+	/**
+	 * 业务门店商户分类添加
+	 * 
+	 * @param shopTypeLink
+	 */
+	@Transactional
+	public void saveShopTypeLink(ShopTypeLink shopTypeLink) {
+		// 保存门店商户分类信息
+		shopTypeLink = shopTypeLinkDao.save(shopTypeLink);
+		logUtils.logAdd("成功添加业务门店商户分类,ID：", shopTypeLink.getId().toString());
+	}
+
+	/**
+	 * 业务门店终端关系配置
+	 * 
+	 * @param shopPosLink
+	 */
+	@Transactional
+	public void saveShopPosLink(ShopPosLink shopPosLink) {
+		// 保存门店终端信息
+		shopPosLink = shopPosLinkDao.save(shopPosLink);
+		logUtils.logAdd("成功添加业务门店终端,ID：", shopPosLink.getId().toString());
+	}
+
+	/**
+	 * 业务门店标签关系配置
+	 * 
+	 * @param shopTag
+	 */
+	@Transactional
+	public void saveShopTag(ShopTag shopTag) {
+		// 保存门店标签信息
+		shopTag = shopTagDao.save(shopTag);
+		logUtils.logAdd("成功添加业务门店标签,ID：", shopTag.getId().toString());
+	}
+
+	/**
+	 * 查询指定门店
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public Shop findOneShop(Long id) {
+		Shop shop = shopDao.findOne(id);
+		return shop;
+	}
+
+	/**
+	 * 查询指定终端
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public SysPos findPosById(Long id) {
+		SysPos sysPos = sysPosDao.findOne(id);
+		return sysPos;
+	}
+
+	/**
+	 * 查询是否重复添加门店终端
+	 * 
+	 * @param posId
+	 * @param posNo
+	 * @param shopId
+	 * @return
+	 */
+	@Transactional
+	public List<ShopPosLink> findShopPosLink(Long posId, String posNo, String terminalId) {
+		List<ShopPosLink> linkList = shopPosLinkDao.findPosLink(posId, posNo, terminalId);
+		return linkList;
+	}
+
+	/**
+	 * 校验门店名称唯一
+	 * 
+	 * @param name
+	 * @return
+	 */
+	@Transactional
+	public List<Shop> checkOneName(String name) {
+		List<Shop> nameList = shopDao.findByName(name);
+		return nameList;
+	}
+
+	/**
+	 * 校验门店简称唯一
+	 * 
+	 * @param shortName
+	 * @return
+	 */
+	@Transactional
+	public List<Shop> checkOneShortName(String shortName) {
+		List<Shop> shortNameList = shopDao.findByShortName(shortName);
+		return shortNameList;
+	}
+
+	/**
+	 * 查询门店下的商户分类
+	 * 
+	 * @param shopId
+	 * @return typeLinkList
+	 */
+	@Transactional
+	public List<ShopTypeLink> findShopTypeLinkByShopId(Long shopId) {
+		List<ShopTypeLink> typeLinkList = shopTypeLinkDao.findByShopId(shopId);
+		return typeLinkList;
+	}
+
+	/**
+	 * 校验门店终端设备号唯一
+	 * 
+	 * @param posNo
+	 * @return
+	 */
+	@Transactional
+	public List<ShopPosLink> checkOnePosNo(String posNo) {
+		List<ShopPosLink> posNoList = shopPosLinkDao.findOnePosNo(posNo);
+		return posNoList;
+	}
+
+	/**
+	 * 校验门店终端设备号唯一
+	 * 
+	 * @param terminalId
+	 * @return
+	 */
+	@Transactional
+	public List<ShopPosLink> checkOneTerminalId(String terminalId) {
+		List<ShopPosLink> posNoList = shopPosLinkDao.findOneTerminalId(terminalId);
+		return posNoList;
+	}
+
+	/**
+	 * 查询门店下的终端
+	 * 
+	 * @param shopId
+	 * @return posLinkList
+	 */
+	@Transactional
+	public List<ShopPosLink> findShopPosLinkByShopId(Long shopId) {
+		List<ShopPosLink> posLinkList = shopPosLinkDao.findByShopId(shopId);
+		return posLinkList;
+	}
+
+	/**
+	 * 获取终端
+	 * 
+	 * @return
+	 */
+	public List<SysPos> findSysPos() {
+		return this.sysPosDao.findSysPos();
+	}
+
+	/**
+	 * 查询指定门店标签
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public ShopTag findOneShopTag(Long id) {
+		ShopTag shopTag = shopTagDao.findOne(id);
+		return shopTag;
+	}
+
+	/**
+	 * 查询门店下的标签
+	 * 
+	 * @param posId
+	 * @return tagList
+	 */
+	@Transactional
+	public List<ShopTag> findShopTagByShopId(Long shopId) {
+		List<ShopTag> tagList = shopTagDao.findByShopId(shopId);
+		return tagList;
+	}
+
+	/**
+	 * 查询指定商户
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public Store findOneStore(Long id) {
+		Store store = storeDao.findOne(id);
+		return store;
+	}
+	
+	/**
+	 * 查询指定被关联的Pos
+	 * @param posId
+	 * @return
+	 */
+	public List<ShopPosLink> findShopPosLinkListByPosId(Long posId){		 
+		List<ShopPosLink> shopPosLinkList  = shopPosLinkDao.findByPosId(posId);		  
+		return shopPosLinkList;		 
+	}
+	
+	/**
+	 * 查询指定被关联的TYPE
+	 * @param typeId
+	 * @return
+	 */
+	public List<ShopTypeLink> findShopTypeLinkListByTypeId(Long typeId){		 
+		List<ShopTypeLink> shopTypeLinkList  = shopTypeLinkDao.findByTypeId(typeId);		  
+		return shopTypeLinkList;		 
+	}
+
+	/**
+	 * 删除门店
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteShop(Long id) {
+		shopDao.delete(id);
+		logUtils.logDelete("成功删除业务门店", "ID:" + id);
+	}
+
+	/**
+	 * 删除门店终端
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteShopPosLink(Long id) {
+		shopPosLinkDao.delete(id);
+		logUtils.logDelete("成功删除业务门店终端", "ID:" + id);
+	}
+
+	/**
+	 * 删除门店标签
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteShopTag(Long id) {
+		shopTagDao.delete(id);
+		logUtils.logDelete("成功删除业务门店标签", "ID:" + id);
+	}
+
+	/**
+	 * 删除门店商户分类
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteShopType(Long id) {
+		shopTypeLinkDao.delete(id);
+		logUtils.logDelete("成功删除业务门店商户分类", "ID:" + id);
+	}
+
+	/**
+	 * 删除门店下的所有商户分类
+	 * 
+	 * @param id
+	 */
+	@Transactional
+	public void deleteShopTypeLink(Long id) {
+		List<ShopTypeLink> typeList = findShopTypeLinkByShopId(id);
+		if (typeList.size() > 0) {
+			for (int j = 0; j < typeList.size(); j++) {
+				deleteShopType(typeList.get(j).getId());
+			}
+		}
+	}
+
+	/**
+	 * 获得一个商铺可用的门店列表
+	 * 
+	 * @param storeId
+	 *            商户编号
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<Shop> findStoreValidShops(Long storeId) throws SQLException {
+		// StringBuilder sql = new StringBuilder();
+		// sql.append("select s.*,sr.region_name regionName  from T_SHOP s left join t_sys_region sr on s.AREA_CODE = sr.region_code   where s.AC_SHOP_ID = ? and status = 3 and is_Valid = 1 ");
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select s.*, sr.region_name regionName, t.name storeName ");
+		sqlBuff.append("  from t_shop s ");
+		sqlBuff.append("  left join t_sys_region sr ");
+		sqlBuff.append("    on s.area_code = sr.region_code ");
+		sqlBuff.append("  left join t_store t ");
+		sqlBuff.append("    on s.ac_shop_id = t.id ");
+		sqlBuff.append(" where s.ac_shop_id = ? ");
+		sqlBuff.append("   and s.status = 3 ");
+		sqlBuff.append("   and s.is_Valid = 1");
+
+		return dbHelper.getBeanList(sqlBuff.toString(), Shop.class, new Object[] { storeId });
+
+	}
+
+	/**
+	 * 获得一个商铺可用的门店列表
+	 * 
+	 * @param storeId
+	 *            商户编号
+	 * @return
+	 * @throws SQLException
+	 */
+	public List<Shop> findChannelValidShops(String ids) throws SQLException {
+		// StringBuilder sql = new StringBuilder();
+		// sql.append("select s.*,sr.region_name regionName  from T_SHOP s left join t_sys_region sr on s.AREA_CODE = sr.region_code   where s.AC_SHOP_ID = ? and status = 3 and is_Valid = 1 ");
+		if (StringUtils.isEmpty(ids)) {
+			return null;
+		}
+		StringBuilder sqlBuff = new StringBuilder();
+		sqlBuff.setLength(0);
+		sqlBuff.append("select s.*, sr.region_name regionName, t.name storeName ");
+		sqlBuff.append("  from t_shop s ");
+		sqlBuff.append("  left join t_sys_region sr ");
+		sqlBuff.append("    on s.area_code = sr.region_code ");
+		sqlBuff.append("  left join t_store t ");
+		sqlBuff.append("    on s.ac_shop_id = t.id ");
+		sqlBuff.append(" where 1 = 1 ");
+
+		sqlBuff.append(" and s.ac_shop_id in ( ").append(ids).append(" )");
+
+		sqlBuff.append("   and s.status = 3 ");
+		sqlBuff.append("   and s.is_Valid = 1");
+
+		return dbHelper.getBeanList(sqlBuff.toString(), Shop.class);
+
+	}
+
+}

@@ -1,0 +1,153 @@
+package com.cplatform.mall.back.sys.service;
+
+import java.security.SecureRandom;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.sys.dao.OpenRoleItemDao;
+import com.cplatform.mall.back.sys.entity.OpenCustomer;
+import com.cplatform.mall.back.sys.entity.OpenRoleItem;
+
+/**
+ * 客服信息dao
+ * <p>
+ * Copyright: Copyright (c) 2013-8-16 下午08:32:07
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author jisn@c-platform.com
+ * @version 1.0.0
+ */
+
+@Service
+public class OpenService {
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	@Autowired
+	OpenRoleItemDao customerServiceDao;
+
+	private static final String POSSIBLE_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	public Page<OpenRoleItem> getPageListRoleItem(OpenRoleItem openRoleItem, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_ROLE_ITEM where 1=1 ");
+
+		if (openRoleItem != null) {
+			if (StringUtils.isNotEmpty(openRoleItem.getName())) {
+				sql.append(" and NAME like ? ");
+				params.add("%" + openRoleItem.getName().trim() + "%");
+			}
+		}
+		sql.append(" order by id desc ");
+		return dbHelper.getPage(sql.toString(), OpenRoleItem.class, pageNo, pageSize, params.toArray());
+	}
+
+	public Page<OpenCustomer> getPageListCustomer(OpenCustomer openCustomer, int pageNo, int pageSize) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql
+		        .append(" select c.*,s.name storeName,sh.name shopName from T_OPEN_CUSTOMER c left join t_store s  on c.store_id = s.id  left join t_shop sh on c.shop_id = sh.id  where 1=1 ");
+
+		if (openCustomer != null) {
+			if (StringUtils.isNotEmpty(openCustomer.getName())) {
+				sql.append(" and c.NAME like ? ");
+				params.add("%" + openCustomer.getName().trim() + "%");
+			}
+			if (StringUtils.isNotEmpty(openCustomer.getStatus())) {
+				sql.append(" and c.STATUS = ? ");
+				params.add(openCustomer.getStatus());
+			}
+			if (openCustomer.getAppId() != null) {
+				sql.append(" and c.app_id = ? ");
+				params.add(openCustomer.getAppId());
+			}
+		}
+		sql.append(" order by c.APP_ID desc ");
+		return dbHelper.getPage(sql.toString(), OpenCustomer.class, pageNo, pageSize, params.toArray());
+	}
+
+	public List<OpenRoleItem> getOpenRoleItemList() throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_ROLE_ITEM where 1=1 ");
+		sql.append(" order by id desc ");
+		// params.add(appId);
+		return dbHelper.getBeanList(sql.toString(), OpenRoleItem.class, params.toArray());
+	}
+
+	public List<Map<String, String>> getListRoleItemMap(Long appId) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select t.APP_ID,t.ROLE_ID from T_OPEN_CUSTOMER_ROLE t where t.APP_ID = ? ");
+		sql.append(" order by  t.ROLE_ID desc ");
+		params.add(appId);
+		return dbHelper.getMapList(sql.toString(), params.toArray());
+	}
+
+	public void saveRole(OpenCustomer openCustomer, String[] roles) throws SQLException {
+		String delSql = "delete from T_OPEN_CUSTOMER_ROLE where APP_ID = ? ";
+		dbHelper.execute(delSql, new Object[] { openCustomer.getAppId() });
+		if (roles != null) {
+			String insertSql = "insert into T_OPEN_CUSTOMER_ROLE values(? , ? ) ";
+			for (String role : roles) {
+				dbHelper.execute(insertSql, new Object[] { openCustomer.getAppId(), role });
+			}
+		}
+	}
+
+	public void getRanddomString(int length, OpenCustomer openCustomer) throws SQLException {
+		StringBuilder sb = new StringBuilder(length);
+		SecureRandom random = new SecureRandom();
+		for (int i = 0; i < length; i++) {
+			sb.append(POSSIBLE_CHARS.charAt(random.nextInt(POSSIBLE_CHARS.length())));
+		}
+		StringBuilder sql = new StringBuilder(100);
+		List<Object> params = new ArrayList<Object>();
+		sql.append(" select * from T_OPEN_CUSTOMER where app_key = ? ");
+		params.add(sb.toString());
+		List<OpenRoleItem> listOpenRoleItem = dbHelper.getBeanList(sql.toString(), OpenRoleItem.class, params.toArray());
+		if (listOpenRoleItem.size() > 0) {
+			getRanddomString(length, openCustomer);
+		} else {
+			openCustomer.setAppKey(sb.toString());
+		}
+	}
+
+	public String validIps(OpenCustomer openCustomer) {
+		String msg = null;
+		String index = "";
+		String[] ips = openCustomer.getIps().split(",");
+		Pattern pattern = Pattern
+		        .compile("\\b((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\.((?!\\d\\d\\d)\\d+|1\\d\\d|2[0-4]\\d|25[0-5])\\b");
+		for (int i = 0; i < ips.length; i++) {
+			Matcher matcher = pattern.matcher(ips[i]);
+			if (!matcher.matches()) {
+				if (index == "") {
+					index += (i + 1);
+				} else {
+					index += "," + (i + 1);
+				}
+
+			}
+		}
+		if (index != "") {
+			msg = "第" + index + "个ip地址格式不正确,请重新修改！";
+		}
+		return msg;
+	}
+
+}

@@ -1,0 +1,322 @@
+package com.cplatform.mall.back.cont.service;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import net.sf.json.JSONArray;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.cplatform.dbhelp.DbHelper;
+import com.cplatform.dbhelp.page.Page;
+import com.cplatform.mall.back.cont.dao.ContMmsDao;
+import com.cplatform.mall.back.cont.entity.ContMms;
+import com.cplatform.mall.back.cont.mms.bean.Frame;
+import com.cplatform.mall.back.cont.mms.util.AjaxUtils;
+import com.cplatform.mall.back.cont.mms.util.MmsUtils;
+import com.cplatform.mall.back.cont.mms.util.ParseFrameException;
+import com.cplatform.mall.back.cont.mms.util.TimeUtil;
+import com.cplatform.mall.back.sys.service.SysInfoService;
+import com.cplatform.mall.back.utils.JsonRespWrapper;
+import com.cplatform.mall.back.utils.data.RoleDataUtils;
+
+/**
+ * 彩信编辑service类
+ * <p>
+ * Copyright: Copyright (c) 2012-11-23 下午2:46:31
+ * <p>
+ * Company: 北京宽连十方数字技术有限公司
+ * <p>
+ * 
+ * @author jisn@c-platform.com
+ * @version 1.0.0
+ */
+@Component
+public class ContMmsService extends ContentService {
+
+	@Autowired
+	ContMmsDao contMmsDao;
+
+	@Autowired
+	SysInfoService sysInfoService;
+
+	@Autowired
+	private DbHelper dbHelper;
+
+	static final Log logger = LogFactory.getLog(ContMmsService.class);
+
+	/**
+	 * @param contentCode
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws SQLException
+	 */
+	public Page<ContMms> listContMms(ContMms contMms, int pageNo, int pageSize) throws SQLException {
+
+		StringBuilder sql = new StringBuilder();
+		sql.append("SELECT * FROM T_CONT_MMS WHERE 1=1");
+		List<Object> params = null;
+		if (contMms != null) {
+			params = new ArrayList<Object>();
+			if (StringUtils.isNotEmpty(contMms.getContentSrc())) {
+				sql.append(" AND UPPER(CONTENT_SRC) LIKE '%'||UPPER('" + contMms.getContentSrc() + "')||'%'");
+			}
+			if (StringUtils.isNotEmpty(contMms.getStartTime())) {
+				sql.append(" AND START_TIME >?");
+				params.add(contMms.getStartTime());
+			}
+			if (StringUtils.isNotEmpty(contMms.getEndTime())) {
+				sql.append(" AND START_TIME <?");
+				params.add(contMms.getEndTime());
+			}
+			if (contMms.getStatus() != null) {
+				sql.append(" AND  STATUS=?");
+				params.add(contMms.getStatus());
+			}
+			if (StringUtils.isNotEmpty(contMms.getTitle())) {
+				sql.append(" AND  TITLE LIKE ?");
+				params.add("%" + contMms.getTitle() + "%");
+			}
+		}
+		sql.append(RoleDataUtils.getRoleData(RoleDataUtils.MODUE_MMSCONTENT));// 控制数据访问
+		sql.append(" order by id desc");
+		return dbHelper.getPage(sql.toString(), ContMms.class, pageNo, pageSize, params.toArray());
+	}
+
+	/**
+	 * 新增彩信
+	 * 
+	 * @param contMms
+	 * @return
+	 */
+	public ContMms addContMms(ContMms contMms) {
+		contMms.setStatus(ContMms.ASTATUS_WAIT);
+		contMms.setUpdateTime(TimeUtil.now());
+		contMms.setContent("--------");
+		if (!StringUtils.isEmpty(contMms.getStartTime())) {
+			contMms.setStartTime(TimeUtil.format(contMms.getStartTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		}
+		if (!StringUtils.isEmpty(contMms.getEndTime())) {
+			contMms.setEndTime(TimeUtil.format(contMms.getEndTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		}
+		return contMmsDao.save(contMms);
+	}
+
+	/**
+	 * 编辑彩信
+	 * 
+	 * @param contMms
+	 * @param database
+	 * @return
+	 */
+	public ContMms editContMms(ContMms contMms, ContMms database) {
+		database.setUpdateTime(TimeUtil.now());
+		database.setTitle(contMms.getTitle());
+		if (!StringUtils.isEmpty(contMms.getStartTime())) {
+			database.setStartTime(TimeUtil.format(contMms.getStartTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		} else {
+			database.setStartTime("");
+		}
+		if (!StringUtils.isEmpty(contMms.getEndTime())) {
+			database.setEndTime(TimeUtil.format(contMms.getEndTime(), TimeUtil.TARGET_1, TimeUtil.SOURCE_1));
+		} else {
+			database.setEndTime("");
+		}
+
+		if (database.getStatus() == database.ASTATUS_REJECT) {
+			database.setStatus(database.ASTATUS_WAIT);
+		}
+		return contMmsDao.save(database);
+	}
+
+	/**
+	 * 创建彩信smil文件等内容
+	 * 
+	 * @param contMms
+	 * @param mmsFrameData
+	 * @return
+	 */
+	public Object createMmsContent(ContMms contMms, String mmsFrameData, boolean flag, Collection<Frame> frames) {
+		String smilName = contMms.getId() + ".smil";
+		/** 新增彩信，增加彩信路径 */
+		if (!flag) {
+			setContentPath(contMms);// 设置彩信相对路径
+			contMms.setSmilName(smilName);// 设置彩信smil文件名
+		}
+		contMms.setPicSize(appConfig.getMmsDefaultSize());
+
+		/** 彩信编辑结果json */
+		Map<String, Object> json = new HashMap<String, Object>();
+		json.put("mmsid", contMms.getId());
+
+		/** 以下是彩信文件相关属性 */
+		Map<String, String> mmsFileAttr = new HashMap<String, String>();
+		mmsFileAttr.put("mmsPath", appConfig.getMmsPath());
+		mmsFileAttr.put("mmsMaxSize", String.valueOf(appConfig.getMmsMaxSize()));
+		mmsFileAttr.put("mmsDefaultSize", appConfig.getMmsDefaultSize());
+		mmsFileAttr.put("contentPath", contMms.getContentPath());
+		mmsFileAttr.put("smilName", smilName);
+		mmsFileAttr.put("flag", String.valueOf(flag));
+
+		// Collection<Frame> frames = null;
+		try {
+			// frames = getFrame(mmsFrameData); // 获得彩信对象
+
+			MmsUtils.createFrameTextFile(frames, mmsFileAttr);// 创建彩信文本
+
+			int contentSize = MmsUtils.saveAllMmsFile(frames, mmsFileAttr, json);// 创建彩信所有文件
+
+			contMms.setContent(MmsUtils.getFirstPic(frames));// 获得彩信第一张图
+			contMms.setContentSize(contentSize);
+			contMms.setAttachmentType(MmsUtils.getAttachmentType(frames));
+
+			contMmsDao.save(contMms);
+
+			return json;
+		}
+		catch (Exception ex) {
+			return JsonRespWrapper.error(ex.getMessage());
+		}
+	}
+
+	/**
+	 * 将页面提交彩信信息字符串封装成对象
+	 * 
+	 * @param mmsFrameData
+	 * @return
+	 */
+	public Collection<Frame> getFrame(String mmsFrameData) {
+		mmsFrameData = mmsFrameData.replace("&quot;", "\"");
+		Collection<Frame> frames = null;
+		// 解析为Collection<Frame>对象
+		JSONArray ja = JSONArray.fromObject(mmsFrameData);
+		return JSONArray.toList(ja, Frame.class);
+	}
+
+	/**
+	 * 根据id删除彩信
+	 * 
+	 * @param id
+	 */
+	public void deleteContMmsById(Long id) {
+		contMmsDao.delete(id);
+	}
+
+	/**
+	 * 根据appId删除彩信内容
+	 * 
+	 * @param appId
+	 */
+	public void deleteContMmsByAppId(String appId) {
+		contMmsDao.deleteMmsByAppId(appId);
+	}
+
+	/**
+	 * 根据id获得彩信
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public ContMms getContMmsById(Long id) {
+		return contMmsDao.findOne(id);
+	}
+
+	/**
+	 * 读取彩信内容
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public Object getMmsContent(Long id) {
+		ContMms contMms = getContMmsById(id);
+		List<Frame> frames = null;
+		try {
+			frames = MmsUtils.getFrames(contMms, appConfig.getMmsPath(), appConfig.getMmsDefaultSize());
+		}
+		catch (ParseFrameException ex) {
+			return (AjaxUtils.getFailReturn(ex.getMessage()));
+		}
+		catch (Exception ex) {
+			return (AjaxUtils.getFailReturn("读取彩信异常"));
+		}
+
+		Map<String, Object> json = new HashMap<String, Object>();
+		if ("1".equals(contMms.getParam1())) {
+			json.put("isSticker", "1");
+		}
+		json.put("success", Boolean.TRUE);
+		json.put("content", contMms.getContent());
+		json.put("title", contMms.getTitle());
+		json.put("frames", frames);
+		return json;
+	}
+
+	/**
+	 * 设置彩信存放相对路径
+	 * 
+	 * @param contMms
+	 */
+	private void setContentPath(ContMms contMms) {
+		String now = TimeUtil.now();
+		String DAY = now.substring(0, 8);
+		String HHMI = now.substring(8, 12);
+		String id = String.valueOf(contMms.getId());
+		String sercode = contMms.getContentSrc().toString();
+		contMms.setContentPath(sercode + "/" + DAY + "/" + HHMI + "/" + id);
+	}
+
+	/**
+	 * 验证彩信文本内容是否含有过滤字
+	 * 
+	 * @param frames
+	 * @return true－有过滤字/false－无过滤字
+	 */
+	public int checkMmsContent(Collection<Frame> frames) {
+		int filterWordResult = 2;
+		for (Frame frame : frames) {
+			if (frame.getText() == null) {
+				continue;
+			}
+
+			if (StringUtils.isBlank(frame.getText().getValue())) {
+				continue;
+			}
+
+			if (frame.getText().getValue().length() > 1500) {
+				return 1;
+			}
+
+			if (sysInfoService.checkFilterWord(frame.getText().getValue())) {
+				return 0;
+			}
+		}
+		return 2;
+	}
+
+	/**
+	 * 彩信审核
+	 * 
+	 * @param contMms
+	 * @throws SQLException
+	 */
+	public void auditContMms(ContMms contMms) throws SQLException {
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE T_CONT_MMS SET STATUS=?,ADVICE=?,AUDITOR_ID=?  WHERE ID = ?");
+
+		List<Object> paramsList = new ArrayList<Object>();
+		paramsList.add(contMms.getStatus());
+		paramsList.add(contMms.getAdvice());
+		paramsList.add(contMms.getAuditorId());
+		paramsList.add(contMms.getId());
+		dbHelper.execute(sql.toString(), paramsList.toArray());
+	}
+}

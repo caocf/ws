@@ -1,0 +1,1 @@
+CREATE INDEX "LIFE".idx_pay_order_callback_01 ON "LIFE".t_pay_order_callback(pay_order_id);

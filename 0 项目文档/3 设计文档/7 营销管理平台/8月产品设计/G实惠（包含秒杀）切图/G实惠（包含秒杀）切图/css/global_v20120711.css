@@ -1,0 +1,354 @@
+
+body, h1, h2, h3, h4, h5, h6, hr, p, dl, dt, dd, ul, ol, li, pre, form, fieldset, legend, button, input, textarea, th, td {
+    margin: 0;
+    padding: 0;
+}
+body, button, input, select, textarea {
+    color: #101010;
+    font: 12px/1.5 tahoma,arial,宋体;
+}
+h1, h2, h3, h4, h5, h6, button, input, select, textarea, option {
+    font-size: 100%;
+}
+em {
+    font-style: normal;
+}
+img {
+    border: 0 none;
+}
+ul, ol {
+    list-style: none outside none;
+}
+a {
+    color: #333333;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+a:hover {
+    text-decoration: underline;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+.fix {
+    clear: both;
+}
+.fix:after {
+    clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+}
+.wrap {
+    margin: 0 auto;
+    width: 1000px;
+}
+.m-t {
+    margin-top: 10px;
+}
+.m-r {
+    margin-right: 10px;
+}
+.bor {
+    border: 1px solid #BFBFBF;
+}
+.top-nav {
+    background: none repeat scroll 0 0 #EFEFEF;
+    height: 32px;
+    line-height: 32px;
+}
+.welcome {
+    float: left;
+}
+.welcome a, .site-map li a b {
+    color: #48A4F8;
+}
+.site-map {
+    float: right;
+}
+.site-map li {
+    background: url("http://mall.12580life.com/images/icon.gif") no-repeat scroll -147px -20px transparent;
+    display: block;
+    float: left;
+}
+.site-map li.hmain {
+    position: relative;
+    z-index: 100;
+}
+.site-map li.bgnone {
+    background: none repeat scroll 0 0 transparent;
+}
+.site-map li a {
+    display: block;
+    padding: 0 7px;
+}
+.site-map li a.phone, .site-map li a.goods-car {
+    background: url("http://mall.12580life.com/images/icon.gif") no-repeat scroll 0 0 transparent;
+    padding-left: 15px;
+}
+.site-map li a.phone {
+    background-position: 0 7px;
+}
+.site-map li a.goods-car {
+    background-position: 0 -22px;
+    padding-left: 18px;
+}
+.site-map a.erji {
+    background: url("http://mall.12580life.com/images/icon.gif") no-repeat scroll -83px 13px transparent;
+    border: 1px solid #EFEFEF;
+    height: 28px;
+    padding-right: 15px;
+    position: relative;
+    z-index: 100;
+}
+.site-map a.on {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background: url("http://mall.12580life.com/images/icon.gif") no-repeat scroll -83px 13px #FFFFFF;
+    border-color: #BFBFBF #BFBFBF -moz-use-text-color;
+    border-image: none;
+    border-style: solid solid none;
+    border-width: 1px 1px medium;
+    height: 30px;
+}
+.site-map li dl {
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 1px solid #BFBFBF;
+    display: none;
+    left: 0;
+    position: absolute;
+    top: 30px;
+    z-index: 99;
+}
+.site-map li dl a {
+    display: block;
+    line-height: 26px;
+    width: 80px;
+}
+.fll {
+    float: left;
+    margin: 65px 0 0 50px;
+    position: relative;
+    width: 100px;
+    z-index: 10;
+}
+.head_city {
+    background: url("http://mall.12580life.com/images/icon-03.gif") no-repeat scroll 53px -20px transparent;
+    border: 1px solid #D5D5D5;
+    color: #929292;
+    cursor: pointer;
+    height: 21px;
+    line-height: 21px;
+    padding-right: 22px;
+    text-align: center;
+    width: 53px;
+}
+.other_city {
+    left: -100px;
+    position: absolute;
+    top: 23px;
+    width: 263px;
+}
+.iother_city {
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 1px solid #006EFF;
+    padding: 10px;
+    width: 255px;
+}
+.noactive_city p, .active_city p {
+    display: block;
+    float: left;
+    margin-top: 5px;
+}
+.other_city li {
+    float: left;
+    height: 24px;
+    line-height: 24px;
+    width: 50px;
+}
+.other_city li a {
+    margin-left: 5px;
+}
+.headDes .other_city p {
+    float: left;
+    line-height: 24px;
+    padding: 0;
+    width: 100px;
+}
+.active_city {
+    border-bottom: 1px dashed #006EFF;
+}
+.active_city a {
+    color: #006EFF;
+}
+.other_city ul {
+    float: right;
+    width: 150px;
+}
+.other_city i {
+    background: url("http://mall.12580life.com/images/icon-03.gif") no-repeat scroll 0 -637px transparent;
+    display: block;
+    height: 9px;
+    margin: 0 auto -2px;
+    overflow: hidden;
+    position: relative;
+    width: 17px;
+}
+.noactive_city a:hover {
+    color: #006EFF;
+}
+.header {
+    height: 100px;
+}
+.logo {
+    float: left;
+    margin: 10px 0 0;
+}
+.search {
+    float: right;
+    margin: 10px 0 0;
+    width: 600px;
+}
+.search ul {
+    bottom: -2px;
+    position: relative;
+}
+.search ul li {
+    cursor: pointer;
+    display: block;
+    float: left;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    width: 54px;
+}
+.search ul li.on {
+    background: url("http://mall.12580life.com/images/icon.gif") no-repeat scroll 0 -70px transparent;
+    color: #FFFFFF;
+}
+.search input {
+    border: medium none;
+    height: 34px;
+    line-height: 34px;
+    vertical-align: middle;
+}
+.search-text {
+    background: url("http://mall.12580life.com/images/search-text.gif") no-repeat scroll 0 0 transparent;
+    color: #666666;
+    padding-left: 40px;
+    width: 460px;
+}
+.search-btn {
+    background: url("http://mall.12580life.com/images/search-btn.gif") no-repeat scroll 0 0 transparent;
+    color: #FFFFFF;
+    cursor: pointer;
+    text-align: center;
+    width: 95px;
+}
+.search p {
+    margin-top: 5px;
+}
+.search p a {
+    padding: 0 10px;
+}
+.search-box {
+    position: relative;
+    top: -2px;
+}
+.main {
+    background: url("http://mall.12580life.com/images/icon.gif") repeat-x scroll 0 -100px transparent;
+}
+.main ul li {
+    float: left;
+}
+.main ul li a {
+    color: #FFFFFF;
+    display: block;
+    font-family: "Microsoft YaHei";
+    font-size: 16px;
+    font-weight: bold;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    width: 100px;
+}
+.main ul li a:hover, .main ul li a.on {
+    background: url("http://mall.12580life.com/images/icon.gif") repeat-x scroll 0 -132px transparent;
+    border-left: 2px solid #FFFFFF;
+    border-right: 2px solid #FFFFFF;
+    text-decoration: none;
+    width: 96px;
+}
+#footer {
+    background: none repeat scroll 0 0 #F7F7F7;
+    border-top: 4px solid #E0E0E0;
+    height: 1%;
+    margin-top: 10px;
+    overflow: hidden;
+    padding: 15px 0 25px;
+    width: 100%;
+}
+#footer dl {
+    display: inline;
+    float: left;
+    margin-left: 35px;
+    width: 130px;
+}
+#footer dl dt {
+    border-bottom: 1px solid #DADADA;
+    color: #333333;
+    overflow: hidden;
+    padding-left: 10px;
+}
+#footer dl dt span {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: bold;
+    padding-bottom: 10px;
+    width: 95px;
+}
+#footer dl dd {
+    color: #616161;
+    padding-left: 10px;
+    padding-top: 10px;
+}
+#footer dl dd a, #footer dl dd a:visited {
+    color: #616161;
+}
+.footer-menu {
+    color: #144899;
+    margin-top: 25px;
+    text-align: center;
+}
+.footer-menu a, .footer-menu a:visited {
+    color: #144899;
+    padding: 0 5px;
+}
+#copyright {
+    height: 33px;
+    line-height: 33px;
+    margin-top: 10px;
+    width: 100%;
+}
+.copyright-text {
+    float: left;
+    padding-left: 80px;
+}
+.copyright-text span {
+    color: #D2E3FC;
+    font: 11px Arial,Helvetica,sans-serif;
+    padding-right: 10px;
+}
+.icp {
+    text-align: center;
+}
+.icp a, .icp a:visited {
+    margin-left: 10px;
+}

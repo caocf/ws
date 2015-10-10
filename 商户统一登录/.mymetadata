@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="商户统一登录"
+  id="myeclipse.1395824899394"
+  context-root="/store-sso"
+  j2ee-spec="6.0"
+  archive="商户统一登录.war">
+  <attributes>
+    <attribute name="webrootdir" value="src/main/webapp" />
+  </attributes>
+</project-module>
+

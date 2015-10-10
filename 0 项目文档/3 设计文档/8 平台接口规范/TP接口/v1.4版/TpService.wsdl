@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:tp="http://www.cplatform.com/tp/server" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="TpService"
+	targetNamespace="http://www.cplatform.com/tp/server" xmlns:xsd1="http://www.cplatform.com/tp/info">
+	<wsdl:types>
+		<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+			<xsd:import namespace="http://www.cplatform.com/tp/info"
+				schemaLocation="TpInterfaceType.xsd">
+			</xsd:import>
+		</xsd:schema>
+	</wsdl:types>
+	<wsdl:message name="sendMmsMtMessageRequest">
+		<wsdl:part name="sendMmsMtMessageRequest" type="xsd1:SubmitMmsMtRequest" />
+	</wsdl:message>
+	<wsdl:message name="sendMmsMtMessageResponse">
+		<wsdl:part name="sendMmsMtMessageResponse" type="xsd1:SubmitMmsMtResponse" />
+	</wsdl:message>
+	<wsdl:message name="sendSmsMtMessageRequest">
+		<wsdl:part name="sendSmsMtMessageRequest" type="xsd1:SubmitSmsMtRequest">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="sendSmsMtMessageResponse">
+		<wsdl:part name="sendSmsMtMessageResponse" type="xsd1:SubmitSmsMtResponse">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="sendWapMtMessageRequest">
+		<wsdl:part name="sendWapMtMessageRequest" type="xsd1:SubmitWapMtRequest">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="sendWapMtMessageResponse">
+		<wsdl:part name="sendWapMtMessageResponse" type="xsd1:SubmitWapMtResponse">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="getMmsMoMessageRequest">
+		<wsdl:part name="getMmsMoMessageRequest" type="xsd1:GetMmsMoRequest">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="getMmsMoMessageResponse">
+		<wsdl:part name="getMmsMoMessageResponse" type="xsd1:GetMmsMoResponse">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="getSmsMoMessageRequest">
+		<wsdl:part name="getSmsMoMessageRequest" type="xsd1:GetSmsMoRequest">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="getSmsMoMessageResponse">
+		<wsdl:part name="getSmsMoMessageResponse" type="xsd1:GetSmsMoResponse">
+		</wsdl:part>
+	</wsdl:message>
+	<wsdl:portType name="TpService">
+		<wsdl:operation name="sendMmsMtMessage">
+			<wsdl:input message="tp:sendMmsMtMessageRequest" />
+			<wsdl:output message="tp:sendMmsMtMessageResponse" />
+		</wsdl:operation>
+		<wsdl:operation name="sendSmsMtMessage">
+			<wsdl:input message="tp:sendSmsMtMessageRequest"></wsdl:input>
+			<wsdl:output message="tp:sendSmsMtMessageResponse"></wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="sendWapMtMessage">
+			<wsdl:input message="tp:sendWapMtMessageRequest"></wsdl:input>
+			<wsdl:output message="tp:sendWapMtMessageResponse"></wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="getMmsMoMessage">
+			<wsdl:input message="tp:getMmsMoMessageRequest"></wsdl:input>
+			<wsdl:output message="tp:getMmsMoMessageResponse"></wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="getSmsMoMessage">
+			<wsdl:input message="tp:getSmsMoMessageRequest"></wsdl:input>
+			<wsdl:output message="tp:getSmsMoMessageResponse"></wsdl:output>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="TpServiceSOAP" type="tp:TpService">
+
+		<soap:binding style="rpc"
+			transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="sendMmsMtMessage">
+
+			<soap:operation soapAction="http://www.cplatform.com/tp/server/sendMmsMtMessage" />
+			<wsdl:input>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:input>
+			<wsdl:output>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="sendSmsMtMessage">
+
+			<soap:operation soapAction="http://www.cplatform.com/tp/server/sendSmsMtMessage" />
+			<wsdl:input>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:input>
+			<wsdl:output>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="sendWapMtMessage">
+
+			<soap:operation soapAction="http://www.cplatform.com/tp/server/sendWapMtMessage" />
+			<wsdl:input>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:input>
+			<wsdl:output>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="getMmsMoMessage">
+
+			<soap:operation soapAction="http://www.cplatform.com/tp/server/getMmsMoMessage" />
+			<wsdl:input>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:input>
+			<wsdl:output>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="getSmsMoMessage">
+
+			<soap:operation soapAction="http://www.cplatform.com/tp/server/getSmsMoMessage" />
+			<wsdl:input>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:input>
+			<wsdl:output>
+
+				<soap:body use="literal" namespace="http://www.cplatform.com/tp/server" />
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="TpService">
+		<wsdl:port binding="tp:TpServiceSOAP" name="TpService">
+			<soap:address location="http://www.cplatform.com/tp/ws" />
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
